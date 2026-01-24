@@ -6,15 +6,22 @@ import { Button } from "@/components/ui/button";
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden pt-[140px] pb-32 lg:pt-[180px] lg:pb-40">
+    <section className="relative overflow-hidden pt-[140px] pb-32 lg:pt-[180px] lg:pb-40 bg-[#f6f9fc] dark:bg-slate-950">
       
-      {/* Vibrant Gradient Background - Fixed Visibility */}
-      <div className="absolute inset-0 -z-20 h-full w-full bg-slate-950">
-           <div className="absolute inset-0 bg-gradient-to-br from-violet-600/90 via-purple-600/90 to-blue-600/90" />
-           <div className="absolute -top-[50%] -left-[50%] h-[200%] w-[200%] animate-[spin_60s_linear_infinite] opacity-30 bg-[conic-gradient(from_0deg,transparent_0_340deg,white_360deg)]" />
+      {/* Stripe-like Vector Gradient Background */}
+      <div className="absolute inset-0 -z-20 h-full w-full overflow-hidden transform-gpu">
+        {/* Base slant */}
+        <div className="absolute top-0 left-0 right-0 h-[500px] w-full bg-[#0a2540] origin-top-left -skew-y-6 transform-gpu lg:h-[700px]" />
+        
+        {/* Gradient Mesh 1 */}
+        <div className="absolute -top-40 -right-40 h-[800px] w-[800px] rounded-full bg-gradient-to-br from-[#00d4ff] to-[#0a2540] opacity-30 blur-3xl" />
+        
+        {/* Gradient Mesh 2 (Accent) */}
+        <div className="absolute top-20 right-0 h-[600px] w-[600px] bg-gradient-to-bl from-[#635bff] via-[#ff4d4d] to-[#0a2540] opacity-40 blur-[100px] transform-gpu origin-top-right rotate-12" />
+        
+        {/* Subtle Grid Overlay */}
+         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:linear-gradient(to_bottom,black_40%,transparent_100%)]" />
       </div>
-      
-      <div className="absolute inset-0 -z-10 h-full w-full bg-[url('/grid.svg')] opacity-20" />
           
       <div className="container mx-auto px-4 text-white">
         <div className="grid grid-cols-1 gap-16 lg:grid-cols-2 lg:items-center">

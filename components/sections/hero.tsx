@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowRight, ChevronRight, Terminal, Globe } from "lucide-react";
+import { ArrowRight, ChevronRight, Terminal, Globe, Code2, Cpu, Database, Layout } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function Hero() {
@@ -44,7 +44,7 @@ export function Hero() {
               className="font-heading text-5xl font-bold tracking-tight text-slate-900 sm:text-7xl lg:leading-[1.1] mb-6"
             >
               Build Scalable <br/>
-              SaaS & Web Apps <br/>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-violet-600">SaaS & Web Apps</span> <br/>
               with a Top 10% <br/>
               Developer
             </motion.h1>
@@ -64,7 +64,7 @@ export function Hero() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
-              className="flex flex-wrap gap-4"
+              className="flex flex-wrap gap-4 mb-12"
             >
               <Button size="lg" className="h-12 rounded-full px-8 text-base bg-slate-900 text-white hover:bg-slate-800 font-semibold shadow-lg shadow-slate-900/10">
                 Start a Project
@@ -73,6 +73,22 @@ export function Hero() {
               <Button size="lg" variant="outline" className="h-12 rounded-full px-8 text-base border-slate-200 bg-white text-slate-900 hover:bg-slate-50">
                 View Portfolio
               </Button>
+            </motion.div>
+
+            {/* Tech Stack Logos */}
+            <motion.div
+               initial={{ opacity: 0 }}
+               animate={{ opacity: 1 }}
+               transition={{ duration: 0.5, delay: 0.4 }}
+               className="flex flex-col gap-3"
+            >
+                <div className="text-xs font-semibold uppercase tracking-wider text-slate-400">Powering solutions with</div>
+                <div className="flex items-center gap-6 opacity-60 grayscale transition-all hover:grayscale-0 hover:opacity-100">
+                    <div className="flex items-center gap-1.5"><Code2 className="h-5 w-5" /><span className="font-semibold text-slate-700">Next.js</span></div>
+                    <div className="flex items-center gap-1.5"><Layout className="h-5 w-5" /><span className="font-semibold text-slate-700">Tailwind</span></div>
+                    <div className="flex items-center gap-1.5"><Database className="h-5 w-5" /><span className="font-semibold text-slate-700">Postgres</span></div>
+                    <div className="flex items-center gap-1.5"><Cpu className="h-5 w-5" /><span className="font-semibold text-slate-700">AWS</span></div>
+                </div>
             </motion.div>
           </div>
 
@@ -84,7 +100,7 @@ export function Hero() {
             className="relative mx-auto w-full max-w-[500px] perspective-1000"
           >
              {/* Abstract Dev Environment */}
-            <div className="relative z-10 rounded-2xl border border-slate-200 bg-white/80 backdrop-blur-xl shadow-2xl overflow-hidden transform rotate-y-12 rotate-x-6 hover:rotate-0 transition-transform duration-500 ease-out">
+            <div className="relative z-10 rounded-2xl border border-slate-200 bg-white/80 backdrop-blur-xl shadow-2xl shadow-slate-200/50 overflow-hidden transform rotate-y-12 rotate-x-6 hover:rotate-0 transition-transform duration-500 ease-out">
                 {/* Window Controls */}
                 <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50/50 px-4 py-3">
                     <div className="h-3 w-3 rounded-full bg-red-400" />

@@ -1,25 +1,21 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowRight, ChevronRight } from "lucide-react";
+import { ArrowRight, ChevronRight, Terminal, Database, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden bg-background pt-[140px] pb-24 lg:pt-[180px] lg:pb-32">
-        {/* Stripe-like Mesh Gradient Background */}
-         <div className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80">
-            <div
-              className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-[#ff80b5] to-[#9089fc] opacity-30 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]"
-              style={{
-                clipPath:
-                  'polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)',
-              }}
-            />
-          </div>
+    <section className="relative overflow-hidden bg-background pt-[140px] pb-32 lg:pt-[180px] lg:pb-40">
+      
+      {/* Stripe-like Angular Gradient Background */}
+      <div className="absolute inset-0 -z-10 h-full w-full bg-[#ffffff] dark:bg-[#0a0a0a]">
+        <div className="absolute top-0 right-0 -left-[10%] h-[800px] w-[150%] origin-top-left -rotate-6 bg-gradient-to-br from-[#635BFF] via-[#A259FF] to-[#FF4D4D] opacity-100 lg:h-[1000px]" />
+        <div className="absolute top-0 right-0 left-0 h-full w-full bg-[url('/grid.svg')] opacity-[0.05]" />
+      </div>
           
-      <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:items-center">
+      <div className="container mx-auto px-4 text-white">
+        <div className="grid grid-cols-1 gap-16 lg:grid-cols-2 lg:items-center">
           
           {/* Left Column: Text Content */}
           <div className="flex flex-col items-start text-left">
@@ -29,10 +25,10 @@ export function Hero() {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5 }}
-              className="mb-8 inline-flex items-center gap-1 rounded-full bg-secondary px-3 py-1 pr-2 text-sm font-medium text-secondary-foreground transition-colors hover:bg-secondary/80 group cursor-pointer"
+              className="mb-8 inline-flex items-center gap-1 rounded-full bg-white/10 px-3 py-1 pr-2 text-sm font-medium text-white backdrop-blur-md transition-colors hover:bg-white/20 group cursor-pointer border border-white/10"
             >
-              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary font-bold">New</span>
-              <span className="ml-1">Available for 2026 Projects</span>
+              <span className="rounded-full bg-emerald-400/90 px-2 py-0.5 text-[10px] uppercase font-bold text-emerald-950 tracking-wide">Available</span>
+              <span className="ml-1">Taking new projects for 2026</span>
               <ChevronRight className="ml-1 h-3 w-3 transition-transform group-hover:translate-x-0.5" />
             </motion.div>
 
@@ -41,21 +37,22 @@ export function Hero() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="font-heading text-5xl font-bold tracking-tight text-foreground sm:text-7xl lg:leading-[1.1]"
+              className="font-heading text-5xl font-bold tracking-tight text-white sm:text-7xl lg:leading-[1.1] mb-6"
             >
-              Financial <br/>
-              infrastructure <br/>
-              to grow your <br/>
-              revenue
+              Build Scalable <br/>
+              SaaS & Web Apps <br/>
+              with a Top 10% <br/>
+              Developer
             </motion.h1>
 
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="mt-6 max-w-xl text-lg text-muted-foreground sm:text-xl leading-relaxed"
+              className="max-w-xl text-lg text-white/80 sm:text-xl leading-relaxed mb-8"
             >
-               Join the millions of companies that use my custom software solutions to accept payments online, manage scalable backends, and build profitable businesses.
+               Senior Full Stack Engineer (7+ Years) specializing in Laravel, Next.js, and Cloud Infrastructure. 
+               I transform complex technical challenges into high-performance solutions.
             </motion.p>
 
             {/* CTA Buttons */}
@@ -63,52 +60,80 @@ export function Hero() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
-              className="mt-8 flex flex-wrap gap-4"
+              className="flex flex-wrap gap-4"
             >
-              <Button size="lg" className="h-12 rounded-full px-8 text-base bg-foreground text-background hover:bg-foreground/90">
-                Start now
+              <Button size="lg" className="h-12 rounded-full px-8 text-base bg-white text-slate-900 hover:bg-white/90 font-semibold border-0">
+                Start a Project
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
-              <Button size="lg" variant="ghost" className="h-12 rounded-full px-8 text-base hover:bg-secondary/50">
-                Contact sales
-                <ArrowRight className="ml-2 h-4 w-4" />
+              <Button size="lg" variant="outline" className="h-12 rounded-full px-8 text-base border-white/20 bg-white/5 text-white hover:bg-white/10 hover:text-white backdrop-blur-sm shadow-none">
+                View Portfolio
               </Button>
             </motion.div>
           </div>
 
-          {/* Right Column: Visual/Phone Mockup (Abstract representation) */}
+          {/* Right Column: Code/Dev Visualization */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.7, delay: 0.2 }}
-            className="relative mx-auto w-full max-w-[500px]"
+            initial={{ opacity: 0, scale: 0.9, rotate: -2 }}
+            animate={{ opacity: 1, scale: 1, rotate: 0 }}
+            transition={{ duration: 0.8, delay: 0.2, type: "spring" }}
+            className="relative mx-auto w-full max-w-[500px] perspective-1000"
           >
-             {/* Abstract Phone/Dashboard UI */}
-            <div className="relative z-10 rounded-2xl border border-white/20 bg-black/40 backdrop-blur-xl p-4 shadow-2xl dark:bg-zinc-900/50">
-                {/* Mockup Header */}
-                <div className="mb-4 flex items-center justify-between border-b border-white/10 pb-4">
-                    <div className="h-3 w-3 rounded-full bg-red-500/50" />
-                     <div className="h-2 w-20 rounded-full bg-white/10" />
+             {/* Abstract Dev Environment */}
+            <div className="relative z-10 rounded-2xl border border-white/10 bg-slate-900/80 backdrop-blur-xl shadow-2xl overflow-hidden transform rotate-y-12 rotate-x-6 hover:rotate-0 transition-transform duration-500 ease-out">
+                {/* Window Controls */}
+                <div className="flex items-center gap-2 border-b border-white/10 bg-white/5 px-4 py-3">
+                    <div className="h-3 w-3 rounded-full bg-red-400/80" />
+                    <div className="h-3 w-3 rounded-full bg-amber-400/80" />
+                    <div className="h-3 w-3 rounded-full bg-emerald-400/80" />
+                    <div className="ml-2 text-xs font-mono text-white/40">deployment-script.ts</div>
                 </div>
-                {/* Mockup Body Content */}
-                <div className="space-y-4">
+                
+                {/* Code Content */}
+                <div className="p-6 font-mono text-sm">
                     <div className="flex gap-4">
-                        <div className="h-24 w-1/3 rounded-lg bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20" />
-                        <div className="flex-1 space-y-2">
-                             <div className="h-4 w-3/4 rounded bg-white/10" />
-                             <div className="h-4 w-1/2 rounded bg-white/10" />
-                             <div className="mt-4 h-8 w-24 rounded bg-blue-500" />
-                        </div>
+                       <div className="text-white/20 select-none text-right">
+                          1<br/>2<br/>3<br/>4<br/>5<br/>6
+                       </div>
+                       <div className="text-emerald-300">
+                          <span className="text-purple-400">const</span> <span className="text-blue-400">deploy</span> = <span className="text-purple-400">async</span> () ={">"} {"{"}<br/>
+                          &nbsp;&nbsp;<span className="text-purple-400">const</span> infrastructure = <span className="text-purple-400">await</span> cloud.init();<br/>
+                          &nbsp;&nbsp;<br/>
+                          &nbsp;&nbsp;<span className="text-slate-400">// Scaling to millions</span><br/>
+                          &nbsp;&nbsp;<span className="text-purple-400">await</span> infrastructure.scale({"{"}<br/>
+                          &nbsp;&nbsp;&nbsp;&nbsp;mode: <span className="text-amber-300">"global"</span>,<br/>
+                          &nbsp;&nbsp;&nbsp;&nbsp;uptime: <span className="text-blue-400">99.99</span><br/>
+                          &nbsp;&nbsp;{"}"});<br/>
+                          {"}"}
+                       </div>
                     </div>
-                     <div className="h-32 w-full rounded-lg bg-zinc-800/50 p-4">
-                        <div className="mb-2 h-2 w-12 rounded bg-white/20" />
-                        <div className="h-20 w-full rounded bg-gradient-to-r from-emerald-500/10 to-blue-500/10" />
-                     </div>
+                    
+                    {/* Floating Status Cards */}
+                    <div className="absolute right-6 bottom-6 space-y-3">
+                        <motion.div 
+                          initial={{ x: 50, opacity: 0 }}
+                          animate={{ x: 0, opacity: 1 }}
+                          transition={{ delay: 0.6 }}
+                          className="flex items-center gap-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-3 backdrop-blur-md"
+                        >
+                            <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                            <span className="text-xs font-semibold text-emerald-200">System Operational</span>
+                        </motion.div>
+                        <motion.div 
+                          initial={{ x: 50, opacity: 0 }}
+                          animate={{ x: 0, opacity: 1 }}
+                          transition={{ delay: 0.8 }}
+                          className="flex items-center gap-3 rounded-lg bg-blue-500/10 border border-blue-500/20 p-3 backdrop-blur-md"
+                        >
+                            <Globe className="h-4 w-4 text-blue-400" />
+                            <span className="text-xs font-semibold text-blue-200">Global CDN Active</span>
+                        </motion.div>
+                    </div>
                 </div>
             </div>
 
-            {/* Background Glow behind Phone */}
-            <div className="absolute -inset-4 -z-10 rounded-[30px] bg-gradient-to-br from-violet-600 to-indigo-600 opacity-30 blur-2xl" />
+            {/* Glow Behind */}
+            <div className="absolute -inset-10 -z-10 bg-gradient-to-tr from-purple-600/30 to-blue-600/30 blur-3xl rounded-full" />
           </motion.div>
         </div>
       </div>

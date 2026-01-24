@@ -21,8 +21,8 @@ export function Navbar() {
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-black/5 backdrop-blur-md transition-all">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 font-bold text-xl text-foreground">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+        <Link href="/" className="flex items-center gap-2 font-bold text-xl text-white">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/20 text-white backdrop-blur-sm">
             A
           </div>
           <span>Ali R.</span>
@@ -31,9 +31,9 @@ export function Navbar() {
         {/* Desktop Navigation */}
         <div className="hidden md:block">
           <NavigationMenu>
-            <NavigationMenuList>
+            <NavigationMenuList className="text-white/90">
               <NavigationMenuItem>
-                <NavigationMenuTrigger className="bg-transparent">Services</NavigationMenuTrigger>
+                <NavigationMenuTrigger className="bg-transparent text-white hover:bg-white/10 hover:text-white focus:bg-white/10 focus:text-white data-[active]:bg-white/10 data-[state=open]:bg-white/10">Services</NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <ul className="grid gap-3 p-6 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
                     <li className="row-span-3">
@@ -65,7 +65,7 @@ export function Navbar() {
                 </NavigationMenuContent>
               </NavigationMenuItem>
               <NavigationMenuItem>
-                <NavigationMenuTrigger className="bg-transparent">Expertise</NavigationMenuTrigger>
+                <NavigationMenuTrigger className="bg-transparent text-white hover:bg-white/10 hover:text-white focus:bg-white/10 focus:text-white data-[active]:bg-white/10 data-[state=open]:bg-white/10">Expertise</NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px] ">
                     {components.map((component) => (
@@ -82,7 +82,7 @@ export function Navbar() {
               </NavigationMenuItem>
               <NavigationMenuItem>
                 <Link href="/portfolio" legacyBehavior passHref>
-                  <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), "bg-transparent")}>
+                  <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), "bg-transparent text-white hover:bg-white/10 hover:text-white focus:bg-white/10 focus:text-white")}>
                     Portfolio
                   </NavigationMenuLink>
                 </Link>
@@ -93,18 +93,18 @@ export function Navbar() {
 
         {/* CTA Buttons */}
         <div className="hidden items-center gap-4 md:flex">
-          <Button variant="ghost" className="text-foreground hover:bg-white/10">
+          <Button variant="ghost" className="text-white hover:bg-white/10 hover:text-white">
             Sign In
           </Button>
-          <Button className="rounded-full bg-white px-6 font-semibold text-black hover:bg-zinc-200">
-            Contact Sales
+          <Button className="rounded-full bg-white/20 px-6 font-semibold text-white hover:bg-white/30 backdrop-blur-md border border-white/10">
+            Contact Me
           </Button>
         </div>
 
         {/* Mobile Menu */}
         <Sheet>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="md:hidden">
+            <Button variant="ghost" size="icon" className="md:hidden text-white hover:bg-white/10 hover:text-white">
               <Menu className="h-6 w-6" />
             </Button>
           </SheetTrigger>

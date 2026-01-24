@@ -6,13 +6,15 @@ import { Button } from "@/components/ui/button";
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden bg-background pt-[140px] pb-32 lg:pt-[180px] lg:pb-40">
+    <section className="relative overflow-hidden pt-[140px] pb-32 lg:pt-[180px] lg:pb-40">
       
-      {/* Stripe-like Angular Gradient Background */}
-      <div className="absolute inset-0 -z-10 h-full w-full bg-[#ffffff] dark:bg-[#0a0a0a]">
-        <div className="absolute top-0 right-0 -left-[10%] h-[800px] w-[150%] origin-top-left -rotate-6 bg-gradient-to-br from-[#635BFF] via-[#A259FF] to-[#FF4D4D] opacity-100 lg:h-[1000px]" />
-        <div className="absolute top-0 right-0 left-0 h-full w-full bg-[url('/grid.svg')] opacity-[0.05]" />
+      {/* Vibrant Gradient Background - Fixed Visibility */}
+      <div className="absolute inset-0 -z-20 h-full w-full bg-slate-950">
+           <div className="absolute inset-0 bg-gradient-to-br from-violet-600/90 via-purple-600/90 to-blue-600/90" />
+           <div className="absolute -top-[50%] -left-[50%] h-[200%] w-[200%] animate-[spin_60s_linear_infinite] opacity-30 bg-[conic-gradient(from_0deg,transparent_0_340deg,white_360deg)]" />
       </div>
+      
+      <div className="absolute inset-0 -z-10 h-full w-full bg-[url('/grid.svg')] opacity-20" />
           
       <div className="container mx-auto px-4 text-white">
         <div className="grid grid-cols-1 gap-16 lg:grid-cols-2 lg:items-center">
@@ -37,7 +39,7 @@ export function Hero() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="font-heading text-5xl font-bold tracking-tight text-white sm:text-7xl lg:leading-[1.1] mb-6"
+              className="font-heading text-5xl font-bold tracking-tight text-white sm:text-7xl lg:leading-[1.1] mb-6 drop-shadow-sm"
             >
               Build Scalable <br/>
               SaaS & Web Apps <br/>

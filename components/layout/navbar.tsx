@@ -35,30 +35,32 @@ export function Navbar() {
               <NavigationMenuItem>
                 <NavigationMenuTrigger className="bg-transparent text-slate-600 hover:text-slate-900 focus:text-slate-900">Services</NavigationMenuTrigger>
                 <NavigationMenuContent>
-                  <ul className="grid gap-3 p-6 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
+                  <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
                     <li className="row-span-3">
                       <NavigationMenuLink asChild>
                         <a
-                          className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
+                          className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-br from-indigo-50 to-purple-50 p-6 no-underline outline-none transition-shadow hover:shadow-md border border-indigo-100"
                           href="/"
                         >
-                          <Terminal className="h-6 w-6" />
-                          <div className="mb-2 mt-4 text-lg font-medium">
+                          <div className="mb-2 h-8 w-8 rounded-lg bg-indigo-500/10 flex items-center justify-center">
+                             <Terminal className="h-5 w-5 text-indigo-600" />
+                          </div>
+                          <div className="mb-2 mt-4 text-lg font-bold text-slate-900">
                             Full Stack Dev
                           </div>
-                          <p className="text-sm leading-tight text-muted-foreground">
+                          <p className="text-sm leading-tight text-slate-600">
                             End-to-end development for scalable web applications.
                           </p>
                         </a>
                       </NavigationMenuLink>
                     </li>
-                    <ListItem href="/services/backend" title="Backend Engineering" icon={<ServerIcon />}>
+                    <ListItem href="/services/backend" title="Backend Engineering" icon={<ServerIcon className="text-blue-500" />}>
                       High-performance APIs and database architecture.
                     </ListItem>
-                    <ListItem href="/services/frontend" title="Frontend & UI/UX" icon={<LayoutIcon />}>
+                    <ListItem href="/services/frontend" title="Frontend & UI/UX" icon={<LayoutIcon className="text-pink-500" />}>
                       Pixel-perfect interfaces with React & Tailwind.
                     </ListItem>
-                    <ListItem href="/services/devops" title="DevOps & Cloud" icon={<CloudIcon />}>
+                    <ListItem href="/services/devops" title="DevOps & Cloud" icon={<CloudIcon className="text-emerald-500" />}>
                       AWS, Docker, and CI/CD pipelines.
                     </ListItem>
                   </ul>
@@ -174,6 +176,6 @@ const ListItem = React.forwardRef<
 });
 ListItem.displayName = "ListItem";
 
-function ServerIcon() { return <Terminal className="h-4 w-4" />; }
-function LayoutIcon() { return <Code2 className="h-4 w-4" />; }
-function CloudIcon() { return <Cpu className="h-4 w-4" />; }
+function ServerIcon({ className }: { className?: string }) { return <Terminal className={cn("h-4 w-4", className)} />; }
+function LayoutIcon({ className }: { className?: string }) { return <Code2 className={cn("h-4 w-4", className)} />; }
+function CloudIcon({ className }: { className?: string }) { return <Cpu className={cn("h-4 w-4", className)} />; }

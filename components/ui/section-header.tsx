@@ -11,6 +11,7 @@ interface SectionHeaderProps {
   description: string;
   align?: "center" | "left";
   className?: string;
+  invert?: boolean;
 }
 
 export function SectionHeader({
@@ -21,6 +22,7 @@ export function SectionHeader({
   description,
   align = "center",
   className,
+  invert = false,
 }: SectionHeaderProps) {
   return (
     <div className={cn(
@@ -30,12 +32,10 @@ export function SectionHeader({
     )}>
       {badge && (
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+// ... existing badge code ...
           className={cn(
             "mb-4 inline-block rounded-full px-4 py-1 text-[10px] font-bold uppercase tracking-[0.2em]",
-            "bg-primary/5 text-primary dark:bg-primary/10"
+            invert ? "bg-white/10 text-white" : "bg-primary/5 text-primary dark:bg-primary/10"
           )}
         >
           {badge}
@@ -43,10 +43,11 @@ export function SectionHeader({
       )}
       
       <motion.h2
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        className="text-4xl font-black tracking-tight text-slate-900 dark:text-white sm:text-6xl"
+// ... existing h2 code ...
+        className={cn(
+          "text-4xl font-black tracking-tight sm:text-6xl",
+          invert ? "text-white" : "text-slate-900 dark:text-white"
+        )}
       >
         {titlePrefix} <br />
         <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600">
@@ -62,12 +63,10 @@ export function SectionHeader({
       </motion.h2>
 
       <motion.p
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ delay: 0.1 }}
+// ... existing p code ...
         className={cn(
-          "mx-auto mt-6 max-w-2xl text-lg text-slate-600 dark:text-slate-400",
+          "mx-auto mt-6 max-w-2xl text-lg",
+          invert ? "text-slate-300" : "text-slate-600 dark:text-slate-400",
           align === "left" && "mx-0"
         )}
       >

@@ -34,15 +34,15 @@ const tools = [
   { name: "OpenAI", slug: "openai", color: "412991" },
   { name: "Docker", slug: "docker", color: "2496ED" },
   { name: "MongoDB", slug: "mongodb", color: "47A248" },
-  { name: "AWS", slug: "amazonaws", color: "232F3E" },
-  { name: "GCP", slug: "googlecloud", color: "4285F4" },
+  { name: "AWS", slug: "amazon-aws", color: "232F3E" },
+  { name: "GCP", slug: "google-cloud", color: "4285F4" },
   { name: "DigitalOcean", slug: "digitalocean", color: "0080FF" },
   { name: "WordPress", slug: "wordpress", color: "21759B" },
   { name: "Zapier", slug: "zapier", color: "FF4F00" },
   { name: "Postman", slug: "postman", color: "FF6C37" },
   { name: "GitHub", slug: "github", color: "181717" },
   { name: "Git", slug: "git", color: "F05032" },
-  { name: "VS Code", slug: "visualstudiocode", color: "007ACC" },
+  { name: "VS Code", slug: "visual-studio-code", color: "007ACC" },
   { name: "Sentry", slug: "sentry", color: "362D59" },
   { name: "Redis", slug: "redis", color: "DC382D" },
   { name: "Expo", slug: "expo", color: "000020" },
@@ -69,7 +69,7 @@ export function TechStack() {
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600">
               Modern Technologies
             </span> <br />
-            💻 & Frameworks
+            & Frameworks
           </motion.h2>
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
@@ -82,12 +82,12 @@ export function TechStack() {
           </motion.p>
         </div>
 
-        <div className="relative flex flex-col gap-8 lg:gap-10">
-          <MarqueeRow items={row1} direction="left" speed={40} />
-          <MarqueeRow items={row2} direction="right" speed={50} />
-          <MarqueeRow items={row3} direction="left" speed={45} />
+        <div className="relative flex flex-col gap-10 lg:gap-12">
+          <MarqueeRow items={row1} direction="left" speed={45} />
+          <MarqueeRow items={row2} direction="right" speed={55} />
+          <MarqueeRow items={row3} direction="left" speed={50} />
           
-          {/* Faded edges for better premium feel */}
+          {/* Faded edges */}
           <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-white to-transparent pointer-events-none z-20" />
           <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-white to-transparent pointer-events-none z-20" />
         </div>
@@ -102,7 +102,7 @@ function MarqueeRow({ items, direction = "left", speed = 30 }: { items: typeof t
   return (
     <div className="flex overflow-hidden">
       <motion.div 
-        className="flex gap-8 lg:gap-10 shrink-0 px-4"
+        className="flex gap-10 lg:gap-14 shrink-0 px-4"
         animate={{
           x: direction === "left" ? ["0%", "-33.33%"] : ["-33.33%", "0%"]
         }}
@@ -115,18 +115,22 @@ function MarqueeRow({ items, direction = "left", speed = 30 }: { items: typeof t
         {tripledItems.map((tool, index) => (
           <div
             key={`${tool.name}-${index}`}
-            className="group relative flex flex-col items-center"
+            className="group relative flex flex-col items-center justify-center min-w-[100px]"
           >
-            <div className="relative flex h-24 w-24 items-center justify-center rounded-2xl border border-slate-100 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.02)] transition-all hover:bg-slate-50 hover:border-slate-200">
+            <div 
+              className="relative flex h-20 w-20 items-center justify-center rounded-2xl border border-slate-100 bg-white shadow-sm transition-all duration-300 group-hover:border-indigo-500/50 group-hover:shadow-[0_0_20px_rgba(79,70,229,0.15)]"
+            >
               <img 
                 src={`https://cdn.simpleicons.org/${tool.slug}/${tool.color}`} 
                 alt={tool.name}
-                className="h-10 w-10 transition-all duration-300 group-hover:scale-110"
+                className="h-9 w-9 transition-all duration-300 group-hover:scale-110"
               />
             </div>
             
-            {/* Title - Revealed globally on section hover as per user request */}
-            <span className="absolute -bottom-8 rounded-lg bg-slate-900 px-3 py-1.5 text-[10px] font-bold text-white opacity-0 transition-all duration-300 group-hover/section:opacity-100 group-hover/section:translate-y-2 group-hover:bg-indigo-600 whitespace-nowrap z-30">
+            {/* Title - Visible for ALL when section is hovered */}
+            <span 
+              className="mt-3 text-[11px] font-semibold text-slate-500 opacity-0 transition-all duration-500 group-hover/section:opacity-100 group-hover:text-indigo-600 whitespace-nowrap"
+            >
               {tool.name}
             </span>
           </div>

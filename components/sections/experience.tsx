@@ -1,173 +1,172 @@
 "use client";
 
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useRef } from "react";
+import { motion, useScroll, useSpring, useTransform } from "framer-motion";
 import { experiences } from "@/lib/data";
 import { Icon } from "@iconify/react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-
-const categories = ["All", "AI", "Mobile Apps", "Websites", "Trainings", "ChatBots"];
 
 export function Experience() {
-  const [activeCategory, setActiveCategory] = useState("All");
-
-  const filteredExperiences = experiences.filter(exp => 
-    activeCategory === "All" || exp.categories.includes(activeCategory)
-  );
+  const containerRef = useRef<HTMLDivElement>(null);
+  
+  // Sorting experiences latest first
+  const sortedExperiences = [...experiences].sort((a, b) => {
+    if (a.period.includes("Present")) return -1;
+    if (b.period.includes("Present")) return 1;
+    return 0; // Simple sort for local data
+  });
 
   return (
-    <section className="relative overflow-hidden bg-white py-24 dark:bg-slate-950">
+    <section ref={containerRef} className="relative bg-white py-32 dark:bg-slate-950">
       <div className="container mx-auto px-4">
-        <div className="mb-20 text-center">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            className="inline-block rounded-full bg-teal-50 px-4 py-1.5 text-sm font-semibold text-teal-600 dark:bg-teal-900/30"
-          >
-            Professional Path
-          </motion.div>
+        {/* Header */}
+        <div className="mb-32 max-w-2xl">
           <motion.h2 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="mt-6 text-4xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-6xl"
+            initial={{ opacity: 0, x: -20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            className="text-5xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-7xl"
           >
-            My Experience <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-500 to-blue-600">
-              Evolution
-            </span>
+            Proof of <br />
+            <span className="text-teal-600">Expertise</span>
           </motion.h2>
+          <p className="mt-8 text-xl text-slate-500 leading-relaxed">
+            A chronological journey of high-impact roles, technical leadership, 
+            and scalable solutions delivered for global clients.
+          </p>
         </div>
 
-        {/* Categories - Modern Segmented Control */}
-        <div className="mb-16 flex justify-center">
-          <div className="flex flex-wrap items-center justify-center gap-2 rounded-2xl bg-slate-50 p-2 dark:bg-slate-900">
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className={cn(
-                  "relative rounded-xl px-4 py-2 text-sm font-medium transition-all duration-300",
-                  activeCategory === cat 
-                    ? "bg-white text-teal-600 shadow-sm dark:bg-slate-800" 
-                    : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
-                )}
-              >
-                {activeCategory === cat && (
-                  <motion.div 
-                    layoutId="activeTab"
-                    className="absolute inset-0 rounded-xl bg-white shadow-sm dark:bg-slate-800"
-                    style={{ zIndex: -1 }}
-                  />
-                )}
-                {cat}
-              </button>
+        <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-12">
+          {/* Left Side: Sticky Timeline Indicator */}
+          <div className="hidden lg:block lg:col-span-4 h-full">
+            <div className="sticky top-40 space-y-12 pl-4">
+              {sortedExperiences.map((exp, i) => (
+                <TimelineStep key={exp.company} exp={exp} index={i} />
+              ))}
+            </div>
+          </div>
+
+          {/* Right Side: Immersive Content Panels */}
+          <div className="lg:col-span-8 space-y-32 lg:space-y-64 pb-32">
+            {sortedExperiences.map((exp, i) => (
+              <ExperiencePanel key={exp.company} exp={exp} index={i} />
             ))}
           </div>
-        </div>
-
-        {/* Modern Bento Grid Experience */}
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-6">
-          <AnimatePresence mode="popLayout">
-            {filteredExperiences.map((exp, index) => (
-              <ExperienceCard key={exp.company} exp={exp} index={index} />
-            ))}
-          </AnimatePresence>
         </div>
       </div>
     </section>
   );
 }
 
-function ExperienceCard({ exp, index }: { exp: any; index: number }) {
-  const isLarge = index === 0;
-
+function TimelineStep({ exp, index }: { exp: any; index: number }) {
   return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.9 }}
-      transition={{ duration: 0.4, delay: index * 0.05 }}
-      className={cn(
-        "group relative overflow-hidden rounded-[2rem] border border-slate-100 bg-white p-8 dark:border-slate-800 dark:bg-slate-900",
-        isLarge ? "md:col-span-4 md:row-span-2" : "md:col-span-2"
-      )}
+    <motion.div 
+      initial={{ opacity: 0.3 }}
+      whileInView={{ opacity: 1 }}
+      viewport={{ margin: "-40% 0px -50% 0px" }}
+      className="group relative flex items-center gap-6"
     >
-      {/* Background Gradient Glow */}
-      <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-teal-500/5 blur-[100px] transition-all group-hover:bg-teal-500/10" />
-
-      <div className="relative flex h-full flex-col">
-        {/* Header */}
-        <div className="mb-6 flex items-start justify-between">
-          <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-50 text-2xl shadow-inner dark:bg-slate-800">
-              <Icon icon={exp.logo} />
-            </div>
-            <div>
-              <h3 className="text-2xl font-bold text-slate-900 dark:text-white">{exp.company}</h3>
-              <p className="text-sm font-medium text-teal-600">{exp.role}</p>
-            </div>
-          </div>
-          {exp.link !== "#" && (
-             <a 
-              href={exp.link} 
-              target="_blank" 
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-100 bg-white text-slate-400 transition-all hover:border-teal-500 hover:text-teal-600 dark:border-slate-800 dark:bg-slate-900"
-            >
-              <Icon icon="lucide:arrow-up-right" className="h-5 w-5" />
-            </a>
-          )}
-        </div>
-
-        {/* Content */}
-        <div className="flex-grow">
-          <p className="text-sm font-medium text-slate-400 mb-4">{exp.period}</p>
-          <p className={cn(
-            "text-slate-600 dark:text-slate-400 leading-relaxed",
-            isLarge ? "text-lg" : "text-sm line-clamp-4 group-hover:line-clamp-none transition-all"
-          )}>
-            {exp.description}
-          </p>
-        </div>
-
-        {/* Projects Strip - Modern Horizontal Cards */}
-        {isLarge && exp.projects.length > 0 && (
-          <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {exp.projects.map((project: any) => (
-              <motion.div
-                key={project.title}
-                whileHover={{ scale: 1.02 }}
-                className="relative h-32 overflow-hidden rounded-2xl bg-slate-50 dark:bg-slate-800 group/project"
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-teal-500/10 to-blue-500/10" />
-                <div className="relative p-4">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{project.title}</span>
-                  <div className="mt-2 h-1 w-12 rounded-full bg-teal-500" />
-                </div>
-                <div className="absolute inset-0 flex items-center justify-center bg-teal-600/90 opacity-0 transition-opacity group-hover/project:opacity-100">
-                  <span className="font-bold text-white">View Case Study</span>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        )}
-
-        {/* Tech Stack */}
-        <div className="mt-8 flex flex-wrap gap-2">
-          {exp.technologies.slice(0, isLarge ? 10 : 4).map((tech: string) => (
-            <span key={tech} className="rounded-lg bg-slate-50 px-2.5 py-1 text-[10px] font-semibold text-slate-500 dark:bg-slate-800">
-              {tech}
-            </span>
-          ))}
-          {!isLarge && exp.technologies.length > 4 && (
-             <span className="text-[10px] font-bold text-slate-300">+{exp.technologies.length - 4} more</span>
-          )}
-        </div>
+      <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 transition-all group-hover:border-teal-500 group-hover:shadow-[0_0_20px_rgba(20,184,166,0.1)]">
+        <Icon icon={exp.logo} className="h-6 w-6" />
       </div>
+      <div>
+        <p className="text-xs font-bold uppercase tracking-widest text-teal-600">{exp.company}</p>
+        <p className="text-sm font-medium text-slate-400">{exp.period.split("-")[0]}</p>
+      </div>
+      
+      {/* Connector Line */}
+      {index !== experiences.length - 1 && (
+        <div className="absolute left-6 top-16 h-20 w-px bg-slate-100 dark:bg-slate-800" />
+      )}
     </motion.div>
   );
 }
+
+function ExperiencePanel({ exp, index }: { exp: any; index: number }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 50 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-100px" }}
+      transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+      className="relative"
+    >
+      {/* High-Fidelity Platform Header */}
+      <div className="mb-12 flex flex-col sm:flex-row sm:items-end justify-between gap-6">
+        <div>
+          <div className="mb-4 flex items-center gap-3">
+             <span className="rounded-full bg-teal-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-teal-600 dark:bg-teal-900/30">
+               {exp.categories[0]}
+             </span>
+             <div className="h-1 w-1 rounded-full bg-slate-200" />
+             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{exp.location}</span>
+          </div>
+          <h3 className="text-4xl font-bold text-slate-900 dark:text-white sm:text-5xl">{exp.role}</h3>
+          <p className="mt-2 text-2xl font-medium text-slate-400">@ {exp.company}</p>
+        </div>
+        
+        {exp.link !== "#" && (
+          <a 
+            href={exp.link}
+            target="_blank"
+            className="group/btn flex items-center gap-2 rounded-full border-2 border-slate-900 bg-slate-900 px-8 py-3 text-sm font-bold text-white transition-all hover:bg-transparent hover:text-slate-900 dark:border-white dark:bg-white dark:text-slate-900 dark:hover:bg-transparent dark:hover:text-white"
+          >
+            View Live Case
+            <Icon icon="lucide:arrow-up-right" className="transition-transform group-hover/btn:-translate-y-1 group-hover/btn:translate-x-1" />
+          </a>
+        )}
+      </div>
+
+      {/* Description Content */}
+      <div className="max-w-3xl">
+        <p className="text-lg text-slate-600 dark:text-slate-400 leading-relaxed mb-12">
+          {exp.description}
+        </p>
+
+        {/* Project Horizontal Reel */}
+        {exp.projects.length > 0 && (
+          <div className="group/reel relative mb-16">
+            <div className="flex gap-6 overflow-x-auto no-scrollbar scroll-smooth">
+              {exp.projects.map((project: any) => (
+                <motion.div
+                  key={project.title}
+                  whileHover={{ y: -12, scale: 1.02 }}
+                  className="relative h-64 w-80 shrink-0 overflow-hidden rounded-[2rem] bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm transition-all hover:shadow-2xl"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-teal-500/5 to-blue-500/5" />
+                  <div className="absolute inset-0 p-8 flex flex-col justify-end">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-teal-600 opacity-0 transition-opacity group-hover/reel:opacity-100">Project Highlight</p>
+                    <h4 className="mt-1 text-xl font-bold text-slate-900 dark:text-white">{project.title}</h4>
+                  </div>
+                  {/* Glassy Overlay on Hover */}
+                  <div className="absolute inset-0 flex items-center justify-center bg-teal-600/10 opacity-0 backdrop-blur-[2px] transition-opacity hover:opacity-100">
+                    <div className="h-12 w-12 rounded-full bg-white/90 flex items-center justify-center text-teal-600 shadow-xl">
+                       <Icon icon="lucide:eye" className="h-5 w-5" />
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Technical Stack Pills */}
+        <div className="flex flex-wrap gap-3">
+          {exp.technologies.map((tech: string) => (
+            <span 
+              key={tech} 
+              className="flex items-center gap-1.5 rounded-full border border-slate-100 bg-white px-4 py-2 text-xs font-semibold text-slate-600 shadow-sm transition-all hover:border-teal-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400"
+            >
+              <div className="h-1 w-1 rounded-full bg-teal-500" />
+              {tech}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Background Decor */}
+      <div className="absolute -left-20 top-0 -z-10 h-64 w-64 rounded-full bg-teal-500/2 blur-[120px]" />
+    </motion.div>
+  );
+}
+
 

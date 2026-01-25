@@ -45,7 +45,7 @@ export function Workflow() {
             >
                <div className="mb-3 flex items-center gap-2">
                  <Terminal className="h-5 w-5 text-emerald-500" />
-                 <span className="text-sm font-semibold text-foreground">Backend API</span>
+                 <span className="text-sm font-semibold text-white">Backend API</span>
                </div>
                <div className="space-y-2">
                  <div className="h-2 w-3/4 rounded bg-emerald-500/20" />
@@ -61,7 +61,7 @@ export function Workflow() {
             >
                <div className="mb-3 flex items-center gap-2">
                  <GitBranch className="h-5 w-5 text-blue-500" />
-                 <span className="text-sm font-semibold text-foreground">CI/CD Pipeline</span>
+                 <span className="text-sm font-semibold text-white">CI/CD Pipeline</span>
                </div>
                <div className="space-y-2">
                  <div className="flex justify-between">
@@ -88,7 +88,7 @@ export function Workflow() {
             >
                <div className="mb-3 flex items-center gap-2">
                  <Zap className="h-5 w-5 text-purple-500" />
-                 <span className="text-sm font-semibold text-foreground">Optimization</span>
+                 <span className="text-sm font-semibold text-white">Optimization</span>
                </div>
                <div className="grid grid-cols-2 gap-2">
                  <div className="rounded bg-purple-500/20 p-2 text-center text-xs font-bold text-purple-700 dark:text-purple-300">100/100</div>
@@ -119,7 +119,7 @@ export function Workflow() {
                   <step.icon className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-foreground">{step.title}</h3>
+                   <h3 className="text-xl font-bold text-white">{step.title}</h3>
                   <p className="mt-1 text-muted-foreground">{step.desc}</p>
                 </div>
               </motion.div>

@@ -48,9 +48,11 @@ export const experiences = [
         period: "January 2023 - Present (1 year 1 month)",
         description: "Spearheaded the establishment of UpAlerts, a revolutionary platform empowering freelancers and agencies to craft superior proposals utilizing Generative AI. Developed real-time job notifications from Upwork to mobile apps, websites, and WhatsApp. Successfully garnered over 20,000 active users within 6 months.",
         categories: ["AI", "Websites", "Mobile Apps"],
-        technologies: ["Next.js", "Node.js", "Flutter", "Firebase", "Supabase", "GCP", "RevenueCat", "Stripe", "OpenAI", "LangChain"],
-        logo: "logos:upwork-icon", // Placeholder for actual logo
+        technologies: ["Next.js", "Node.js", "Flutter", "OpenAI", "LangChain"],
+        logo: "logos:upwork-icon",
         link: "https://upalerts.com",
+        color: "teal",
+        glow: "rgba(20, 184, 166, 0.15)",
         projects: [
             { title: "LinkedIn Post AI Writer", image: "/projects/upalerts-1.png" },
             { title: "EvyAI Subscription Plans", image: "/projects/upalerts-2.png" },
@@ -67,6 +69,8 @@ export const experiences = [
         technologies: ["React", "Next.js", "Tailwind CSS", "Node.js", "PostgreSQL"],
         logo: "logos:react",
         link: "#",
+        color: "indigo",
+        glow: "rgba(79, 70, 229, 0.15)",
         projects: [
             { title: "Learning Dashboard", image: "/projects/lws-1.png" },
             { title: "Course Catalog", image: "/projects/lws-2.png" },
@@ -82,6 +86,8 @@ export const experiences = [
         technologies: ["PHP", "MySQL", "JavaScript", "HTML/CSS"],
         logo: "logos:php",
         link: "#",
+        color: "blue",
+        glow: "rgba(59, 130, 246, 0.15)",
         projects: []
     },
     {
@@ -94,6 +100,8 @@ export const experiences = [
         technologies: ["Android", "Java", "Mobile Development"],
         logo: "logos:android-icon",
         link: "#",
+        color: "amber",
+        glow: "rgba(245, 158, 11, 0.15)",
         projects: []
     },
     {
@@ -106,6 +114,8 @@ export const experiences = [
         technologies: ["Android", "SQLite", "Java", "Social Media Integration"],
         logo: "logos:android-icon",
         link: "#",
+        color: "rose",
+        glow: "rgba(244, 63, 94, 0.15)",
         projects: []
     }
 ];

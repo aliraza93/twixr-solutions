@@ -56,18 +56,28 @@ const tools = [
   { name: "Google Play", slug: "googleplay", color: "410093" },
   { name: "RevenueCat", slug: "revenuecat", color: "FF4C4C" },
   { name: "GraphQL", slug: "graphql", color: "E10098" },
-  { name: "Apollo", slug: "apollographicql", color: "311C87" },
+  { name: "Apollo", slug: "apollographql", color: "311C87" },
   { name: "Slack", slug: "slack", color: "4A154B" },
   { name: "Jira", slug: "jira", color: "0052CC" },
   { name: "Atlassian", slug: "atlassian", color: "0052CC" },
   { name: "Notion", slug: "notion", color: "000000" },
   { name: "Jest", slug: "jest", color: "C21325" },
   { name: "Cypress", slug: "cypress", color: "17202C" },
+  { name: "MySQL", slug: "mysql", color: "4479A1" },
+  { name: "Nginx", slug: "nginx", color: "009639" },
+  { name: "Linux", slug: "linux", color: "FCC624" },
+  { name: "Ubuntu", slug: "ubuntu", color: "E9430F" },
+  { name: "Framer", slug: "framer", color: "0055FF" },
+  { name: "Vitest", slug: "vitest", color: "6E9F18" },
+  { name: "Storybook", slug: "storybook", color: "FF4785" },
+  { name: "Clerk", slug: "clerk", color: "6C47FF" },
+  { name: "Upwork", slug: "upwork", color: "14A800" },
+  { name: "LinkedIn", slug: "linkedin", color: "0A66C2" },
 ];
 
-const row1 = tools.slice(0, 17);
-const row2 = tools.slice(17, 34);
-const row3 = tools.slice(34);
+const row1 = tools.slice(0, 20);
+const row2 = tools.slice(20, 40);
+const row3 = tools.slice(40);
 
 export function TechStack() {
   return (

@@ -34,25 +34,40 @@ const tools = [
   { name: "OpenAI", slug: "openai", color: "412991" },
   { name: "Docker", slug: "docker", color: "2496ED" },
   { name: "MongoDB", slug: "mongodb", color: "47A248" },
-  { name: "AWS", slug: "amazon-aws", color: "232F3E" },
-  { name: "GCP", slug: "google-cloud", color: "4285F4" },
+  { name: "AWS", slug: "amazonaws", color: "232F3E" },
+  { name: "GCP", slug: "googlecloud", color: "4285F4" },
   { name: "DigitalOcean", slug: "digitalocean", color: "0080FF" },
   { name: "WordPress", slug: "wordpress", color: "21759B" },
   { name: "Zapier", slug: "zapier", color: "FF4F00" },
   { name: "Postman", slug: "postman", color: "FF6C37" },
   { name: "GitHub", slug: "github", color: "181717" },
   { name: "Git", slug: "git", color: "F05032" },
-  { name: "VS Code", slug: "visual-studio-code", color: "007ACC" },
+  { name: "VS Code", slug: "visualstudiocode", color: "007ACC" },
   { name: "Sentry", slug: "sentry", color: "362D59" },
   { name: "Redis", slug: "redis", color: "DC382D" },
   { name: "Expo", slug: "expo", color: "000020" },
   { name: "Prisma", slug: "prisma", color: "2D3748" },
   { name: "Figma", slug: "figma", color: "F24E1E" },
+  { name: "Go", slug: "go", color: "00ADD8" },
+  { name: "Rust", slug: "rust", color: "000000" },
+  { name: "Kubernetes", slug: "kubernetes", color: "326CE5" },
+  { name: "Terraform", slug: "terraform", color: "7B42BC" },
+  { name: "App Store", slug: "appstore", color: "0D96F6" },
+  { name: "Google Play", slug: "googleplay", color: "410093" },
+  { name: "RevenueCat", slug: "revenuecat", color: "FF4C4C" },
+  { name: "GraphQL", slug: "graphql", color: "E10098" },
+  { name: "Apollo", slug: "apollographicql", color: "311C87" },
+  { name: "Slack", slug: "slack", color: "4A154B" },
+  { name: "Jira", slug: "jira", color: "0052CC" },
+  { name: "Atlassian", slug: "atlassian", color: "0052CC" },
+  { name: "Notion", slug: "notion", color: "000000" },
+  { name: "Jest", slug: "jest", color: "C21325" },
+  { name: "Cypress", slug: "cypress", color: "17202C" },
 ];
 
-const row1 = tools.slice(0, 12);
-const row2 = tools.slice(12, 24);
-const row3 = tools.slice(24);
+const row1 = tools.slice(0, 17);
+const row2 = tools.slice(17, 34);
+const row3 = tools.slice(34);
 
 export function TechStack() {
   return (

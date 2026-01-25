@@ -56,9 +56,9 @@ const row3 = tools.slice(24);
 
 export function TechStack() {
   return (
-    <section className="relative overflow-hidden bg-white py-24 group/section">
+    <section className="relative overflow-hidden bg-white py-12 group/section">
       <div className="container mx-auto px-4 relative z-10">
-        <div className="mb-20 text-center">
+        <div className="mb-12 text-center">
           <motion.h2 
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -82,10 +82,10 @@ export function TechStack() {
           </motion.p>
         </div>
 
-        <div className="relative flex flex-col gap-12 lg:gap-16">
-          <MarqueeRow items={row1} direction="left" />
-          <MarqueeRow items={row2} direction="right" />
-          <MarqueeRow items={row3} direction="left" />
+        <div className="relative flex flex-col gap-8 lg:gap-10">
+          <MarqueeRow items={row1} direction="left" speed={40} />
+          <MarqueeRow items={row2} direction="right" speed={50} />
+          <MarqueeRow items={row3} direction="left" speed={45} />
           
           {/* Faded edges for better premium feel */}
           <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-white to-transparent pointer-events-none z-20" />
@@ -96,23 +96,23 @@ export function TechStack() {
   );
 }
 
-function MarqueeRow({ items, direction = "left" }: { items: typeof tools, direction?: "left" | "right" }) {
-  const doubledItems = [...items, ...items, ...items]; // Triple for smoother loop
+function MarqueeRow({ items, direction = "left", speed = 30 }: { items: typeof tools, direction?: "left" | "right", speed?: number }) {
+  const tripledItems = [...items, ...items, ...items];
   
   return (
     <div className="flex overflow-hidden">
       <motion.div 
-        className="flex gap-8 lg:gap-10 shrink-0"
+        className="flex gap-8 lg:gap-10 shrink-0 px-4"
         animate={{
-          x: direction === "left" ? [0, -1000] : [-1000, 0]
+          x: direction === "left" ? ["0%", "-33.33%"] : ["-33.33%", "0%"]
         }}
         transition={{
-          duration: 30,
+          duration: speed,
           repeat: Infinity,
           ease: "linear"
         }}
       >
-        {doubledItems.map((tool, index) => (
+        {tripledItems.map((tool, index) => (
           <div
             key={`${tool.name}-${index}`}
             className="group relative flex flex-col items-center"
@@ -121,12 +121,12 @@ function MarqueeRow({ items, direction = "left" }: { items: typeof tools, direct
               <img 
                 src={`https://cdn.simpleicons.org/${tool.slug}/${tool.color}`} 
                 alt={tool.name}
-                className="h-10 w-10 grayscale transition-all duration-300 group-hover:grayscale-0 group-hover:scale-110"
+                className="h-10 w-10 transition-all duration-300 group-hover:scale-110"
               />
             </div>
             
             {/* Title - Revealed globally on section hover as per user request */}
-            <span className="absolute -bottom-8 rounded-lg bg-slate-900 px-3 py-1.5 text-[10px] font-bold text-white opacity-0 transition-all duration-300 group-hover/section:opacity-100 group-hover/section:translate-y-2 group-hover:bg-indigo-600 whitespace-nowrap">
+            <span className="absolute -bottom-8 rounded-lg bg-slate-900 px-3 py-1.5 text-[10px] font-bold text-white opacity-0 transition-all duration-300 group-hover/section:opacity-100 group-hover/section:translate-y-2 group-hover:bg-indigo-600 whitespace-nowrap z-30">
               {tool.name}
             </span>
           </div>

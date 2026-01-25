@@ -22,10 +22,10 @@ export function Testimonials() {
       <div className="container relative z-10 mx-auto px-4">
         <SectionHeader
           badge="Client Success"
-          titlePrefix="What My"
-          titleHighlight="Clients"
-          titleSuffix="Say"
-          description="Real feedback from professionals and companies I've collaborated with across global platforms."
+          titlePrefix="Trusted"
+          titleHighlight="Client"
+          titleSuffix="Feedback"
+          description="Real results from professionals and companies I've collaborated with across global platforms."
         />
 
         {/* Marquee Rows */}

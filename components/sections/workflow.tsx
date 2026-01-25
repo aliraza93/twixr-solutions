@@ -12,8 +12,9 @@ export function Workflow() {
         <SectionHeader
           invert={true}
           badge="Product Life-Cycle"
-          titlePrefix="My Streamlined"
-          titleHighlight="Development Workflow"
+          titlePrefix="Streamlined"
+          titleHighlight="Development"
+          titleSuffix="Workflow"
           description="From concept to deployment, I use a battle-tested process to ensure code quality and rapid delivery."
         />
 

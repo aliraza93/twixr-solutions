@@ -20,7 +20,7 @@ export function FAQ() {
               className="sticky top-32"
               align="left"
               badge="Support Hub"
-              titlePrefix="Frequently Asked"
+              titlePrefix="Common"
               titleHighlight="Questions"
               description="Can't find what you're looking for? Feel free to contact me directly."
             />

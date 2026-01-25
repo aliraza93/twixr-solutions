@@ -14,8 +14,9 @@ export function BlogPosts() {
       <div className="container relative z-10 mx-auto px-4">
         <SectionHeader
           badge="Latest Insights"
-          titlePrefix="Recent"
-          titleHighlight="Blog Posts"
+          titlePrefix=""
+          titleHighlight="Latest"
+          titleSuffix="Insights"
           description="Sharing my discoveries, technical deep-dives, and life experiences in software engineering."
         />
 

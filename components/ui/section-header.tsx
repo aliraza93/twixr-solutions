@@ -44,13 +44,15 @@ export function SectionHeader({
       
       <motion.h2
         className={cn(
-          "text-4xl font-black tracking-tight sm:text-6xl",
+          "text-3xl font-bold tracking-tight sm:text-5xl",
           invert ? "text-white" : "text-slate-900 dark:text-white"
         )}
       >
-        {titlePrefix} <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-primary/80 to-primary">
+        {titlePrefix && <>{titlePrefix} </>}
+        <span className="text-primary italic font-black">
           {titleHighlight}
-        </span> {titleSuffix}
+        </span>
+        {titleSuffix && <> {titleSuffix}</>}
       </motion.h2>
 
       <motion.p

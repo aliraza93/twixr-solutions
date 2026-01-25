@@ -113,11 +113,11 @@ export function Footer() {
                 <a 
                   key={social.name} 
                   href={social.href}
-                  className="group flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 transition-all hover:bg-slate-900 dark:bg-slate-900 dark:hover:bg-white"
+                  className="group flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 transition-all hover:scale-110 hover:bg-white hover:shadow-lg dark:bg-slate-900"
                 >
                   <Icon 
                     icon={social.icon} 
-                    className="h-5 w-5 text-slate-400 transition-colors group-hover:text-white dark:group-hover:text-slate-900" 
+                    className="h-5 w-5 transition-transform" 
                   />
                 </a>
               ))}

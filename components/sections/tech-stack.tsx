@@ -78,9 +78,9 @@ export function TechStack() {
       <div className="container mx-auto px-4 relative z-10">
         <SectionHeader
           badge="Our Tech Stack"
-          titlePrefix="Expertise Across"
-          titleHighlight="Modern Technologies"
-          titleSuffix="& Frameworks"
+          titlePrefix="Modern"
+          titleHighlight="Tech"
+          titleSuffix="Stack"
           description="Building scalable solutions with cutting-edge tools across web, mobile, AI, and cloud technologies."
         />
 

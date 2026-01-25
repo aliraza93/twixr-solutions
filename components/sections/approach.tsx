@@ -12,13 +12,14 @@ export function Approach() {
       <div className="container relative z-10 mx-auto px-4">
         <SectionHeader
           badge="Our Methodology"
-          titlePrefix="A Proven Approach to"
-          titleHighlight="Achieve Your Objectives"
+          titlePrefix="Strategic"
+          titleHighlight="Proven"
+          titleSuffix="Approach"
           description="I follow a structured, results-driven process designed to transform complex challenges into scalable, high-performing solutions."
         />
 
         {/* Steps Flow */}
-        <div className="relative mx-auto max-w-6xl">
+        <div className="relative mx-auto max-w-[1440px]">
           {/* Animated SVG Path for Connections (Desktop) */}
           <svg className="absolute left-0 top-10 hidden h-20 w-full lg:block" preserveAspectRatio="none">
             <path
@@ -38,7 +39,7 @@ export function Approach() {
             </defs>
           </svg>
 
-          <div className="grid grid-cols-1 gap-12 sm:grid-cols-2 lg:grid-cols-5 lg:gap-8">
+          <div className="grid grid-cols-1 gap-12 sm:grid-cols-2 lg:grid-cols-5 lg:gap-12">
             {approachSteps.map((step, index) => (
               <StepCard key={index} step={step} index={index} />
             ))}

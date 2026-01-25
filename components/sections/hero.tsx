@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { ArrowRight, ChevronRight, Terminal, Globe, Code2, Cpu, Database, Layout } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Icon } from "@iconify/react";
 
 export function Hero() {
   return (
@@ -80,14 +81,55 @@ export function Hero() {
                initial={{ opacity: 0 }}
                animate={{ opacity: 1 }}
                transition={{ duration: 0.5, delay: 0.4 }}
-               className="flex flex-col gap-3"
+               className="flex flex-col gap-4"
             >
-                <div className="text-xs font-semibold uppercase tracking-wider text-slate-400">Powering solutions with</div>
-                <div className="flex items-center gap-6 opacity-60 grayscale transition-all hover:grayscale-0 hover:opacity-100">
-                    <div className="flex items-center gap-1.5"><Code2 className="h-5 w-5" /><span className="font-semibold text-slate-700">Next.js</span></div>
-                    <div className="flex items-center gap-1.5"><Layout className="h-5 w-5" /><span className="font-semibold text-slate-700">Tailwind</span></div>
-                    <div className="flex items-center gap-1.5"><Database className="h-5 w-5" /><span className="font-semibold text-slate-700">Postgres</span></div>
-                    <div className="flex items-center gap-1.5"><Cpu className="h-5 w-5" /><span className="font-semibold text-slate-700">AWS</span></div>
+                <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Powering solutions with</div>
+                <div className="flex flex-wrap items-center gap-x-8 gap-y-4">
+                    <div className="flex items-center gap-2 transition-all hover:scale-110">
+                        <Icon icon="logos:laravel" className="h-5 w-5" />
+                        <span className="text-sm font-bold text-slate-700">Laravel</span>
+                    </div>
+                    <div className="flex items-center gap-2 transition-all hover:scale-110">
+                        <Icon icon="logos:nodejs-icon" className="h-5 w-5" />
+                        <span className="text-sm font-bold text-slate-700">Node.js</span>
+                    </div>
+                    <div className="flex items-center gap-2 transition-all hover:scale-110">
+                        <Icon icon="logos:aws" className="h-5 w-5" />
+                        <span className="text-sm font-bold text-slate-700">AWS</span>
+                    </div>
+                    <div className="flex items-center gap-2 transition-all hover:scale-110">
+                        <Icon icon="logos:react" className="h-5 w-5" />
+                        <span className="text-sm font-bold text-slate-700">React</span>
+                    </div>
+                    <div className="flex items-center gap-2 transition-all hover:scale-110">
+                        <Icon icon="logos:vue" className="h-5 w-5" />
+                        <span className="text-sm font-bold text-slate-700">Vue</span>
+                    </div>
+                    
+                    {/* +More Interaction */}
+                    <div className="group relative flex cursor-pointer items-center justify-center rounded-full bg-slate-50 px-3 py-1.5 transition-all hover:bg-primary/10">
+                       <span className="text-[10px] font-black text-slate-400 group-hover:text-primary">+3 More</span>
+                       
+                       <div className="absolute bottom-full mb-4 opacity-0 transition-all group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto group-hover:-translate-y-2">
+                          <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-2xl backdrop-blur-xl dark:bg-slate-900 dark:border-slate-800">
+                             <div className="flex gap-6">
+                                <div className="flex flex-col items-center gap-2">
+                                   <Icon icon="logos:wordpress-icon" className="h-6 w-6" />
+                                   <span className="text-[10px] font-bold text-slate-500">WordPress</span>
+                                </div>
+                                <div className="flex flex-col items-center gap-2">
+                                   <Icon icon="logos:docker-icon" className="h-6 w-6" />
+                                   <span className="text-[10px] font-bold text-slate-500">DevOps</span>
+                                </div>
+                                <div className="flex flex-col items-center gap-2">
+                                   <Icon icon="logos:nextjs-icon" className="h-6 w-6 dark:invert" />
+                                   <span className="text-[10px] font-bold text-slate-500">Next.js</span>
+                                </div>
+                             </div>
+                             <div className="absolute left-1/2 top-full -translate-x-1/2 border-8 border-transparent border-t-white dark:border-t-slate-900" />
+                          </div>
+                       </div>
+                    </div>
                 </div>
             </motion.div>
           </div>

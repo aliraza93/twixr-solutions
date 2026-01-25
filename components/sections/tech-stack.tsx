@@ -26,8 +26,8 @@ const tools = [
   { name: "OpenAI", icon: "logos:openai-icon" },
   { name: "Docker", icon: "logos:docker-icon" },
   { name: "MongoDB", icon: "logos:mongodb-icon" },
-  { name: "AWS", icon: "logos:aws" },
-  { name: "GCP", icon: "logos:google-cloud" },
+  { name: "AWS", icon: "skill-icons:aws-light" },
+  { name: "GCP", icon: "logos:google-cloud-icon" },
   { name: "DigitalOcean", icon: "logos:digital-ocean" },
   { name: "WordPress", icon: "logos:wordpress-icon" },
   { name: "Zapier", icon: "logos:zapier-icon" },
@@ -44,13 +44,13 @@ const tools = [
   { name: "Rust", icon: "logos:rust" },
   { name: "Kubernetes", icon: "logos:kubernetes" },
   { name: "Terraform", icon: "logos:terraform-icon" },
-  { name: "App Store", icon: "logos:app-store" },
+  { name: "App Store", icon: "logos:apple-app-store" },
   { name: "Google Play", icon: "logos:google-play-icon" },
-  { name: "RevenueCat", icon: "logos:revenuecat-icon" },
+  { name: "RevenueCat", icon: "simple-icons:revenuecat" },
   { name: "GraphQL", icon: "logos:graphql" },
-  { name: "Apollo", icon: "logos:apollo" },
+  { name: "Apollo", icon: "logos:apollostack" },
   { name: "Slack", icon: "logos:slack-icon" },
-  { name: "Jira", icon: "logos:jira" },
+  { name: "Jira", icon: "logos:jira-icon" },
   { name: "Atlassian", icon: "logos:atlassian" },
   { name: "Notion", icon: "logos:notion-icon" },
   { name: "Jest", icon: "logos:jest" },
@@ -58,12 +58,12 @@ const tools = [
   { name: "MySQL", icon: "logos:mysql-icon" },
   { name: "Nginx", icon: "logos:nginx" },
   { name: "Linux", icon: "logos:linux-tux" },
-  { name: "Ubuntu", icon: "logos:ubuntu-icon" },
+  { name: "Ubuntu", icon: "logos:ubuntu" },
   { name: "Framer", icon: "logos:framer" },
   { name: "Vitest", icon: "logos:vitest" },
   { name: "Storybook", icon: "logos:storybook-icon" },
-  { name: "Clerk", icon: "logos:clerk-icon" },
-  { name: "Upwork", icon: "logos:upwork-icon" },
+  { name: "Clerk", icon: "simple-icons:clerk" },
+  { name: "Upwork", icon: "simple-icons:upwork" },
   { name: "LinkedIn", icon: "logos:linkedin-icon" },
 ];
 
@@ -99,10 +99,10 @@ export function TechStack() {
           </motion.p>
         </div>
 
-        <div className="relative flex flex-col gap-4 lg:gap-6">
-          <MarqueeRow items={row1} direction="left" speed={60} />
-          <MarqueeRow items={row2} direction="right" speed={70} />
-          <MarqueeRow items={row3} direction="left" speed={65} />
+        <div className="relative flex flex-col gap-6 lg:gap-8">
+          <MarqueeRow items={row1} direction="left" speed={70} />
+          <MarqueeRow items={row2} direction="right" speed={80} />
+          <MarqueeRow items={row3} direction="left" speed={75} />
 
           {/* Faded edges */}
           <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-white to-transparent pointer-events-none z-20" />
@@ -119,7 +119,7 @@ function MarqueeRow({ items, direction = "left", speed = 30 }: { items: typeof t
   return (
     <div className="flex overflow-hidden">
       <motion.div
-        className="flex gap-6 lg:gap-8 shrink-0 px-4"
+        className="flex gap-8 lg:gap-10 shrink-0 px-4"
         animate={{
           x: direction === "left" ? ["0%", "-33.33%"] : ["-33.33%", "0%"]
         }}
@@ -132,20 +132,20 @@ function MarqueeRow({ items, direction = "left", speed = 30 }: { items: typeof t
         {tripledItems.map((tool, index) => (
           <div
             key={`${tool.name}-${index}`}
-            className="group relative flex flex-col items-center justify-center min-w-[80px]"
+            className="group relative flex flex-col items-center justify-center min-w-[100px]"
           >
             <div
-              className="relative flex h-16 w-16 items-center justify-center rounded-2xl border border-slate-100 bg-white shadow-sm transition-all duration-300 group-hover:border-indigo-500/50 group-hover:shadow-[0_0_20px_rgba(79,70,229,0.15)] group-hover:scale-110"
+              className="relative flex h-20 w-20 items-center justify-center rounded-2xl border border-slate-100 bg-white shadow-sm transition-all duration-300 group-hover:border-indigo-500/50 group-hover:shadow-[0_0_20px_rgba(79,70,229,0.15)] group-hover:scale-110"
             >
               <Icon
                 icon={tool.icon}
-                className="h-8 w-8 transition-all duration-300"
+                className="h-10 w-10 transition-all duration-300"
               />
             </div>
 
             {/* Title - Visible for ALL when section is hovered */}
             <span
-              className="mt-2 text-[10px] font-semibold text-slate-500 opacity-0 transition-all duration-500 group-hover/section:opacity-100 group-hover:text-indigo-600 whitespace-nowrap"
+              className="mt-3 text-[11px] font-semibold text-slate-500 opacity-0 transition-all duration-500 group-hover/section:opacity-100 group-hover:text-indigo-600 whitespace-nowrap"
             >
               {tool.name}
             </span>

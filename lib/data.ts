@@ -265,5 +265,33 @@ export const faqs = [
     }
 ];
 
+export const footerData = {
+    platforms: [
+        { name: "YouTube Channel", href: "#" },
+        { name: "Official Website", href: "#" },
+        { name: "Trainings", href: "/courses" },
+        { name: "Newsletter", href: "#newsletter" },
+        { name: "Schedule Meeting", href: "https://calendly.com" },
+    ],
+    freelance: [
+        { name: "Upwork", href: "https://upwork.com" },
+        { name: "Fiverr", href: "https://fiver.com" },
+    ],
+    community: [
+        { name: "Facebook Group", href: "#" },
+        { name: "WhatsApp Channel", href: "#" },
+        { name: "Skool Community", href: "#" },
+    ],
+    socials: [
+        { name: "YouTube", icon: "logos:youtube-icon", href: "#" },
+        { name: "LinkedIn", icon: "logos:linkedin-icon", href: "#" },
+        { name: "Facebook", icon: "logos:facebook", href: "#" },
+        { name: "Instagram", icon: "logos:instagram-icon", href: "#" },
+        { name: "X", icon: "logos:twitter", href: "#" },
+        { name: "TikTok", icon: "logos:tiktok-icon", href: "#" },
+    ]
+};
+
+
 
 

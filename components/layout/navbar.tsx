@@ -83,11 +83,11 @@ export function Navbar() {
                 </NavigationMenuContent>
               </NavigationMenuItem>
               <NavigationMenuItem>
-                <Link href="/portfolio" legacyBehavior passHref>
-                  <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), "bg-transparent text-slate-600 hover:text-slate-900 focus:text-slate-900")}>
+                <NavigationMenuLink asChild>
+                  <Link href="/portfolio" className={cn(navigationMenuTriggerStyle(), "bg-transparent text-slate-600 hover:text-slate-900 focus:text-slate-900")}>
                     Portfolio
-                  </NavigationMenuLink>
-                </Link>
+                  </Link>
+                </NavigationMenuLink>
               </NavigationMenuItem>
             </NavigationMenuList>
           </NavigationMenu>

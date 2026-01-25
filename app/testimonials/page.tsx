@@ -63,9 +63,9 @@ export default function TestimonialsPage() {
                 <Icon 
                   icon={testimonial.platform} 
                   className={cn(
-                    "h-8 w-8",
-                    testimonial.platform.includes("upwork") && "text-[#14a800]",
-                    testimonial.platform.includes("fiverr") && "text-[#1dbf73]",
+                    "h-8 w-8 transition-transform origin-right",
+                    testimonial.platform.includes("upwork") && "text-[#14a800] scale-[1.2]",
+                    testimonial.platform.includes("fiverr") && "text-[#1dbf73] scale-[1.5]",
                     testimonial.platform.includes("linkedin") && "text-[#0a66c2]",
                     testimonial.platform.includes("facebook") && "text-[#1877f2]"
                   )} 

@@ -4,6 +4,7 @@ import { Workflow } from "@/components/sections/workflow";
 import { TechStack } from "@/components/sections/tech-stack";
 import { Experience } from "@/components/sections/experience";
 import { Testimonials } from "@/components/sections/testimonials";
+import { BlogPosts } from "@/components/sections/blog-posts";
 
 export default function Home() {
   return (
@@ -13,6 +14,7 @@ export default function Home() {
       <TechStack />
       <Experience />
       <Testimonials />
+      <BlogPosts />
       <Services />
     </main>
   );

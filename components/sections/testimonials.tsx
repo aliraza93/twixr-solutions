@@ -101,9 +101,9 @@ function TestimonialCard({ testimonial }: { testimonial: any }) {
         <Icon 
           icon={testimonial.platform} 
           className={cn(
-            "h-6 w-6",
-            testimonial.platform.includes("upwork") && "text-[#14a800]",
-            testimonial.platform.includes("fiverr") && "text-[#1dbf73]",
+            "h-6 w-6 transition-transform",
+            testimonial.platform.includes("upwork") && "text-[#14a800] scale-[1.3]",
+            testimonial.platform.includes("fiverr") && "text-[#1dbf73] scale-[1.6]",
             testimonial.platform.includes("linkedin") && "text-[#0a66c2]",
             testimonial.platform.includes("facebook") && "text-[#1877f2]"
           )} 

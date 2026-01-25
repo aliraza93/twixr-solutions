@@ -292,6 +292,40 @@ export const footerData = {
     ]
 };
 
+export const approachSteps = [
+    {
+        title: "Understand Pattern Identification",
+        description: "Revolves around understanding pattern identification. It involves analyzing data to identify and extract significant patterns.",
+        icon: "lucide:eye",
+        color: "indigo"
+    },
+    {
+        title: "Pattern Mapping User Stories",
+        description: "Categorizing user stories according to recognized patterns to ensure the solution aligns with user behaviors.",
+        icon: "lucide:map",
+        color: "violet"
+    },
+    {
+        title: "Wireframe and Front End",
+        description: "Creating dedicated wireframes and front-end designs that align with identified patterns and user stories.",
+        icon: "lucide:layout",
+        color: "fuchsia"
+    },
+    {
+        title: "Model Development and Training",
+        description: "Involves the development of machine learning models and training using identified patterns and structured data.",
+        icon: "lucide:cpu",
+        color: "purple"
+    },
+    {
+        title: "Development and Deployment",
+        description: "The final step where developed models and features are integrated into the software and deployed for global use.",
+        icon: "lucide:rocket",
+        color: "indigo"
+    }
+];
+
+
 
 
 

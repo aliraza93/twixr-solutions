@@ -29,10 +29,10 @@ export function Hero() {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5 }}
-              className="mb-8 inline-flex items-center gap-1 rounded-full bg-slate-50 px-3 py-1 pr-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 group cursor-pointer border border-slate-200"
+              className="mb-8 inline-flex items-center gap-1 rounded-full bg-slate-50 px-3 py-1 pr-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 group cursor-pointer border border-slate-200 dark:bg-slate-900/50 dark:border-slate-800"
             >
-              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] uppercase font-bold text-emerald-700 tracking-wide">Available</span>
-              <span className="ml-1">Taking new projects for 2026</span>
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] uppercase font-black text-primary tracking-wide">Available</span>
+              <span className="ml-1 text-xs">Taking new projects for 2026</span>
               <ChevronRight className="ml-1 h-3 w-3 transition-transform group-hover:translate-x-0.5" />
             </motion.div>
 
@@ -66,11 +66,11 @@ export function Hero() {
               transition={{ duration: 0.5, delay: 0.3 }}
               className="flex flex-wrap gap-4 mb-12"
             >
-              <Button size="lg" className="h-12 rounded-full px-8 text-base bg-slate-900 text-white hover:bg-slate-800 font-semibold shadow-lg shadow-slate-900/10">
+              <Button size="lg" className="h-12 cursor-pointer rounded-full px-8 text-base font-bold shadow-lg shadow-primary/10">
                 Start a Project
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
-              <Button size="lg" variant="outline" className="h-12 rounded-full px-8 text-base border-slate-200 bg-white text-slate-900 hover:bg-slate-50">
+              <Button size="lg" variant="outline" className="h-12 cursor-pointer rounded-full px-8 text-base border-slate-200">
                 View Portfolio
               </Button>
             </motion.div>
@@ -105,7 +105,7 @@ export function Hero() {
                 <div className="flex items-center gap-2 border-b border-slate-100 bg-slate-50/50 px-4 py-3">
                     <div className="h-3 w-3 rounded-full bg-red-400" />
                     <div className="h-3 w-3 rounded-full bg-amber-400" />
-                    <div className="h-3 w-3 rounded-full bg-emerald-400" />
+                    <div className="h-3 w-3 rounded-full bg-indigo-400" />
                     <div className="ml-2 text-xs font-mono text-slate-400">deployment-script.ts</div>
                 </div>
                 
@@ -134,10 +134,10 @@ export function Hero() {
                           initial={{ x: 50, opacity: 0 }}
                           animate={{ x: 0, opacity: 1 }}
                           transition={{ delay: 0.6 }}
-                          className="flex items-center gap-3 rounded-lg bg-emerald-50 border border-emerald-100 p-3 shadow-sm"
+                          className="flex items-center gap-3 rounded-lg bg-indigo-50 border border-indigo-100 p-3 shadow-sm"
                         >
-                            <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                            <span className="text-xs font-semibold text-emerald-700">System Operational</span>
+                            <div className="h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
+                            <span className="text-xs font-semibold text-indigo-700">System Operational</span>
                         </motion.div>
                         <motion.div 
                           initial={{ x: 50, opacity: 0 }}

@@ -43,7 +43,7 @@ export function FAQ() {
       </div>
 
       {/* Background Accent */}
-      <div className="absolute -left-20 top-1/2 -z-10 h-96 w-96 -translate-y-1/2 rounded-full bg-teal-500/5 blur-[120px] dark:bg-teal-500/10" />
+      <div className="absolute -left-20 top-1/2 -z-10 h-96 w-96 -translate-y-1/2 rounded-full bg-primary/5 blur-[120px] dark:bg-primary/10" />
     </section>
   );
 }
@@ -56,18 +56,18 @@ function FAQItem({ faq, isOpen, onClick }: { faq: any; isOpen: boolean; onClick:
       className={cn(
         "group overflow-hidden rounded-3xl border transition-all duration-300",
         isOpen 
-          ? "border-teal-500/30 bg-white shadow-xl shadow-slate-200/50 dark:border-teal-500/20 dark:bg-slate-900 dark:shadow-none" 
+          ? "border-primary/30 bg-white shadow-xl shadow-slate-200/50 dark:border-primary/20 dark:bg-slate-900 dark:shadow-none" 
           : "border-slate-100 bg-slate-50/50 hover:border-slate-200 hover:bg-white dark:border-slate-800 dark:bg-slate-900/40 dark:hover:border-slate-700"
       )}
     >
       <button
         onClick={onClick}
-        className="flex w-full items-center justify-between p-6 text-left sm:p-8"
+        className="flex w-full cursor-pointer items-center justify-between p-6 text-left sm:p-8"
       >
         <div className="flex items-center gap-6">
           <div className={cn(
             "flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm border transition-all duration-300 dark:bg-slate-800",
-            isOpen ? "scale-110 border-teal-500/50 text-teal-600" : "text-slate-400 group-hover:text-slate-600"
+            isOpen ? "scale-110 border-primary/50 text-primary" : "text-slate-400 group-hover:text-slate-600"
           )}>
             <Icon icon={faq.icon} className="h-6 w-6" />
           </div>
@@ -80,7 +80,7 @@ function FAQItem({ faq, isOpen, onClick }: { faq: any; isOpen: boolean; onClick:
         </div>
         <div className={cn(
           "flex h-8 w-8 items-center justify-center rounded-full border transition-all duration-500",
-          isOpen ? "rotate-180 bg-teal-500 border-teal-500 text-white" : "border-slate-200 text-slate-400 group-hover:border-slate-300"
+          isOpen ? "rotate-180 bg-primary border-primary text-primary-foreground" : "border-slate-200 text-slate-400 group-hover:border-slate-300"
         )}>
           <Icon icon="lucide:chevron-down" className="h-5 w-5" />
         </div>

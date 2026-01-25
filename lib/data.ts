@@ -1,34 +1,34 @@
-import { Code2, Server, Cloud, Smartphone, Layout, Database } from "lucide-react";
+import { Code2, Server, Cloud, Smartphone, Layout, Database, Cpu } from "lucide-react";
 
 export const services = [
     {
         title: "Full Stack Development",
-        description: "Building scalable web applications from scratch using modern technologies like Next.js, Laravel, and Node.js.",
+        description: "Transforming complex ideas into scalable web applications using Next.js, Laravel, and modern microservices.",
         icon: Code2,
     },
     {
-        title: "Backend Engineering",
-        description: "Designing robust APIs, database architectures, and microservices that can handle high traffic loads.",
+        title: "Enterprise Architecture",
+        description: "Designing robust, long-term technical frameworks and database systems that handle millions of requests.",
         icon: Server,
     },
     {
-        title: "DevOps & Cloud",
-        description: "Automating deployments, setting up CI/CD pipelines, and managing AWS/DigitalOcean infrastructure.",
+        title: "AI & Automation",
+        description: "Integrating LLMs, custom RAG pipelines, and automated workflows to revolutionize business operations.",
+        icon: Cpu,
+    },
+    {
+        title: "Cloud & DevOps",
+        description: "Optimizing AWS/DigitalOcean infrastructure with automated CI/CD and zero-downtime deployment pipelines.",
         icon: Cloud,
     },
     {
-        title: "Custom WordPress",
-        description: "Developing custom themes and plugins to extend WordPress functionality beyond the basics.",
-        icon: Layout,
-    },
-    {
-        title: "API Integration",
-        description: "Seamlessly connecting third-party services like Stripe, OpenAI, and internal systems.",
+        title: "API Intelligence",
+        description: "Seamlessly connecting high-performance third-party services like Stripe, OpenAI, and internal enterprise systems.",
         icon: Database,
     },
     {
-        title: "Mobile App Backends",
-        description: "Creating secure and fast APIs to power your mobile applications (iOS & Android).",
+        title: "Mobile App Sprints",
+        description: "Developing fast, cross-platform mobile experiences with specialized backends for iOS & Android.",
         icon: Smartphone,
     },
 ];
@@ -42,39 +42,36 @@ export const skills = {
 
 export const experiences = [
     {
-        company: "UpAlerts",
+        company: "Twixr Solutions",
         location: "Pakistan",
-        role: "Founder",
-        period: "January 2023 - Present (1 year 1 month)",
-        description: "Spearheaded the establishment of UpAlerts, a revolutionary platform empowering freelancers and agencies to craft superior proposals utilizing Generative AI. Developed real-time job notifications from Upwork to mobile apps, websites, and WhatsApp. Successfully garnered over 20,000 active users within 6 months.",
-        categories: ["AI", "Websites", "Mobile Apps"],
-        technologies: ["Next.js", "Node.js", "Flutter", "OpenAI", "LangChain"],
-        logo: "logos:upwork-icon",
-        link: "https://upalerts.com",
-        color: "teal",
-        glow: "rgba(20, 184, 166, 0.15)",
-        projects: [
-            { title: "LinkedIn Post AI Writer", image: "/projects/upalerts-1.png" },
-            { title: "EvyAI Subscription Plans", image: "/projects/upalerts-2.png" },
-            { title: "UpAlerts Platform", image: "/projects/upalerts-3.png" },
-        ]
-    },
-    {
-        company: "LWS Academy",
-        location: "Remote",
-        role: "Founder",
-        period: "January 2022 - Present (2 years 1 month)",
-        description: "Building an educational platform focusing on modern tech stacks and career development in software engineering.",
-        categories: ["Websites", "Trainings"],
-        technologies: ["React", "Next.js", "Tailwind CSS", "Node.js", "PostgreSQL"],
-        logo: "logos:react",
-        link: "#",
+        role: "Founder & Lead Engineer",
+        period: "January 2023 - Present",
+        description: "Leading Twixr Solutions, a premium digital agency specializing in high-performance web applications and AI-driven automation. I manage end-to-end delivery of complex projects for global clients.",
+        categories: ["AI", "Websites", "Automation"],
+        technologies: ["Next.js", "Node.js", "Laravel", "OpenAI", "AWS"],
+        logo: "logos:nextjs-icon",
+        link: "https://twixrsolutions.com",
         color: "indigo",
         glow: "rgba(79, 70, 229, 0.15)",
         projects: [
-            { title: "Learning Dashboard", image: "/projects/lws-1.png" },
-            { title: "Course Catalog", image: "/projects/lws-2.png" },
+            { title: "AI Proposal Engine", image: "/projects/upalerts-1.png" },
+            { title: "Custom SaaS Platform", image: "/projects/upalerts-2.png" },
+            { title: "Enterprise Dashboard", image: "/projects/upalerts-3.png" },
         ]
+    },
+    {
+        company: "DevLabs",
+        location: "Remote",
+        role: "Senior Full Stack Developer",
+        period: "January 2020 - December 2022",
+        description: "Developed and maintained full-stack web applications using Laravel and React. Optimized database performance and implemented advanced search features.",
+        categories: ["Websites", "E-commerce"],
+        technologies: ["React", "Laravel", "PostgreSQL", "Redis"],
+        logo: "logos:laravel",
+        link: "#",
+        color: "indigo",
+        glow: "rgba(79, 70, 229, 0.15)",
+        projects: []
     },
     {
         company: "Smonte Technologies",
@@ -86,8 +83,8 @@ export const experiences = [
         technologies: ["PHP", "MySQL", "JavaScript", "HTML/CSS"],
         logo: "logos:php",
         link: "#",
-        color: "blue",
-        glow: "rgba(59, 130, 246, 0.15)",
+        color: "violet",
+        glow: "rgba(139, 92, 246, 0.15)",
         projects: []
     },
     {
@@ -100,8 +97,8 @@ export const experiences = [
         technologies: ["Android", "Java", "Mobile Development"],
         logo: "logos:android-icon",
         link: "#",
-        color: "amber",
-        glow: "rgba(245, 158, 11, 0.15)",
+        color: "blue",
+        glow: "rgba(59, 130, 246, 0.15)",
         projects: []
     },
     {
@@ -114,8 +111,8 @@ export const experiences = [
         technologies: ["Android", "SQLite", "Java", "Social Media Integration"],
         logo: "logos:android-icon",
         link: "#",
-        color: "rose",
-        glow: "rgba(244, 63, 94, 0.15)",
+        color: "purple",
+        glow: "rgba(168, 85, 247, 0.15)",
         projects: []
     }
 ];
@@ -124,9 +121,9 @@ export const testimonials = [
     {
         name: "Emily Rodriguez",
         role: "Product Manager",
-        company: "Upwork",
+        company: "GlobalTech",
         image: "https://api.dicebear.com/7.x/avataaars/svg?seed=Emily",
-        content: "Shajeel's UI/UX skills are top-notch. He transformed our outdated website into a modern, user-friendly experience.",
+        content: "Ali's UI/UX skills are top-notch. He transformed our outdated website into a modern, user-friendly experience.",
         rating: 5,
         platform: "simple-icons:upwork",
     },
@@ -142,9 +139,9 @@ export const testimonials = [
     {
         name: "Sarah Johnson",
         role: "Director of Marketing",
-        company: "Upwork",
+        company: "Innova",
         image: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah",
-        content: "Shajeel delivered exceptional work on our e-commerce platform. His attention to detail and technical expertise made our project a huge success.",
+        content: "Ali delivered exceptional work on our e-commerce platform. His attention to detail and technical expertise made our project a huge success.",
         rating: 5,
         platform: "simple-icons:upwork",
     },
@@ -178,9 +175,9 @@ export const testimonials = [
     {
         name: "Alex Parker",
         role: "Founder",
-        company: "Upwork",
+        company: "Stark Ltd",
         image: "https://api.dicebear.com/7.x/avataaars/svg?seed=Alex",
-        content: "Shajeel's full-stack expertise saved us time and money. He handled both frontend and backend perfectly.",
+        content: "Ali's full-stack expertise saved us time and money. He handled both frontend and backend perfectly.",
         rating: 5,
         platform: "simple-icons:upwork",
     },
@@ -234,8 +231,8 @@ export const faqs = [
         icon: "lucide:bot"
     },
     {
-        question: "Do you offer training or educational content creation services?",
-        answer: "Yes, I run LWS Academy where I create in-depth technical courses and tutorials on modern web development and AI technologies.",
+        question: "Do you offer training or educational consultancy?",
+        answer: "Yes, I offer specialized training for engineering teams and individual consultancy for architects looking to upscale their stack.",
         icon: "lucide:video"
     },
     {
@@ -294,32 +291,32 @@ export const footerData = {
 
 export const approachSteps = [
     {
-        title: "Understand Pattern Identification",
-        description: "Revolves around understanding pattern identification. It involves analyzing data to identify and extract significant patterns.",
+        title: "Strategy & Discovery",
+        description: "We dive deep into your business goals, user needs, and technical requirements to define a clear roadmap for success.",
         icon: "lucide:eye",
         color: "indigo"
     },
     {
-        title: "Pattern Mapping User Stories",
-        description: "Categorizing user stories according to recognized patterns to ensure the solution aligns with user behaviors.",
+        title: "Precision Architecture",
+        description: "Designing scalable database schemas, high-performance APIs, and intuitive UI/UX frameworks built for long-term growth.",
         icon: "lucide:map",
         color: "violet"
     },
     {
-        title: "Wireframe and Front End",
-        description: "Creating dedicated wireframes and front-end designs that align with identified patterns and user stories.",
+        title: "High-Velocity Dev",
+        description: "Agile sprints focused on building core features using modern stacks like Next.js, Laravel, and AI-powered automation.",
         icon: "lucide:layout",
         color: "fuchsia"
     },
     {
-        title: "Model Development and Training",
-        description: "Involves the development of machine learning models and training using identified patterns and structured data.",
+        title: "Rigorous QA & Test",
+        description: "Comprehensive testing for security, performance, and cross-device compatibility to ensure a flawless user experience.",
         icon: "lucide:cpu",
         color: "purple"
     },
     {
-        title: "Development and Deployment",
-        description: "The final step where developed models and features are integrated into the software and deployed for global use.",
+        title: "Global Launch & Scale",
+        description: "Seamless deployment with automated CI/CD pipelines, SEO optimization, and proactive maintenance for sustained impact.",
         icon: "lucide:rocket",
         color: "indigo"
     }

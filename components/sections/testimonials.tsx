@@ -36,7 +36,7 @@ export function Testimonials() {
 
         {/* Action Button */}
         <div className="mt-20 text-center">
-          <Button asChild variant="outline" size="lg" className="rounded-full px-8 py-6 text-base font-bold transition-all hover:bg-teal-600 hover:text-white">
+          <Button asChild variant="outline" size="lg" className="cursor-pointer rounded-full px-8 py-6 text-base font-bold transition-all hover:bg-primary hover:text-primary-foreground">
             <Link href="/testimonials" className="flex items-center gap-2">
               View All Testimonials
               <Icon icon="lucide:arrow-right" />
@@ -46,7 +46,7 @@ export function Testimonials() {
       </div>
 
       {/* Decorative Glow */}
-      <div className="absolute left-1/2 top-1/2 -z-10 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 bg-teal-500/5 blur-[120px]" />
+      <div className="absolute left-1/2 top-1/2 -z-10 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 bg-primary/5 blur-[120px]" />
     </section>
   );
 }
@@ -78,7 +78,7 @@ function MarqueeRow({ items, direction = "left", speed = 30 }: { items: any[]; d
 
 function TestimonialCard({ testimonial }: { testimonial: any }) {
   return (
-    <div className="relative w-[320px] shrink-0 transform-gpu overflow-hidden rounded-[2rem] border border-slate-100 bg-white p-6 transition-all hover:border-teal-500/30 hover:shadow-2xl hover:shadow-slate-200/50 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-teal-500/30">
+    <div className="relative w-[320px] cursor-pointer shrink-0 transform-gpu overflow-hidden rounded-[2rem] border border-slate-100 bg-white p-6 transition-all hover:border-primary/30 hover:shadow-2xl hover:shadow-slate-200/50 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-primary/30">
       {/* Platform Icon */}
       <div className="absolute right-6 top-6 transition-all duration-300 group-hover:scale-110">
         <Icon 

@@ -25,6 +25,16 @@ export function BlogPosts() {
             <BlogCard key={post.slug} post={post} index={idx} />
           ))}
         </div>
+
+        {/* Action Button */}
+        <div className="mt-20 text-center">
+          <Button asChild variant="outline" size="lg" className="cursor-pointer rounded-full px-8 py-6 text-base font-bold transition-all hover:bg-primary hover:text-primary-foreground">
+            <Link href="/blog" className="flex items-center gap-2">
+              View All Posts
+              <Icon icon="lucide:arrow-right" />
+            </Link>
+          </Button>
+        </div>
       </div>
     </section>
   );
@@ -37,7 +47,7 @@ function BlogCard({ post, index }: { post: any; index: number }) {
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.1 }}
       viewport={{ once: true }}
-      className="group relative flex flex-col overflow-hidden rounded-[2.5rem] border border-slate-100 bg-white transition-all duration-500 hover:border-blue-500/30 hover:shadow-2xl hover:shadow-slate-200/50 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-500/30"
+      className="group relative flex cursor-pointer flex-col overflow-hidden rounded-[2.5rem] border border-slate-100 bg-white transition-all duration-500 hover:border-primary/30 hover:shadow-2xl hover:shadow-slate-200/50 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-primary/30"
     >
       {/* Thumbnail */}
       <div className="relative aspect-[16/10] overflow-hidden">
@@ -61,7 +71,7 @@ function BlogCard({ post, index }: { post: any; index: number }) {
         <p className="mb-3 text-[11px] font-bold uppercase tracking-widest text-slate-400">
           {post.date}
         </p>
-        <h3 className="mb-4 text-xl font-bold leading-tight text-slate-900 transition-colors group-hover:text-blue-600 dark:text-white dark:group-hover:text-blue-400">
+        <h3 className="mb-4 text-xl font-bold leading-tight text-slate-900 transition-colors group-hover:text-primary dark:text-white dark:group-hover:text-primary">
           {post.title}
         </h3>
         <p className="mb-8 line-clamp-3 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
@@ -71,15 +81,15 @@ function BlogCard({ post, index }: { post: any; index: number }) {
         {/* Footer Link */}
         <Link 
           href={`/blog/${post.slug}`}
-          className="mt-auto inline-flex items-center gap-2 text-sm font-bold text-slate-900 transition-all hover:gap-3 dark:text-white"
+          className="mt-auto inline-flex cursor-pointer items-center gap-2 text-sm font-bold text-slate-900 transition-all hover:gap-3 dark:text-white"
         >
           Read full story
-          <Icon icon="lucide:arrow-right" className="h-4 w-4 text-blue-600" />
+          <Icon icon="lucide:arrow-right" className="h-4 w-4 text-primary" />
         </Link>
       </div>
 
       {/* Decorative Brand Glow on Hover */}
-      <div className="absolute -bottom-20 -right-20 -z-10 h-40 w-40 rounded-full bg-blue-600/5 blur-3xl transition-opacity opacity-0 group-hover:opacity-100" />
+      <div className="absolute -bottom-20 -right-20 -z-10 h-40 w-40 rounded-full bg-primary/5 blur-3xl transition-opacity opacity-0 group-hover:opacity-100" />
     </motion.div>
   );
 }

@@ -56,14 +56,16 @@ function ExperienceBar({ exp, isOpen, onClick }: { exp: any; isOpen: boolean; on
       className={cn(
         "relative overflow-hidden rounded-[2rem] border transition-all duration-500",
         isOpen 
-          ? "border-teal-500/30 bg-white shadow-xl shadow-slate-200/40 dark:border-teal-500/20 dark:bg-slate-900" 
+          ? "border-primary/30 bg-white shadow-xl shadow-slate-200/40 dark:border-primary/20 dark:bg-slate-900" 
           : "border-slate-100 bg-white/80 hover:border-slate-200 hover:bg-white dark:border-slate-800 dark:bg-slate-900/40 dark:hover:border-slate-700"
       )}
     >
       {/* Subtle Side Color Indicator */}
       <div 
-        className="absolute left-0 top-0 bottom-0 w-1.5 transition-opacity duration-500"
-        style={{ backgroundColor: exp.color, opacity: isOpen ? 1 : 0 }}
+        className={cn(
+          "absolute left-0 top-0 bottom-0 w-1.5 transition-opacity duration-500 bg-primary",
+          isOpen ? "opacity-100" : "opacity-0"
+        )}
       />
 
       {/* Header (Always Visible) */}
@@ -75,15 +77,14 @@ function ExperienceBar({ exp, isOpen, onClick }: { exp: any; isOpen: boolean; on
           <div 
             className={cn(
               "relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl transition-all duration-500",
-              isOpen ? "scale-110 shadow-lg" : ""
+              isOpen ? "scale-110 shadow-lg bg-primary" : "bg-slate-50"
             )}
-            style={{ backgroundColor: isOpen ? exp.color : '#f8fafc' }}
           >
              <Icon 
                icon={exp.logo} 
                className={cn(
                  "relative z-10 h-7 w-7 transition-colors duration-500",
-                 isOpen ? "text-white" : "text-slate-400"
+                 isOpen ? "text-primary-foreground" : "text-slate-400"
                )} 
              />
           </div>
@@ -102,13 +103,13 @@ function ExperienceBar({ exp, isOpen, onClick }: { exp: any; isOpen: boolean; on
           <div className="hidden text-right sm:block">
             <p className={cn(
               "text-lg font-bold transition-colors",
-              isOpen ? "text-teal-600" : "text-slate-400"
+              isOpen ? "text-primary" : "text-slate-400"
             )}>{exp.role}</p>
             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-300">{exp.location}</p>
           </div>
           <div className={cn(
             "flex h-12 w-12 items-center justify-center rounded-full border-2 transition-all duration-500",
-            isOpen ? "bg-teal-600 border-teal-600 text-white" : "bg-white border-slate-100 text-slate-300 dark:bg-slate-800 dark:border-slate-700"
+            isOpen ? "bg-primary border-primary text-primary-foreground" : "bg-white border-slate-100 text-slate-300 dark:bg-slate-800 dark:border-slate-700"
           )}>
             <Icon icon={isOpen ? "lucide:minus" : "lucide:plus"} className="h-6 w-6" />
           </div>
@@ -138,9 +139,9 @@ function ExperienceBar({ exp, isOpen, onClick }: { exp: any; isOpen: boolean; on
                        {exp.technologies.map((tech: string) => (
                          <span 
                            key={tech} 
-                           className="flex items-center gap-2 rounded-xl bg-slate-100 px-4 py-2 text-xs font-bold text-slate-500 dark:bg-slate-800/50 dark:text-slate-400 transition-colors hover:bg-teal-500/10 hover:text-teal-600"
+                           className="flex items-center gap-2 rounded-xl bg-slate-100 px-4 py-2 text-xs font-bold text-slate-500 dark:bg-slate-800/50 dark:text-slate-400 transition-colors hover:bg-primary/10 hover:text-primary"
                          >
-                            <div className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: exp.color }} />
+                            <div className="h-1.5 w-1.5 rounded-full bg-primary" />
                             {tech}
                          </span>
                        ))}
@@ -157,7 +158,7 @@ function ExperienceBar({ exp, isOpen, onClick }: { exp: any; isOpen: boolean; on
                       <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 mb-3">Domain</h4>
                       <div className="flex flex-wrap gap-3">
                         {exp.categories.map((cat: string) => (
-                           <span key={cat} className="text-xs font-black text-teal-600 uppercase tracking-widest">{cat}</span>
+                           <span key={cat} className="text-xs font-black text-primary uppercase tracking-widest">{cat}</span>
                         ))}
                       </div>
                     </div>
@@ -165,7 +166,7 @@ function ExperienceBar({ exp, isOpen, onClick }: { exp: any; isOpen: boolean; on
                        <a 
                          href={exp.link}
                          target="_blank"
-                         className="group/link mt-auto flex items-center justify-between rounded-2xl bg-slate-900 px-6 py-4 font-bold text-white transition-all hover:bg-teal-600 dark:bg-white dark:text-slate-900 dark:hover:bg-teal-500 dark:hover:text-white"
+                         className="group/link mt-auto flex items-center justify-between rounded-2xl bg-primary px-6 py-4 font-bold text-primary-foreground transition-all hover:bg-primary/90"
                        >
                          <span>Full Project</span>
                          <Icon icon="lucide:external-link" className="h-5 w-5 transition-transform group-hover/link:translate-x-1 group-hover/link:-translate-y-1" />

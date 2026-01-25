@@ -21,8 +21,8 @@ export function Navbar() {
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-slate-200 bg-white/80 backdrop-blur-md transition-all">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 font-bold text-xl text-slate-900">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-white">
+        <Link href="/" className="flex cursor-pointer items-center gap-2 font-bold text-xl text-slate-900">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             A
           </div>
           <span>Ali R.</span>
@@ -39,11 +39,11 @@ export function Navbar() {
                     <li className="row-span-3">
                       <NavigationMenuLink asChild>
                         <a
-                          className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-br from-indigo-50 to-purple-50 p-6 no-underline outline-none transition-shadow hover:shadow-md border border-indigo-100"
+                          className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-br from-primary/5 to-primary/10 p-6 no-underline outline-none transition-shadow hover:shadow-md border border-primary/10"
                           href="/"
                         >
-                          <div className="mb-2 h-8 w-8 rounded-lg bg-indigo-500/10 flex items-center justify-center">
-                             <Terminal className="h-5 w-5 text-indigo-600" />
+                          <div className="mb-2 h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                             <Terminal className="h-5 w-5 text-primary" />
                           </div>
                           <div className="mb-2 mt-4 text-lg font-bold text-slate-900">
                             Full Stack Dev
@@ -60,7 +60,7 @@ export function Navbar() {
                     <ListItem href="/services/frontend" title="Frontend & UI/UX" icon={<LayoutIcon className="text-pink-500" />}>
                       Pixel-perfect interfaces with React & Tailwind.
                     </ListItem>
-                    <ListItem href="/services/devops" title="DevOps & Cloud" icon={<CloudIcon className="text-emerald-500" />}>
+                    <ListItem href="/services/devops" title="DevOps & Cloud" icon={<CloudIcon className="text-blue-500" />}>
                       AWS, Docker, and CI/CD pipelines.
                     </ListItem>
                   </ul>
@@ -95,10 +95,10 @@ export function Navbar() {
 
         {/* CTA Buttons */}
         <div className="hidden items-center gap-4 md:flex">
-          <Button variant="ghost" className="text-slate-600 hover:text-slate-900">
+          <Button variant="ghost" className="cursor-pointer text-slate-600 hover:text-primary">
             Sign In
           </Button>
-          <Button className="rounded-full bg-slate-900 px-6 font-semibold text-white hover:bg-slate-800">
+          <Button className="cursor-pointer rounded-full bg-primary px-6 font-semibold text-primary-foreground hover:bg-primary/90">
             Contact Me
           </Button>
         </div>
@@ -112,10 +112,10 @@ export function Navbar() {
           </SheetTrigger>
           <SheetContent side="right">
             <div className="flex flex-col gap-6 pt-10">
-              <Link href="/" className="font-semibold">Home</Link>
-              <Link href="/services" className="font-semibold">Services</Link>
-              <Link href="/portfolio" className="font-semibold">Portfolio</Link>
-              <Button className="w-full rounded-full">Contact Me</Button>
+              <Link href="/" className="cursor-pointer font-semibold">Home</Link>
+              <Link href="/services" className="cursor-pointer font-semibold">Services</Link>
+              <Link href="/portfolio" className="cursor-pointer font-semibold">Portfolio</Link>
+              <Button className="w-full rounded-full bg-primary text-primary-foreground cursor-pointer">Contact Me</Button>
             </div>
           </SheetContent>
         </Sheet>
@@ -157,7 +157,7 @@ const ListItem = React.forwardRef<
         <a
           ref={ref}
           className={cn(
-            "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+            "block cursor-pointer select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
             className
           )}
           {...props}

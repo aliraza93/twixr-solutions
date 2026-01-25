@@ -25,9 +25,9 @@ export function Footer() {
               Developer & Trainer — Freelancing, Programming & AI. Top Rated Plus on Upwork with 10+ years of experience.
             </p>
             <div className="space-y-4">
-              <a href="mailto:learnwithshajeel@gmail.com" className="flex items-center gap-3 text-slate-600 transition-colors hover:text-teal-600 dark:text-slate-400 dark:hover:text-teal-500">
+              <a href="mailto:ali@twixrsolutions.com" className="flex items-center gap-3 text-slate-600 transition-colors hover:text-primary dark:text-slate-400 dark:hover:text-primary">
                 <Icon icon="lucide:mail" className="h-5 w-5" />
-                <span className="font-medium">learnwithshajeel@gmail.com</span>
+                <span className="font-medium">ali@twixrsolutions.com</span>
               </a>
               <div className="flex items-center gap-3 text-slate-600 dark:text-slate-400">
                 <Icon icon="lucide:map-pin" className="h-5 w-5" />
@@ -43,7 +43,7 @@ export function Footer() {
               <ul className="space-y-4">
                 {footerData.platforms.map((link) => (
                   <li key={link.name}>
-                    <Link href={link.href} className="text-base text-slate-500 transition-colors hover:text-teal-600 dark:text-slate-400 dark:hover:text-teal-500">
+                    <Link href={link.href} className="text-base text-slate-500 transition-colors hover:text-primary dark:text-slate-400 dark:hover:text-primary">
                       {link.name}
                     </Link>
                   </li>
@@ -55,7 +55,7 @@ export function Footer() {
               <ul className="space-y-4">
                 {footerData.freelance.map((link) => (
                   <li key={link.name}>
-                    <Link href={link.href} className="text-base text-slate-500 transition-colors hover:text-teal-600 dark:text-slate-400 dark:hover:text-teal-500">
+                    <Link href={link.href} className="text-base text-slate-500 transition-colors hover:text-primary dark:text-slate-400 dark:hover:text-primary">
                       {link.name}
                     </Link>
                   </li>
@@ -63,8 +63,8 @@ export function Footer() {
               </ul>
               <h4 className="mt-8 mb-6 text-sm font-bold uppercase tracking-widest text-slate-900 dark:text-white">Contact</h4>
               <ul className="space-y-4">
-                <li><Link href="#" className="text-base text-slate-500 transition-colors hover:text-teal-600 dark:text-slate-400 dark:hover:text-teal-500">WhatsApp</Link></li>
-                <li><Link href="#" className="text-base text-slate-500 transition-colors hover:text-teal-600 dark:text-slate-400 dark:hover:text-teal-500">Email</Link></li>
+                <li><Link href="#" className="text-base text-slate-500 transition-colors hover:text-primary dark:text-slate-400 dark:hover:text-primary">WhatsApp</Link></li>
+                <li><Link href="#" className="text-base text-slate-500 transition-colors hover:text-primary dark:text-slate-400 dark:hover:text-primary">Email</Link></li>
               </ul>
             </div>
             <div>
@@ -72,7 +72,7 @@ export function Footer() {
               <ul className="space-y-4">
                 {footerData.community.map((link) => (
                   <li key={link.name}>
-                    <Link href={link.href} className="text-base text-slate-500 transition-colors hover:text-teal-600 dark:text-slate-400 dark:hover:text-teal-500">
+                    <Link href={link.href} className="text-base text-slate-500 transition-colors hover:text-primary dark:text-slate-400 dark:hover:text-primary">
                       {link.name}
                     </Link>
                   </li>
@@ -97,7 +97,7 @@ export function Footer() {
                 placeholder="you@example.com" 
                 className="h-12 rounded-xl border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
               />
-              <Button className="h-12 rounded-xl bg-teal-600 px-8 font-bold text-white hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600">
+              <Button className="h-12 rounded-xl bg-primary px-8 font-bold text-primary-foreground hover:bg-primary/90">
                 Subscribe
               </Button>
             </div>

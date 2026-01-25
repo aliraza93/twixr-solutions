@@ -31,9 +31,9 @@ export function Approach() {
             />
             <defs>
               <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="var(--indigo-500)" stopOpacity="0.2" />
-                <stop offset="50%" stopColor="var(--indigo-600)" stopOpacity="0.6" />
-                <stop offset="100%" stopColor="var(--indigo-500)" stopOpacity="0.2" />
+                <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.2" />
+                <stop offset="50%" stopColor="hsl(var(--primary))" stopOpacity="0.6" />
+                <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0.2" />
               </linearGradient>
             </defs>
           </svg>
@@ -75,17 +75,15 @@ function StepCard({ step, index }: { step: any; index: number }) {
           whileHover={{ scale: 1.1, rotate: 5 }}
           className={cn(
             "relative flex h-24 w-24 items-center justify-center rounded-[2rem] bg-white shadow-2xl transition-all duration-500 dark:bg-slate-900",
-            "border border-slate-50 group-hover:border-indigo-500/30 dark:border-slate-800"
+            "border border-slate-50 group-hover:border-primary/30 dark:border-slate-800"
           )}
         >
           <div 
-            className="absolute inset-4 rounded-xl opacity-0 blur-xl transition-opacity duration-500 group-hover:opacity-40"
-            style={{ backgroundColor: `var(--${step.color}-500)` }}
+            className="absolute inset-4 rounded-xl opacity-0 blur-xl transition-opacity duration-500 group-hover:opacity-40 bg-primary"
           />
           <Icon 
             icon={step.icon} 
-            className="relative h-10 w-10 transition-colors duration-500 group-hover:text-indigo-600" 
-            style={{ color: `var(--${step.color}-600)` }}
+            className="relative h-10 w-10 transition-colors duration-500 text-slate-400 group-hover:text-primary" 
           />
         </motion.div>
         
@@ -97,7 +95,7 @@ function StepCard({ step, index }: { step: any; index: number }) {
 
       {/* Content */}
       <div className="relative">
-        <h3 className="mb-4 text-xl font-black tracking-tight text-slate-900 transition-colors group-hover:text-indigo-600 dark:text-white dark:group-hover:text-indigo-400">
+        <h3 className="mb-4 text-xl font-black tracking-tight text-slate-900 transition-colors group-hover:text-primary dark:text-white dark:group-hover:text-primary">
           {step.title}
         </h3>
         <p className="text-sm leading-relaxed text-slate-500 transition-colors group-hover:text-slate-600 dark:text-slate-400 dark:group-hover:text-slate-300">

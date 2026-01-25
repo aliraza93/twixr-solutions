@@ -43,23 +43,14 @@ export function SectionHeader({
       )}
       
       <motion.h2
-// ... existing h2 code ...
         className={cn(
           "text-4xl font-black tracking-tight sm:text-6xl",
           invert ? "text-white" : "text-slate-900 dark:text-white"
         )}
       >
-        {titlePrefix} <br />
-        <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600">
+        {titlePrefix} <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-primary/80 to-primary">
           {titleHighlight}
-        </span>
-        {titleSuffix && (
-          <>
-            {" "}
-            <br />
-            {titleSuffix}
-          </>
-        )}
+        </span> {titleSuffix}
       </motion.h2>
 
       <motion.p

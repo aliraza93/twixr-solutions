@@ -32,15 +32,20 @@ export function Workflow() {
               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
               className="absolute left-10 top-10 z-30 w-64 rounded-xl border border-white/20 bg-white/10 p-4 shadow-2xl backdrop-blur-xl dark:bg-slate-900/50"
             >
-               <div className="mb-3 flex items-center gap-2">
-                 <Terminal className="h-5 w-5 text-emerald-500" />
-                 <span className="text-sm font-semibold text-white">Backend API</span>
-               </div>
-               <div className="space-y-2">
-                 <div className="h-2 w-3/4 rounded bg-emerald-500/20" />
-                 <div className="h-2 w-1/2 rounded bg-emerald-500/20" />
-                 <div className="h-2 w-full rounded bg-emerald-500/20" />
-               </div>
+                <div className="mb-3 flex items-center gap-2">
+                  <Terminal className="h-5 w-5 text-primary" />
+                  <span className="text-sm font-semibold text-white">Cloud Infrastructure</span>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-[10px] text-white/50 mb-1">
+                    <span>Active Clusters</span>
+                    <span>100%</span>
+                  </div>
+                  <div className="h-2 w-full rounded bg-primary/20">
+                     <div className="h-full w-full rounded bg-primary shrink-0 transition-all duration-1000" />
+                  </div>
+                  <div className="h-2 w-3/4 rounded bg-primary/20" />
+                </div>
             </motion.div>
 
             <motion.div 
@@ -50,11 +55,11 @@ export function Workflow() {
             >
                <div className="mb-3 flex items-center gap-2">
                  <GitBranch className="h-5 w-5 text-blue-500" />
-                 <span className="text-sm font-semibold text-white">CI/CD Pipeline</span>
+                 <span className="text-sm font-semibold text-slate-800 dark:text-white">CI/CD Automation</span>
                </div>
                <div className="space-y-2">
                  <div className="flex justify-between">
-                    <span className="text-xs text-muted-foreground">Build</span>
+                    <span className="text-xs text-muted-foreground">Production Build</span>
                     <CheckCircle2 className="h-3 w-3 text-green-500" />
                  </div>
                  <div className="h-1 w-full rounded-full bg-slate-200 dark:bg-slate-700">
@@ -92,9 +97,9 @@ export function Workflow() {
           {/* Right Column: Steps */}
           <div className="space-y-8">
             {[
-              { title: "Architecture & Design", desc: "Planning scalable database schemas and component hierarchies.", icon: GitBranch, color: "bg-blue-500" },
-              { title: "Rapid Development", desc: "Building core features using modern frameworks like Next.js & Laravel.", icon: Terminal, color: "bg-emerald-500" },
-              { title: "Optimization & Launch", desc: "Performance tuning, SEO implementation, and seamless deployment.", icon: Zap, color: "bg-purple-500" },
+              { title: "Strategic Architecture", desc: "Crafting scalable system blueprints and data models for enterprise growth.", icon: GitBranch, color: "bg-blue-500" },
+              { title: "Precision Engineering", desc: "Developing robust features with Next.js, Laravel, and AI-driven automation.", icon: Terminal, color: "bg-primary" },
+              { title: "Optimized Deployment", desc: "Automated CI/CD pipelines, SEO supremacy, and sub-second performance.", icon: Zap, color: "bg-purple-500" },
             ].map((step, i) => (
               <motion.div 
                 key={i}

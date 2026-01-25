@@ -29,7 +29,6 @@ const tools = [
   { name: "Laravel", slug: "laravel", color: "FF2D20" },
   { name: "PHP", slug: "php", color: "777BB4" },
   { name: "Firebase", slug: "firebase", color: "FFCA28" },
-  { name: "Supabase", slug: "supabase", color: "3ECF8E" },
   { name: "Vercel", slug: "vercel", color: "000000" },
   { name: "Stripe", slug: "stripe", color: "008CDD" },
   { name: "OpenAI", slug: "openai", color: "412991" },
@@ -51,16 +50,20 @@ const tools = [
   { name: "Figma", slug: "figma", color: "F24E1E" },
 ];
 
+const row1 = tools.slice(0, 12);
+const row2 = tools.slice(12, 24);
+const row3 = tools.slice(24);
+
 export function TechStack() {
   return (
-    <section className="relative overflow-hidden bg-white py-24 dark:bg-slate-950">
-      <div className="container mx-auto px-4">
+    <section className="relative overflow-hidden bg-white py-24 group/section">
+      <div className="container mx-auto px-4 relative z-10">
         <div className="mb-20 text-center">
           <motion.h2 
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-4xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-6xl"
+            className="text-4xl font-bold tracking-tight text-slate-900 sm:text-6xl"
           >
             Expertise Across <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600">
@@ -73,60 +76,62 @@ export function TechStack() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
-            className="mx-auto mt-6 max-w-2xl text-lg text-slate-600 dark:text-slate-400"
+            className="mx-auto mt-6 max-w-2xl text-lg text-slate-600"
           >
             Building scalable solutions with cutting-edge tools across web, mobile, AI, and cloud technologies.
           </motion.p>
         </div>
 
-        <div className="mx-auto max-w-6xl">
-          <div className="flex flex-wrap justify-center gap-8 lg:gap-10">
-            {tools.map((tool, index) => (
-              <motion.div
-                key={`${tool.name}-${index}`}
-                initial={{ opacity: 0, scale: 0.5 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ 
-                  delay: (index % 12) * 0.05,
-                  type: "spring",
-                  stiffness: 100
-                }}
-                className="group relative flex flex-col items-center"
-              >
-                <motion.div
-                  animate={{
-                    y: [0, -10, 0],
-                  }}
-                  transition={{
-                    duration: 4 + Math.random() * 2,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                    delay: Math.random() * 2
-                  }}
-                  whileHover={{ 
-                    y: -15, 
-                    scale: 1.15,
-                    transition: { duration: 0.2 } 
-                  }}
-                  className="relative flex h-20 w-20 items-center justify-center rounded-2xl border border-slate-100 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all group-hover:border-slate-300 group-hover:shadow-[0_20px_40px_rgb(0,0,0,0.1)] dark:border-slate-800 dark:bg-slate-900"
-                >
-                  <img 
-                    src={`https://cdn.simpleicons.org/${tool.slug}/${tool.color}`} 
-                    alt={tool.name}
-                    className="h-10 w-10 transition-transform duration-300 group-hover:scale-110"
-                  />
-                </motion.div>
-                
-                {/* Title on Hover */}
-                <span className="absolute -bottom-10 rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-bold text-white opacity-0 shadow-xl transition-all duration-300 group-hover:bottom-[-25px] group-hover:opacity-100 dark:bg-white dark:text-slate-900 pointer-events-none whitespace-nowrap">
-                  {tool.name}
-                </span>
-              </motion.div>
-            ))}
-          </div>
+        <div className="relative flex flex-col gap-12 lg:gap-16">
+          <MarqueeRow items={row1} direction="left" />
+          <MarqueeRow items={row2} direction="right" />
+          <MarqueeRow items={row3} direction="left" />
+          
+          {/* Faded edges for better premium feel */}
+          <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-white to-transparent pointer-events-none z-20" />
+          <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-white to-transparent pointer-events-none z-20" />
         </div>
       </div>
     </section>
+  );
+}
+
+function MarqueeRow({ items, direction = "left" }: { items: typeof tools, direction?: "left" | "right" }) {
+  const doubledItems = [...items, ...items, ...items]; // Triple for smoother loop
+  
+  return (
+    <div className="flex overflow-hidden">
+      <motion.div 
+        className="flex gap-8 lg:gap-10 shrink-0"
+        animate={{
+          x: direction === "left" ? [0, -1000] : [-1000, 0]
+        }}
+        transition={{
+          duration: 30,
+          repeat: Infinity,
+          ease: "linear"
+        }}
+      >
+        {doubledItems.map((tool, index) => (
+          <div
+            key={`${tool.name}-${index}`}
+            className="group relative flex flex-col items-center"
+          >
+            <div className="relative flex h-24 w-24 items-center justify-center rounded-2xl border border-slate-100 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.02)] transition-all hover:bg-slate-50 hover:border-slate-200">
+              <img 
+                src={`https://cdn.simpleicons.org/${tool.slug}/${tool.color}`} 
+                alt={tool.name}
+                className="h-10 w-10 grayscale transition-all duration-300 group-hover:grayscale-0 group-hover:scale-110"
+              />
+            </div>
+            
+            {/* Title - Revealed globally on section hover as per user request */}
+            <span className="absolute -bottom-8 rounded-lg bg-slate-900 px-3 py-1.5 text-[10px] font-bold text-white opacity-0 transition-all duration-300 group-hover/section:opacity-100 group-hover/section:translate-y-2 group-hover:bg-indigo-600 whitespace-nowrap">
+              {tool.name}
+            </span>
+          </div>
+        ))}
+      </motion.div>
+    </div>
   );
 }

@@ -82,7 +82,7 @@ export function TechStack() {
           </motion.p>
         </div>
 
-        <div className="relative flex flex-col gap-10 lg:gap-12">
+        <div className="relative flex flex-col gap-4 lg:gap-6">
           <MarqueeRow items={row1} direction="left" speed={45} />
           <MarqueeRow items={row2} direction="right" speed={55} />
           <MarqueeRow items={row3} direction="left" speed={50} />
@@ -102,7 +102,7 @@ function MarqueeRow({ items, direction = "left", speed = 30 }: { items: typeof t
   return (
     <div className="flex overflow-hidden">
       <motion.div 
-        className="flex gap-10 lg:gap-14 shrink-0 px-4"
+        className="flex gap-6 lg:gap-8 shrink-0 px-4"
         animate={{
           x: direction === "left" ? ["0%", "-33.33%"] : ["-33.33%", "0%"]
         }}
@@ -115,21 +115,21 @@ function MarqueeRow({ items, direction = "left", speed = 30 }: { items: typeof t
         {tripledItems.map((tool, index) => (
           <div
             key={`${tool.name}-${index}`}
-            className="group relative flex flex-col items-center justify-center min-w-[100px]"
+            className="group relative flex flex-col items-center justify-center min-w-[80px]"
           >
             <div 
-              className="relative flex h-20 w-20 items-center justify-center rounded-2xl border border-slate-100 bg-white shadow-sm transition-all duration-300 group-hover:border-indigo-500/50 group-hover:shadow-[0_0_20px_rgba(79,70,229,0.15)]"
+              className="relative flex h-16 w-16 items-center justify-center rounded-2xl border border-slate-100 bg-white shadow-sm transition-all duration-300 group-hover:border-indigo-500/50 group-hover:shadow-[0_0_20px_rgba(79,70,229,0.15)]"
             >
               <img 
                 src={`https://cdn.simpleicons.org/${tool.slug}/${tool.color}`} 
                 alt={tool.name}
-                className="h-9 w-9 transition-all duration-300 group-hover:scale-110"
+                className="h-8 w-8 transition-all duration-300 group-hover:scale-110"
               />
             </div>
             
             {/* Title - Visible for ALL when section is hovered */}
             <span 
-              className="mt-3 text-[11px] font-semibold text-slate-500 opacity-0 transition-all duration-500 group-hover/section:opacity-100 group-hover:text-indigo-600 whitespace-nowrap"
+              className="mt-2 text-[10px] font-semibold text-slate-500 opacity-0 transition-all duration-500 group-hover/section:opacity-100 group-hover:text-indigo-600 whitespace-nowrap"
             >
               {tool.name}
             </span>

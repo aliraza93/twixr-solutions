@@ -20,149 +20,154 @@ export function Experience() {
   return (
     <section className="relative overflow-hidden bg-white py-24 dark:bg-slate-950">
       <div className="container mx-auto px-4">
-        <div className="mb-16 text-center">
+        <div className="mb-20 text-center">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            className="inline-block rounded-full bg-teal-50 px-4 py-1.5 text-sm font-semibold text-teal-600 dark:bg-teal-900/30"
+          >
+            Professional Path
+          </motion.div>
           <motion.h2 
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-4xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-6xl"
+            className="mt-6 text-4xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-6xl"
           >
-            Work Experience
+            My Experience <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-500 to-blue-600">
+              Evolution
+            </span>
           </motion.h2>
-          <motion.p 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.1 }}
-            className="mx-auto mt-6 max-w-2xl text-lg text-slate-600 dark:text-slate-400"
-          >
-            My professional journey and the roles I've held throughout my career
-          </motion.p>
         </div>
 
-        {/* Categories Filter */}
-        <div className="mb-16 flex flex-wrap justify-center gap-2">
-          {categories.map((cat) => (
-            <Button
-              key={cat}
-              variant={activeCategory === cat ? "default" : "secondary"}
-              onClick={() => setActiveCategory(cat)}
-              className={cn(
-                "rounded-full px-6 transition-all duration-300",
-                activeCategory === cat ? "bg-teal-600 hover:bg-teal-700 shadow-lg scale-105" : "bg-slate-100 hover:bg-slate-200 text-slate-600"
-              )}
-            >
-              {cat}
-            </Button>
-          ))}
-        </div>
-
-        {/* Timeline */}
-        <div className="relative mx-auto max-w-5xl">
-          {/* Vertical Line */}
-          <div className="absolute left-4 top-0 h-full w-0.5 bg-slate-200 dark:bg-slate-800 md:left-1/2 md:-translate-x-1/2" />
-
-          <div className="space-y-24">
-            <AnimatePresence mode="popLayout">
-              {filteredExperiences.map((exp, index) => (
-                <ExperienceItem key={exp.company} exp={exp} index={index} />
-              ))}
-            </AnimatePresence>
+        {/* Categories - Modern Segmented Control */}
+        <div className="mb-16 flex justify-center">
+          <div className="flex flex-wrap items-center justify-center gap-2 rounded-2xl bg-slate-50 p-2 dark:bg-slate-900">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={cn(
+                  "relative rounded-xl px-4 py-2 text-sm font-medium transition-all duration-300",
+                  activeCategory === cat 
+                    ? "bg-white text-teal-600 shadow-sm dark:bg-slate-800" 
+                    : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                )}
+              >
+                {activeCategory === cat && (
+                  <motion.div 
+                    layoutId="activeTab"
+                    className="absolute inset-0 rounded-xl bg-white shadow-sm dark:bg-slate-800"
+                    style={{ zIndex: -1 }}
+                  />
+                )}
+                {cat}
+              </button>
+            ))}
           </div>
+        </div>
+
+        {/* Modern Bento Grid Experience */}
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-6">
+          <AnimatePresence mode="popLayout">
+            {filteredExperiences.map((exp, index) => (
+              <ExperienceCard key={exp.company} exp={exp} index={index} />
+            ))}
+          </AnimatePresence>
         </div>
       </div>
     </section>
   );
 }
 
-function ExperienceItem({ exp, index }: { exp: any; index: number }) {
-  const isEven = index % 2 === 0;
+function ExperienceCard({ exp, index }: { exp: any; index: number }) {
+  const isLarge = index === 0;
 
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, y: 50 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.9 }}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
+      transition={{ duration: 0.4, delay: index * 0.05 }}
       className={cn(
-        "relative flex flex-col md:flex-row md:justify-between items-start md:items-center",
-        isEven ? "md:flex-row-reverse" : ""
+        "group relative overflow-hidden rounded-[2rem] border border-slate-100 bg-white p-8 dark:border-slate-800 dark:bg-slate-900",
+        isLarge ? "md:col-span-4 md:row-span-2" : "md:col-span-2"
       )}
     >
-      {/* Content Side */}
-      <div className="md:w-[45%] pl-12 md:pl-0">
-        <div className="relative rounded-3xl border border-slate-100 bg-white p-8 shadow-[0_20px_50px_rgba(0,0,0,0.05)] dark:border-slate-800 dark:bg-slate-900 transition-all hover:shadow-xl group">
-          {/* Company & Role */}
-          <div className="mb-4 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-50 dark:bg-slate-800">
-                <Icon icon={exp.logo} className="h-8 w-8" />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white">{exp.company}</h3>
-                <p className="text-sm text-slate-500">{exp.location}</p>
-              </div>
+      {/* Background Gradient Glow */}
+      <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-teal-500/5 blur-[100px] transition-all group-hover:bg-teal-500/10" />
+
+      <div className="relative flex h-full flex-col">
+        {/* Header */}
+        <div className="mb-6 flex items-start justify-between">
+          <div className="flex items-center gap-4">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-50 text-2xl shadow-inner dark:bg-slate-800">
+              <Icon icon={exp.logo} />
             </div>
-            {exp.link !== "#" && (
-              <Button variant="outline" size="sm" asChild className="rounded-full">
-                <a href={exp.link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
-                  Visit <Icon icon="lucide:external-link" />
-                </a>
-              </Button>
-            )}
+            <div>
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-white">{exp.company}</h3>
+              <p className="text-sm font-medium text-teal-600">{exp.role}</p>
+            </div>
           </div>
+          {exp.link !== "#" && (
+             <a 
+              href={exp.link} 
+              target="_blank" 
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-100 bg-white text-slate-400 transition-all hover:border-teal-500 hover:text-teal-600 dark:border-slate-800 dark:bg-slate-900"
+            >
+              <Icon icon="lucide:arrow-up-right" className="h-5 w-5" />
+            </a>
+          )}
+        </div>
 
-          <div className="mb-4">
-            <h4 className="text-lg font-semibold text-teal-600">{exp.role}</h4>
-            <p className="text-sm font-medium text-slate-400">{exp.period}</p>
-          </div>
-
-          <p className="mb-6 text-slate-600 dark:text-slate-400 leading-relaxed">
+        {/* Content */}
+        <div className="flex-grow">
+          <p className="text-sm font-medium text-slate-400 mb-4">{exp.period}</p>
+          <p className={cn(
+            "text-slate-600 dark:text-slate-400 leading-relaxed",
+            isLarge ? "text-lg" : "text-sm line-clamp-4 group-hover:line-clamp-none transition-all"
+          )}>
             {exp.description}
           </p>
+        </div>
 
-          {/* Project Previews */}
-          {exp.projects.length > 0 && (
-            <div className="relative mb-8 flex h-40 items-center justify-center overflow-hidden rounded-2xl bg-slate-50 dark:bg-slate-800/50">
-              <div className="flex gap-4 px-4 overflow-x-auto no-scrollbar scroll-smooth">
-                {exp.projects.map((project: any, i: number) => (
-                  <motion.div
-                    key={project.title}
-                    whileHover={{ y: -10 }}
-                    className="relative shrink-0 w-64 h-32 rounded-xl border border-slate-200 bg-white shadow-lg overflow-hidden group/project"
-                  >
-                    {/* Placeholder for project images - gradient background with title */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-800 flex items-center justify-center">
-                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{project.title} Preview</span>
-                    </div>
-                    {/* Floating Title on Hover */}
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover/project:opacity-100 transition-opacity">
-                       <span className="text-xs font-bold text-white px-2 py-1 bg-teal-600 rounded-md shadow-lg">{project.title}</span>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Tech Stack */}
-          <div className="flex flex-wrap gap-2">
-            {exp.technologies.map((tech: string) => (
-              <Badge key={tech} variant="secondary" className="bg-slate-50 hover:bg-teal-50 hover:text-teal-600 transition-colors">
-                {tech}
-              </Badge>
+        {/* Projects Strip - Modern Horizontal Cards */}
+        {isLarge && exp.projects.length > 0 && (
+          <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {exp.projects.map((project: any) => (
+              <motion.div
+                key={project.title}
+                whileHover={{ scale: 1.02 }}
+                className="relative h-32 overflow-hidden rounded-2xl bg-slate-50 dark:bg-slate-800 group/project"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-teal-500/10 to-blue-500/10" />
+                <div className="relative p-4">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{project.title}</span>
+                  <div className="mt-2 h-1 w-12 rounded-full bg-teal-500" />
+                </div>
+                <div className="absolute inset-0 flex items-center justify-center bg-teal-600/90 opacity-0 transition-opacity group-hover/project:opacity-100">
+                  <span className="font-bold text-white">View Case Study</span>
+                </div>
+              </motion.div>
             ))}
           </div>
+        )}
+
+        {/* Tech Stack */}
+        <div className="mt-8 flex flex-wrap gap-2">
+          {exp.technologies.slice(0, isLarge ? 10 : 4).map((tech: string) => (
+            <span key={tech} className="rounded-lg bg-slate-50 px-2.5 py-1 text-[10px] font-semibold text-slate-500 dark:bg-slate-800">
+              {tech}
+            </span>
+          ))}
+          {!isLarge && exp.technologies.length > 4 && (
+             <span className="text-[10px] font-bold text-slate-300">+{exp.technologies.length - 4} more</span>
+          )}
         </div>
       </div>
-
-      {/* Timeline Node */}
-      <div className="absolute left-4 md:left-1/2 top-8 md:top-1/2 h-4 w-4 -translate-y-1/2 -translate-x-1/2 rounded-full border-4 border-white bg-teal-600 shadow-[0_0_0_4px_rgba(13,148,136,0.2)] z-30" />
-
-      {/* Spacer side */}
-      <div className="hidden md:block md:w-[45%]" />
     </motion.div>
   );
 }
+

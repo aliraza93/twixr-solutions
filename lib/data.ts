@@ -119,3 +119,79 @@ export const experiences = [
         projects: []
     }
 ];
+
+export const testimonials = [
+    {
+        name: "Emily Rodriguez",
+        role: "Product Manager",
+        company: "Upwork",
+        image: "https://api.dicebear.com/7.x/avataaars/svg?seed=Emily",
+        content: "Shajeel's UI/UX skills are top-notch. He transformed our outdated website into a modern, user-friendly experience.",
+        rating: 5,
+        platform: "simple-icons:upwork",
+    },
+    {
+        name: "David Kim",
+        role: "Founding Engineer",
+        company: "LinkedIn",
+        image: "https://api.dicebear.com/7.x/avataaars/svg?seed=David",
+        content: "Professional, reliable, and delivers quality work on time. Highly recommend for any web development project.",
+        rating: 5,
+        platform: "logos:linkedin-icon",
+    },
+    {
+        name: "Sarah Johnson",
+        role: "Director of Marketing",
+        company: "Upwork",
+        image: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah",
+        content: "Shajeel delivered exceptional work on our e-commerce platform. His attention to detail and technical expertise made our project a huge success.",
+        rating: 5,
+        platform: "simple-icons:upwork",
+    },
+    {
+        name: "Michael Chen",
+        role: "CEO",
+        company: "Fiverr",
+        image: "https://api.dicebear.com/7.x/avataaars/svg?seed=Michael",
+        content: "Outstanding React developer! Built our entire frontend from scratch with beautiful animations and perfect responsiveness.",
+        rating: 5,
+        platform: "simple-icons:fiverr",
+    },
+    {
+        name: "James Wilson",
+        role: "Technical Lead",
+        company: "Facebook",
+        image: "https://api.dicebear.com/7.x/avataaars/svg?seed=James",
+        content: "Best developer I've worked with! Clean code, modern design, and excellent project management skills.",
+        rating: 5,
+        platform: "logos:facebook",
+    },
+    {
+        name: "Lisa Thompson",
+        role: "Project Manager",
+        company: "Fiverr",
+        image: "https://api.dicebear.com/7.x/avataaars/svg?seed=Lisa",
+        content: "Amazing work on our mobile app! The performance optimizations and smooth animations exceeded our expectations.",
+        rating: 5,
+        platform: "simple-icons:fiverr",
+    },
+    {
+        name: "Alex Parker",
+        role: "Founder",
+        company: "Upwork",
+        image: "https://api.dicebear.com/7.x/avataaars/svg?seed=Alex",
+        content: "Shajeel's full-stack expertise saved us time and money. He handled both frontend and backend perfectly.",
+        rating: 5,
+        platform: "simple-icons:upwork",
+    },
+    {
+        name: "Maria Garcia",
+        role: "Creative Director",
+        company: "Google",
+        image: "https://api.dicebear.com/7.x/avataaars/svg?seed=Maria",
+        content: "Incredible attention to detail and communication throughout the project. I will definitely work with him again!",
+        rating: 5,
+        platform: "logos:google-icon",
+    },
+];
+

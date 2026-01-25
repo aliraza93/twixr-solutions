@@ -32,7 +32,7 @@ export function Services() {
           className="text-center max-w-3xl mx-auto mb-16"
         >
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4 font-heading">
-            Technical Expertise
+            Core Service Offerings
           </h2>
           <p className="text-lg text-muted-foreground">
             I combine systems thinking with full-stack capabilities to build software that drives business growth.
@@ -45,7 +45,7 @@ export function Services() {
           initial="hidden"
           whileInView="show"
           viewport={{ once: true }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-20"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
         >
           {services.map((service, index) => (
             <motion.div key={index} variants={item}>
@@ -61,33 +61,6 @@ export function Services() {
             </motion.div>
           ))}
         </motion.div>
-
-        {/* Tech Stack Pills */}
-        <div className="max-w-4xl mx-auto">
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
-            {Object.entries(skills).map(([category, items]) => (
-              <motion.div
-                key={category}
-                initial={{ opacity: 0, scale: 0.95 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4 }}
-                className="space-y-4"
-              >
-                <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                  {category}
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {items.map((skill) => (
-                    <Badge key={skill} variant="secondary" className="bg-background hover:bg-background/80">
-                      {skill}
-                    </Badge>
-                  ))}
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
       </div>
     </section>
   );

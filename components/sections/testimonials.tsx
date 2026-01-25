@@ -7,6 +7,7 @@ import { Icon } from "@iconify/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { SectionHeader } from "@/components/ui/section-header";
 
 export function Testimonials() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -19,31 +20,13 @@ export function Testimonials() {
   return (
     <section className="relative overflow-hidden bg-white py-24 dark:bg-slate-950">
       <div className="container relative z-10 mx-auto px-4">
-        {/* Header */}
-        <div className="mb-20 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            className="mb-4 inline-block rounded-full bg-teal-500/10 px-4 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-teal-600 dark:bg-teal-500/20"
-          >
-            Client Success
-          </motion.div>
-          <motion.h2 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            className="text-4xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-6xl"
-          >
-            What Clients <span className="text-teal-600">Say</span>
-          </motion.h2>
-          <motion.p 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="mx-auto mt-6 max-w-2xl text-lg text-slate-500 dark:text-slate-400"
-          >
-            Real feedback from professionals and companies I've collaborated with across global platforms.
-          </motion.p>
-        </div>
+        <SectionHeader
+          badge="Client Success"
+          titlePrefix="What My"
+          titleHighlight="Clients"
+          titleSuffix="Say"
+          description="Real feedback from professionals and companies I've collaborated with across global platforms."
+        />
 
         {/* Marquee Rows */}
         <div className="flex flex-col gap-8">

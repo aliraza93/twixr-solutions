@@ -4,37 +4,18 @@ import { motion } from "framer-motion";
 import { approachSteps } from "@/lib/data";
 import { Icon } from "@iconify/react";
 import { cn } from "@/lib/utils";
+import { SectionHeader } from "@/components/ui/section-header";
 
 export function Approach() {
   return (
     <section className="relative overflow-hidden bg-white py-24 dark:bg-slate-950">
       <div className="container relative z-10 mx-auto px-4">
-        {/* Header */}
-        <div className="mb-20 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            className="mb-4 inline-block rounded-full bg-indigo-500/10 px-4 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-indigo-600 dark:bg-indigo-500/20"
-          >
-            Our Methodology
-          </motion.div>
-          <motion.h2 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            className="text-4xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-6xl"
-          >
-            A Proven Approach to <br />
-            <span className="text-indigo-600">Achieve Your Objectives</span>
-          </motion.h2>
-          <motion.p 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="mx-auto mt-6 max-w-2xl text-lg text-slate-600 dark:text-slate-400"
-          >
-            I follow a structured, results-driven process designed to transform complex challenges into scalable, high-performing solutions.
-          </motion.p>
-        </div>
+        <SectionHeader
+          badge="Our Methodology"
+          titlePrefix="A Proven Approach to"
+          titleHighlight="Achieve Your Objectives"
+          description="I follow a structured, results-driven process designed to transform complex challenges into scalable, high-performing solutions."
+        />
 
         {/* Steps Flow */}
         <div className="relative mx-auto max-w-6xl">

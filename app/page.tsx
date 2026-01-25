@@ -1,5 +1,4 @@
 import { Hero } from "@/components/sections/hero";
-import { Services } from "@/components/sections/services";
 import { Workflow } from "@/components/sections/workflow";
 import { Approach } from "@/components/sections/approach";
 import { TechStack } from "@/components/sections/tech-stack";
@@ -19,7 +18,6 @@ export default function Home() {
       <Testimonials />
       <BlogPosts />
       <FAQ />
-      <Services />
     </main>
   );
 }

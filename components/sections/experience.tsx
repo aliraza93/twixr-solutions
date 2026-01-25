@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { experiences } from "@/lib/data";
 import { Icon } from "@iconify/react";
 import { cn } from "@/lib/utils";
+import { SectionHeader } from "@/components/ui/section-header";
 
 export function Experience() {
   const [expandedIndex, setExpandedIndex] = useState<number | null>(0);
@@ -19,26 +20,12 @@ export function Experience() {
   return (
     <section className="relative overflow-hidden bg-slate-50/50 py-24 dark:bg-slate-950">
       <div className="container mx-auto px-4">
-        {/* Centered Header */}
-        <div className="mb-24 text-center">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            className="mb-4 inline-block rounded-full bg-teal-500/10 px-4 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-teal-600 dark:bg-teal-500/20"
-          >
-            Professional Path
-          </motion.div>
-          <motion.h2 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            className="text-5xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-7xl"
-          >
-            Career <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-blue-600">
-              Evolution
-            </span>
-          </motion.h2>
-        </div>
+        <SectionHeader
+          badge="Professional Path"
+          titlePrefix="Career"
+          titleHighlight="Evolution"
+          description="A timeline of my professional growth, from early engineering roles to technical leadership and full-stack expertise."
+        />
 
         {/* Motion Accordion Stack with Visible Hierarchy Line */}
         <div className="relative mx-auto max-w-4xl">

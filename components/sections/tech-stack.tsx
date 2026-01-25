@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { Icon } from "@iconify/react";
 import { cn } from "@/lib/utils";
+import { SectionHeader } from "@/components/ui/section-header";
 
 const tools = [
   { name: "JavaScript", icon: "logos:javascript" },
@@ -73,31 +74,15 @@ const row3 = tools.slice(40);
 
 export function TechStack() {
   return (
-    <section className="relative overflow-hidden bg-white py-12 group/section">
+    <section className="relative overflow-hidden bg-white py-24 group/section dark:bg-slate-950">
       <div className="container mx-auto px-4 relative z-10">
-        <div className="mb-12 text-center">
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-4xl font-bold tracking-tight text-slate-900 sm:text-6xl"
-          >
-            Expertise Across <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600">
-              Modern Technologies
-            </span> <br />
-            & Frameworks
-          </motion.h2>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.1 }}
-            className="mx-auto mt-6 max-w-2xl text-lg text-slate-600"
-          >
-            Building scalable solutions with cutting-edge tools across web, mobile, AI, and cloud technologies.
-          </motion.p>
-        </div>
+        <SectionHeader
+          badge="Our Tech Stack"
+          titlePrefix="Expertise Across"
+          titleHighlight="Modern Technologies"
+          titleSuffix="& Frameworks"
+          description="Building scalable solutions with cutting-edge tools across web, mobile, AI, and cloud technologies."
+        />
 
         <div className="relative flex flex-col gap-6 lg:gap-8">
           <MarqueeRow items={row1} direction="left" speed={70} />

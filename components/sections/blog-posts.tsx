@@ -6,49 +6,18 @@ import { Icon } from "@iconify/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { SectionHeader } from "@/components/ui/section-header";
 
 export function BlogPosts() {
   return (
-    <section className="relative overflow-hidden bg-slate-50/30 py-24 dark:bg-slate-900/10">
+    <section className="relative overflow-hidden bg-white py-24 dark:bg-slate-950">
       <div className="container relative z-10 mx-auto px-4">
-        {/* Header */}
-        <div className="mb-16 flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
-          <div className="max-w-2xl">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              className="mb-4 inline-block rounded-full bg-blue-500/10 px-4 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-blue-600 dark:bg-blue-500/20"
-            >
-              Latest Insights
-            </motion.div>
-            <motion.h2 
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              className="text-4xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-6xl"
-            >
-              Recent Blog <span className="text-blue-600">Posts</span>
-            </motion.h2>
-            <motion.p 
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="mt-6 text-lg text-slate-600 dark:text-slate-400"
-            >
-              Sharing my discoveries, technical deep-dives, and life experiences in software engineering.
-            </motion.p>
-          </div>
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-          >
-            <Button asChild variant="outline" className="rounded-xl px-6 py-5 font-bold transition-all hover:bg-slate-900 hover:text-white dark:hover:bg-white dark:hover:text-slate-900">
-              <Link href="/blog" className="flex items-center gap-2">
-                View All Posts
-                <Icon icon="lucide:arrow-right" className="h-4 w-4" />
-              </Link>
-            </Button>
-          </motion.div>
-        </div>
+        <SectionHeader
+          badge="Latest Insights"
+          titlePrefix="Recent"
+          titleHighlight="Blog Posts"
+          description="Sharing my discoveries, technical deep-dives, and life experiences in software engineering."
+        />
 
         {/* Blog Grid */}
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">

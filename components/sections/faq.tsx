@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { faqs } from "@/lib/data";
 import { Icon } from "@iconify/react";
 import { cn } from "@/lib/utils";
+import { SectionHeader } from "@/components/ui/section-header";
 
 export function FAQ() {
   const [activeId, setActiveId] = useState<number | null>(0);
@@ -15,22 +16,14 @@ export function FAQ() {
         <div className="grid grid-cols-1 gap-16 lg:grid-cols-12">
           {/* Left: Text Content */}
           <div className="lg:col-span-5">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
+            <SectionHeader
               className="sticky top-32"
-            >
-              <div className="mb-6 inline-block rounded-full bg-teal-500/10 px-4 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-teal-600 dark:bg-teal-500/20">
-                Support Hub
-              </div>
-              <h2 className="text-4xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-6xl">
-                Frequently Asked <br />
-                <span className="text-slate-400">Questions</span>
-              </h2>
-              <p className="mt-8 max-w-md text-xl leading-relaxed text-slate-500 dark:text-slate-400">
-                Can&apos;t find what you&apos;re looking for? Feel free to <a href="#contact" className="font-bold text-teal-600 underline decoration-teal-500/30 underline-offset-4 hover:text-teal-500">contact me directly</a>.
-              </p>
-            </motion.div>
+              align="left"
+              badge="Support Hub"
+              titlePrefix="Frequently Asked"
+              titleHighlight="Questions"
+              description="Can't find what you're looking for? Feel free to contact me directly."
+            />
           </div>
 
           {/* Right: Accordion */}

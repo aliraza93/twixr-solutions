@@ -1,16 +1,6 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { 
-import {
-  Code2, Cpu, Database, Globe, Layout,
-  Layers, MessageSquare, Smartphone, Terminal,
-  Braces, Cloud, Settings, Zap,
-  Github, GitBranch, GithubIcon,
-  Boxes, Server, Lock, Search,
-  Wind, Triangle, Palette, FileJson,
-  Blocks, Laptop, Fingerprint, DatabaseBackup
-} from "lucide-react";
 import { Icon } from "@iconify/react";
 import { cn } from "@/lib/utils";
 

@@ -46,7 +46,7 @@ export function Hero() {
             >
               Build Scalable <br/>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-violet-600">SaaS & Web Apps</span> <br/>
-              with a Top 10% <br/>
+              with a Top 3% <br/>
               Developer
             </motion.h1>
 

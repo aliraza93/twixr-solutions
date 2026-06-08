@@ -21,17 +21,21 @@ export function Approach() {
         {/* Steps Flow */}
         <div className="relative mx-auto max-w-[1440px]">
           {/* Animated SVG Path for Connections (Desktop) */}
-          <svg className="absolute left-0 top-10 hidden h-20 w-full lg:block" preserveAspectRatio="none">
+          <svg
+            className="absolute left-0 top-10 hidden h-20 w-full lg:block"
+            viewBox="0 0 1200 80"
+            preserveAspectRatio="none"
+          >
             <path
-              d="M 120 40 Q 250 -10 380 40 Q 510 90 640 40 Q 770 -10 900 40"
+              d="M 120 40 Q 250 -10 380 40 Q 510 90 640 40 Q 770 -10 900 40 Q 945 90 990 40"
               fill="none"
-              stroke="url(#gradient)"
+              stroke="url(#approach-flow-gradient)"
               strokeWidth="2"
               strokeDasharray="8 8"
               className="animate-flow-dash"
             />
             <defs>
-              <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <linearGradient id="approach-flow-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
                 <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.2" />
                 <stop offset="50%" stopColor="hsl(var(--primary))" stopOpacity="0.6" />
                 <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0.2" />

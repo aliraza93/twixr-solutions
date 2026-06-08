@@ -102,7 +102,7 @@ function MarqueeRow({ items, direction = "left", speed = 30 }: { items: typeof t
   const tripledItems = [...items, ...items, ...items];
 
   return (
-    <div className="flex overflow-hidden">
+    <div className="flex overflow-hidden py-4">
       <motion.div
         className="flex gap-8 lg:gap-10 shrink-0 px-4"
         animate={{
@@ -120,7 +120,7 @@ function MarqueeRow({ items, direction = "left", speed = 30 }: { items: typeof t
             className="group relative flex flex-col items-center justify-center min-w-[100px]"
           >
             <div
-              className="relative flex h-20 w-20 items-center justify-center rounded-2xl border border-slate-100 bg-white shadow-sm transition-all duration-300 group-hover:border-indigo-500/30 group-hover:border-t-2 group-hover:border-t-indigo-500 group-hover:shadow-[0_10px_30px_rgba(79,70,229,0.1)] group-hover:-translate-y-1 group-hover:scale-110"
+              className="relative flex h-20 w-20 items-center justify-center rounded-2xl border border-slate-100 bg-white shadow-sm transition-all duration-300 group-hover:border-2 group-hover:border-indigo-500/40 group-hover:shadow-[0_10px_30px_rgba(79,70,229,0.1)] group-hover:-translate-y-1 group-hover:scale-110"
             >
               <Icon
                 icon={tool.icon}

@@ -7,7 +7,7 @@ import { Icon } from "@iconify/react";
 
 export function Hero() {
   return (
-    <section className="relative w-full overflow-hidden pt-[140px] pb-32 lg:pt-[180px] lg:pb-40 bg-white">
+    <section className="relative w-full overflow-hidden pt-[120px] pb-24 lg:pt-[140px] lg:pb-32 bg-white">
       
       {/* Light Mode: Stripe-like Vibrant Mesh Overlay */}
       <div className="absolute inset-0 top-0 z-0 h-full w-full overflow-hidden">
@@ -42,19 +42,20 @@ export function Hero() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="font-heading text-5xl font-bold tracking-tight text-slate-900 sm:text-7xl lg:leading-[1.1] mb-6"
+              className="text-display mb-5 text-slate-900"
             >
-              Build Scalable <br/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-violet-600">SaaS & Web Apps</span> <br/>
-              with a Top 3% <br/>
-              Developer
+              Build Scalable{" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-violet-600">
+                SaaS & Web Apps
+              </span>{" "}
+              with a Top 3% Developer
             </motion.h1>
 
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="max-w-xl text-lg text-slate-600 sm:text-xl leading-relaxed mb-8"
+              className="text-lead mb-8"
             >
                Senior Full Stack Engineer (7+ Years) specializing in Laravel, Next.js, and Cloud Infrastructure. 
                I transform complex technical challenges into high-performance solutions.

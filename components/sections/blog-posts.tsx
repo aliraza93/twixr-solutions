@@ -69,7 +69,7 @@ function BlogCard({ post }: { post: (typeof blogPosts)[number] }) {
         <p className="mb-3 text-[11px] font-bold uppercase tracking-widest text-slate-400">
           {post.date}
         </p>
-        <h3 className="mb-4 text-xl font-bold leading-tight text-slate-900 transition-colors group-hover:text-primary dark:text-white dark:group-hover:text-primary">
+        <h3 className="mb-3 text-lg font-bold leading-snug text-slate-900 transition-colors group-hover:text-primary dark:text-white dark:group-hover:text-primary">
           {post.title}
         </h3>
         <p className="mb-8 line-clamp-3 text-sm leading-relaxed text-slate-500 dark:text-slate-400">

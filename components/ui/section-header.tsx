@@ -27,7 +27,7 @@ export function SectionHeader({
   return (
     <div
       className={cn(
-        "mb-16 md:mb-24",
+        "mb-12 md:mb-16",
         align === "center" ? "text-center" : "text-left",
         className
       )}
@@ -36,7 +36,7 @@ export function SectionHeader({
         <ScrollReveal delay={0} distance={20}>
           <div
             className={cn(
-              "mb-4 inline-block rounded-full px-4 py-1 text-[10px] font-bold uppercase tracking-[0.2em]",
+              "mb-4 inline-block rounded-full px-4 py-1 text-[20px] font-bold uppercase tracking-[0.2em]",
               invert ? "bg-white/10 text-white" : "bg-primary/5 text-primary dark:bg-primary/10"
             )}
           >
@@ -48,21 +48,21 @@ export function SectionHeader({
       <ScrollReveal delay={0.05} distance={24}>
         <h2
           className={cn(
-            "text-3xl font-bold tracking-tight sm:text-5xl",
+            "text-section-title font-semibold",
             invert ? "text-white" : "text-slate-900 dark:text-white"
           )}
         >
-          {titlePrefix && <>{titlePrefix} </>}
+          {titlePrefix && <span className="font-semibold">{titlePrefix} </span>}
           <span className="font-black italic text-primary">{titleHighlight}</span>
-          {titleSuffix && <> {titleSuffix}</>}
+          {titleSuffix && <span className="font-semibold"> {titleSuffix}</span>}
         </h2>
       </ScrollReveal>
 
       <ScrollReveal delay={0.1} distance={24}>
         <p
           className={cn(
-            "mx-auto mt-6 max-w-2xl text-lg",
-            invert ? "text-slate-300" : "text-slate-600 dark:text-slate-400",
+            "text-section-desc mx-auto mt-5",
+            invert ? "text-slate-300" : "",
             align === "left" && "mx-0"
           )}
         >

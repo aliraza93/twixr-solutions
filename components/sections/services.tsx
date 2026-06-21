@@ -31,10 +31,10 @@ export function Services() {
           transition={{ duration: 0.5 }}
           className="text-center max-w-3xl mx-auto mb-16"
         >
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4 font-heading">
+          <h2 className="text-section-title mb-4 text-slate-900 dark:text-white">
             Core Service Offerings
           </h2>
-          <p className="text-lg text-muted-foreground">
+          <p className="text-section-desc mx-auto">
             I combine systems thinking with full-stack capabilities to build software that drives business growth.
           </p>
         </motion.div>

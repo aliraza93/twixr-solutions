@@ -22,7 +22,7 @@ export function Footer() {
               </div>
               <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Ali Raza</span>
             </div>
-            <p className="mb-8 max-w-sm text-lg leading-relaxed text-slate-500 dark:text-slate-400">
+            <p className="mb-8 max-w-sm text-base leading-normal text-slate-500 dark:text-slate-400">
               Developer & Trainer — Freelancing, Programming & AI. Top Rated Plus on Upwork with 10+ years of experience.
             </p>
             <div className="space-y-4">

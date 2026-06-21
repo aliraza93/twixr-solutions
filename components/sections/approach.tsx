@@ -98,7 +98,7 @@ function StepCard({ step, index }: { step: any; index: number }) {
 
       {/* Content */}
       <div className="relative">
-        <h3 className="mb-4 text-xl font-black tracking-tight text-slate-900 transition-colors group-hover:text-primary dark:text-white dark:group-hover:text-primary">
+        <h3 className="mb-3 text-lg font-black tracking-tight text-slate-900 transition-colors group-hover:text-primary dark:text-white dark:group-hover:text-primary">
           {step.title}
         </h3>
         <p className="text-sm leading-relaxed text-slate-500 transition-colors group-hover:text-slate-600 dark:text-slate-400 dark:group-hover:text-slate-300">

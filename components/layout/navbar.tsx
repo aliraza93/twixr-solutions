@@ -48,7 +48,7 @@ export function Navbar() {
                           <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-xl shadow-primary/20 transition-transform group-hover/card:scale-110">
                              <Terminal className="h-7 w-7" />
                           </div>
-                          <div className="mb-2 text-2xl font-bold tracking-tight text-slate-950 dark:text-white">
+                          <div className="mb-2 text-xl font-bold tracking-tight text-slate-950 dark:text-white">
                             Strategic <span className="text-primary italic">Dev</span>
                           </div>
                           <p className="text-sm leading-relaxed text-slate-500 dark:text-slate-400">
@@ -62,13 +62,13 @@ export function Navbar() {
                     </li>
                     <div className="flex flex-col gap-1">
                       <p className="mb-2 px-3 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Core Expertise</p>
-                      <ListItem href="/services/backend" title="API Engineering" icon={<ServerIcon className="h-5 w-5" />}>
+                      <ListItem href="/services/laravel-api-backend" title="API Engineering" icon={<ServerIcon className="h-5 w-5" />}>
                         Scalable backends & cloud-native architectures.
                       </ListItem>
-                      <ListItem href="/services/frontend" title="Interaction Design" icon={<LayoutIcon className="h-5 w-5" />}>
+                      <ListItem href="/services/nextjs-frontend" title="Interaction Design" icon={<LayoutIcon className="h-5 w-5" />}>
                         Immersive, high-performance user interfaces.
                       </ListItem>
-                      <ListItem href="/services/devops" title="Systems & Cloud" icon={<CloudIcon className="h-5 w-5" />}>
+                      <ListItem href="/services/cloud-infrastructure-devops" title="Systems & Cloud" icon={<CloudIcon className="h-5 w-5" />}>
                         Automated, secure, and resilient infrastructure.
                       </ListItem>
                     </div>
@@ -117,10 +117,10 @@ export function Navbar() {
               <div className="flex flex-col gap-6 pt-12">
                 <div className="flex flex-col gap-2">
                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Navigation</p>
-                   <Link href="/" className="cursor-pointer text-2xl font-bold hover:text-primary transition-colors">Home</Link>
-                   <Link href="/services" className="cursor-pointer text-2xl font-bold hover:text-primary transition-colors">Services</Link>
-                   <Link href="/portfolio" className="cursor-pointer text-2xl font-bold hover:text-primary transition-colors">Portfolio</Link>
-                   <Link href="/testimonials" className="cursor-pointer text-2xl font-bold hover:text-primary transition-colors">Testimonials</Link>
+                   <Link href="/" className="cursor-pointer text-xl font-bold hover:text-primary transition-colors">Home</Link>
+                   <Link href="/services" className="cursor-pointer text-xl font-bold hover:text-primary transition-colors">Services</Link>
+                   <Link href="/portfolio" className="cursor-pointer text-xl font-bold hover:text-primary transition-colors">Portfolio</Link>
+                   <Link href="/testimonials" className="cursor-pointer text-xl font-bold hover:text-primary transition-colors">Testimonials</Link>
                 </div>
                 <div className="mt-8 flex flex-col gap-4">
                    <Button className="h-12 w-full cursor-pointer rounded-2xl bg-primary text-base font-bold shadow-xl shadow-primary/20">Contact Me</Button>

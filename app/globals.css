@@ -34,6 +34,8 @@
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
+
+  --font-heading: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
 }
 
 @layer base {
@@ -106,6 +108,40 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground text-[15px] leading-normal;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply tracking-tight;
+  }
+}
+
+@layer components {
+  /* Hero / page-level headlines */
+  .text-display {
+    @apply font-heading text-3xl font-bold leading-[1.15] tracking-tight sm:text-4xl lg:text-5xl;
+  }
+
+  /* Detail pages and secondary page titles */
+  .text-page-title {
+    @apply font-heading text-2xl font-bold leading-snug tracking-tight sm:text-3xl lg:text-4xl;
+  }
+
+  /* Section headings (SectionHeader + in-page h2) */
+  .text-section-title {
+    @apply font-heading text-[20px] font-semibold leading-snug tracking-tight sm:text-3xl lg:text-4xl;
+  }
+
+  /* Section intros */
+  .text-section-desc {
+    @apply max-w-3xl text-base leading-normal text-slate-600 sm:text-lg dark:text-slate-400;
+  }
+
+  /* Lead paragraphs under heroes */
+  .text-lead {
+    @apply max-w-3xl text-base leading-normal text-slate-600 sm:text-lg dark:text-slate-400;
   }
 }

@@ -26,29 +26,21 @@ import {
   ScrollStagger,
 } from "@/components/motion/scroll-reveal";
 
-const SERVICE_ICONS: Record<string, LucideIcon> = {
+import type {
+  ServiceCatalogCategoryId,
+  ServiceIconName,
+  ServiceListingItem,
+} from "@/lib/data/services";
+
+export type { ServiceListingItem };
+
+const SERVICE_ICONS: Record<ServiceIconName, LucideIcon> = {
   Layers,
   Server,
   Monitor,
   Bot,
   Cloud,
   Smartphone,
-};
-
-export type ServiceCatalogCategoryId = "product" | "backend" | "ai" | "cloud" | "mobile";
-
-export type ServiceListingItem = {
-  slug: string;
-  icon: keyof typeof SERVICE_ICONS;
-  /** Path under /public for card header art (SVG). */
-  illustration: string;
-  /** Used for filter chips (groups related offerings). */
-  categoryId: ServiceCatalogCategoryId;
-  /** Short label on the card image (e.g. “Web & SaaS”). */
-  categoryLabel: string;
-  title: string;
-  description: string;
-  tags: readonly string[];
 };
 
 const STATS = [
@@ -92,7 +84,7 @@ function ServicesHero({ reduceMotion }: { reduceMotion: boolean | null }) {
           initial={{ opacity: 0, y: -12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={motionTransition(reduceMotion)}
-          className="mb-8 inline-block rounded-full bg-primary/5 px-4 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-primary dark:bg-primary/10"
+          className="mb-8 inline-block rounded-full bg-primary/5 px-4 py-1 text-[20px] font-bold uppercase tracking-[0.2em] text-primary dark:bg-primary/10"
         >
           OUR SERVICES
         </motion.div>
@@ -101,7 +93,7 @@ function ServicesHero({ reduceMotion }: { reduceMotion: boolean | null }) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={motionTransition(reduceMotion, 0.08)}
-          className="font-heading text-4xl font-medium tracking-tight text-slate-900 sm:text-5xl lg:text-6xl lg:leading-[1.1] dark:text-white"
+          className="text-display font-medium text-slate-900 dark:text-white"
         >
           Full Stack{" "}
           <span className="font-black italic text-primary">Development</span>{" "}
@@ -112,7 +104,7 @@ function ServicesHero({ reduceMotion }: { reduceMotion: boolean | null }) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={motionTransition(reduceMotion, 0.16)}
-          className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-slate-600 dark:text-slate-400"
+          className="text-section-desc mx-auto mt-4"
         >
           From concept to deployment — scalable web apps, mobile, and AI solutions tailored to your
           business goals.
@@ -171,13 +163,13 @@ function ServicesGrid({ services }: { services: ServiceListingItem[] }) {
 
       <div className="container relative z-10 mx-auto max-w-6xl px-4">
         <ScrollReveal className="mb-10 text-center md:mb-12">
-          <span className="inline-block rounded-full bg-primary/5 px-4 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-primary dark:bg-primary/15">
+          <span className="inline-block rounded-full bg-primary/5 px-4 py-1 text-[20px] font-bold uppercase tracking-[0.2em] text-primary dark:bg-primary/15">
             Catalog
           </span>
-          <h2 className="mt-4 font-heading text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl md:text-4xl dark:text-white">
+          <h2 className="text-section-title mt-3 text-slate-900 dark:text-white">
             What I build
           </h2>
-          <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+          <p className="text-section-desc mx-auto mt-2 text-sm">
             Browse by track or search the stack — each card links to a deeper write-up when those
             pages go live.
           </p>
@@ -362,8 +354,8 @@ function StatsStrip() {
               <p
                 className={
                   stat.value.length > 12
-                    ? "text-balance text-xl font-black tracking-tight text-white sm:text-2xl md:text-3xl"
-                    : "text-2xl font-black tracking-tight text-white sm:text-3xl md:text-4xl"
+                    ? "text-balance text-lg font-black tracking-tight text-white sm:text-xl md:text-2xl"
+                    : "text-xl font-black tracking-tight text-white sm:text-2xl md:text-3xl"
                 }
               >
                 {stat.value}
@@ -384,10 +376,10 @@ function ServicesCta() {
     <section className="bg-slate-50/90 py-20 dark:bg-slate-900/30">
       <div className="container mx-auto max-w-2xl px-4 text-center">
         <ScrollReveal>
-          <h2 className="font-heading text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
+          <h2 className="text-section-title text-slate-900 dark:text-white">
             Ready to start your project?
           </h2>
-          <p className="mt-4 text-lg text-slate-600 dark:text-slate-400">
+          <p className="text-section-desc mx-auto mt-3">
             Let&apos;s discuss your requirements and build something great together.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-4">

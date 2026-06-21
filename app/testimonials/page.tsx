@@ -29,17 +29,17 @@ export default function TestimonialsPage() {
 
         <div className="mb-20">
           <ScrollReveal>
-            <div className="mb-4 inline-block rounded-full bg-teal-500/10 px-4 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-teal-600 dark:bg-teal-500/20">
+            <div className="mb-4 inline-block rounded-full bg-teal-500/10 px-4 py-1 text-[20px] font-bold uppercase tracking-[0.2em] text-teal-600 dark:bg-teal-500/20">
               Full Archive
             </div>
           </ScrollReveal>
           <ScrollReveal delay={0.05}>
-            <h1 className="text-5xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-7xl">
+            <h1 className="text-display text-slate-900 dark:text-white">
               All Client <span className="text-teal-600">Reviews</span>
             </h1>
           </ScrollReveal>
           <ScrollReveal delay={0.1}>
-            <p className="mt-8 max-w-2xl text-xl text-slate-500 dark:text-slate-400">
+            <p className="text-section-desc mt-4">
               Explore the complete history of feedback from professional collaborations and
               successful project deliveries.
             </p>

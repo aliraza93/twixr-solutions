@@ -2,7 +2,9 @@
 
 import { footerData } from "@/lib/data";
 import { Icon } from "@iconify/react";
+import { ICON_LOCATION, ICON_MAIL } from "@/lib/icon-accents";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { ScrollReveal } from "@/components/motion/scroll-reveal";
@@ -27,11 +29,11 @@ export function Footer() {
             </p>
             <div className="space-y-4">
               <a href="mailto:ali@twixrsolutions.com" className="flex items-center gap-3 text-slate-600 transition-colors hover:text-primary dark:text-slate-400 dark:hover:text-primary">
-                <Icon icon="lucide:mail" className="h-5 w-5" />
+                <Icon icon="lucide:mail" className={cn("h-5 w-5", ICON_MAIL)} />
                 <span className="font-medium">ali@twixrsolutions.com</span>
               </a>
               <div className="flex items-center gap-3 text-slate-600 dark:text-slate-400">
-                <Icon icon="lucide:map-pin" className="h-5 w-5" />
+                <Icon icon="lucide:map-pin" className={cn("h-5 w-5", ICON_LOCATION)} />
                 <span className="font-medium">Lahore, Dubai & Remote</span>
               </div>
             </div>

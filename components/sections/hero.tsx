@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowRight, ChevronRight, Terminal, Globe, Code2, Cpu, Database, Layout } from "lucide-react";
+import { ArrowRight, Calendar, ChevronRight, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { Icon } from "@iconify/react";
+import { ICON_ON_PRIMARY } from "@/lib/icon-accents";
 
 export function Hero() {
   return (
@@ -69,9 +71,12 @@ export function Hero() {
               transition={{ duration: 0.5, delay: 0.3 }}
               className="mb-8 flex flex-wrap gap-4"
             >
-              <Button size="lg" className="h-12 cursor-pointer rounded-full px-8 text-base font-bold shadow-lg shadow-primary/10">
-                Start a Project
-                <ArrowRight className="ml-2 h-4 w-4" />
+              <Button size="lg" className="h-12 cursor-pointer rounded-full px-8 text-base font-bold shadow-lg shadow-primary/10" asChild>
+                <Link href="/schedule" className="inline-flex items-center gap-2">
+                  <Calendar className={cn("h-4 w-4", ICON_ON_PRIMARY)} aria-hidden />
+                  Schedule a Call
+                  <ArrowRight className={cn("h-4 w-4", ICON_ON_PRIMARY)} aria-hidden />
+                </Link>
               </Button>
               <Button size="lg" variant="outline" className="h-12 cursor-pointer rounded-full px-8 text-base border-slate-200" asChild>
                 <Link href="/portfolio">View Portfolio</Link>

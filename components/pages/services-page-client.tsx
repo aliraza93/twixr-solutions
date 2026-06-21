@@ -26,6 +26,10 @@ import {
 } from "@/components/motion/scroll-reveal";
 import { PageCta } from "@/components/sections/page-cta";
 import { StatsStrip } from "@/components/sections/stats-strip";
+import {
+  CATEGORY_ICON_COLORS,
+  SERVICE_ICON_COLORS,
+} from "@/lib/icon-accents";
 
 import type {
   ServiceCatalogCategoryId,
@@ -230,7 +234,7 @@ function ServicesGrid({ services }: { services: ServiceListingItem[] }) {
                       : "border-slate-200 bg-white text-slate-700 hover:border-primary/35 hover:bg-primary/4 dark:border-slate-600 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:border-primary/40"
                   )}
                 >
-                  {Icon && <Icon className="h-3.5 w-3.5 opacity-90" aria-hidden />}
+                  {Icon && <Icon className={cn("h-3.5 w-3.5 opacity-90", CATEGORY_ICON_COLORS[cat.id] ?? "text-primary")} aria-hidden />}
                   {cat.label}
                 </button>
               );
@@ -286,7 +290,7 @@ function ServicesGrid({ services }: { services: ServiceListingItem[] }) {
                       />
                       <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 p-3">
                         <span className="inline-flex max-w-[68%] items-center gap-1.5 rounded-lg border border-white/70 bg-white/90 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-800 shadow-sm backdrop-blur-sm dark:border-slate-600/80 dark:bg-slate-900/85 dark:text-slate-100">
-                          <Icon className="h-3.5 w-3.5 shrink-0 text-primary" aria-hidden />
+                          <Icon className={cn("h-3.5 w-3.5 shrink-0", SERVICE_ICON_COLORS[service.icon])} aria-hidden />
                           <span className="truncate">{service.categoryLabel}</span>
                         </span>
                         <span className="inline-flex max-w-[min(100%,12rem)] shrink-0 items-center gap-1 rounded-lg border border-slate-200/90 bg-white/90 px-2 py-1 text-[10px] font-semibold leading-tight text-slate-700 shadow-sm backdrop-blur-sm dark:border-slate-600/80 dark:bg-slate-900/85 dark:text-slate-200">

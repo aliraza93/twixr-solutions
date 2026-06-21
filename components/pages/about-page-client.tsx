@@ -6,6 +6,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ArrowRight, Check, Mail, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { Approach } from "@/components/sections/approach";
 import { FeaturedPortfolio } from "@/components/sections/featured-portfolio";
 import { PageCta } from "@/components/sections/page-cta";
@@ -13,6 +14,7 @@ import { StatsStrip } from "@/components/sections/stats-strip";
 import { TechStack } from "@/components/sections/tech-stack";
 import { GsapReveal, GsapStagger, GsapStaggerItem } from "@/components/motion/gsap-reveal";
 import { ScrollReveal } from "@/components/motion/scroll-reveal";
+import { getIconAccent, ICON_LOCATION, ICON_MAIL, ICON_ON_PRIMARY } from "@/lib/icon-accents";
 import { footerData } from "@/lib/data";
 import { aboutBio, aboutHighlights } from "@/lib/data/about";
 
@@ -121,28 +123,31 @@ function AboutIntro() {
               </div>
               <div className="mt-5 flex flex-wrap gap-4 text-sm text-muted-foreground">
                 <span className="inline-flex items-center gap-1.5">
-                  <MapPin className="h-4 w-4 text-primary" />
+                  <MapPin className={cn("h-4 w-4", ICON_LOCATION)} />
                   {aboutBio.location}
                 </span>
                 <a
                   href={`mailto:${aboutBio.email}`}
                   className="inline-flex items-center gap-1.5 transition-colors hover:text-primary"
                 >
-                  <Mail className="h-4 w-4 text-primary" />
+                  <Mail className={cn("h-4 w-4", ICON_MAIL)} />
                   {aboutBio.email}
                 </a>
               </div>
             </GsapReveal>
 
             <GsapStagger className="mt-6 grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {aboutHighlights.map((item) => (
+              {aboutHighlights.map((item, index) => {
+                const accent = getIconAccent(index);
+                return (
                 <GsapStaggerItem key={item}>
                   <div className="flex items-start gap-2.5 rounded-xl border border-slate-100 bg-slate-50/80 px-3 py-2.5 dark:border-slate-800 dark:bg-slate-900/40">
-                    <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600" aria-hidden />
+                    <Check className={cn("mt-0.5 h-3.5 w-3.5 shrink-0", accent.icon)} aria-hidden />
                     <span className="text-xs text-slate-700 sm:text-sm dark:text-slate-300">{item}</span>
                   </div>
                 </GsapStaggerItem>
-              ))}
+              );
+              })}
             </GsapStagger>
 
             <GsapReveal className="mt-6 flex flex-wrap items-center gap-3">
@@ -153,7 +158,7 @@ function AboutIntro() {
               >
                 <a href={`mailto:${CONTACT_EMAIL}?subject=Project inquiry`}>
                   Hire Me
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                  <ArrowRight className={cn("ml-2 h-4 w-4", ICON_ON_PRIMARY)} />
                 </a>
               </Button>
               <div className="flex gap-2">

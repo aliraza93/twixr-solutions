@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { approachSteps } from "@/lib/data";
 import { Icon } from "@iconify/react";
 import { cn } from "@/lib/utils";
+import { getNamedIconAccent } from "@/lib/icon-accents";
 import { SectionHeader } from "@/components/ui/section-header";
 import { ScrollReveal } from "@/components/motion/scroll-reveal";
 
@@ -69,7 +70,9 @@ export function Approach() {
   );
 }
 
-function StepCard({ step, index }: { step: any; index: number }) {
+function StepCard({ step, index }: { step: { icon: string; title: string; description: string; color?: string }; index: number }) {
+  const accent = getNamedIconAccent(step.color ?? "indigo", index);
+
   return (
     <ScrollReveal delay={index * 0.08} className="group relative z-10 flex flex-col items-center text-center lg:items-start lg:text-left">
       {/* Icon Container */}
@@ -78,15 +81,19 @@ function StepCard({ step, index }: { step: any; index: number }) {
           whileHover={{ scale: 1.1, rotate: 5 }}
           className={cn(
             "relative flex h-24 w-24 items-center justify-center rounded-[2rem] bg-white shadow-2xl transition-all duration-500 dark:bg-slate-900",
-            "border border-slate-50 group-hover:border-primary/30 dark:border-slate-800"
+            "border group-hover:shadow-lg",
+            accent.border
           )}
         >
           <div 
-            className="absolute inset-4 rounded-xl opacity-0 blur-xl transition-opacity duration-500 group-hover:opacity-40 bg-primary"
+            className={cn(
+              "absolute inset-4 rounded-xl opacity-30 blur-xl transition-opacity duration-500 group-hover:opacity-50",
+              accent.glow
+            )}
           />
           <Icon 
             icon={step.icon} 
-            className="relative h-10 w-10 transition-colors duration-500 text-slate-400 group-hover:text-primary" 
+            className={cn("relative h-10 w-10 transition-transform duration-500 group-hover:scale-110", accent.icon)} 
           />
         </motion.div>
         

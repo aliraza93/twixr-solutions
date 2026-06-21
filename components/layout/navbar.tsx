@@ -11,7 +11,8 @@ import {
 } from "@/components/ui/navigation-menu";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu } from "lucide-react";
+import { Calendar, Menu } from "lucide-react";
+import { ICON_ON_PRIMARY } from "@/lib/icon-accents";
 
 export function Navbar() {
   return (
@@ -75,13 +76,11 @@ export function Navbar() {
 
         {/* Right: Actions */}
         <div className="flex items-center gap-2">
-          <div className="hidden items-center gap-2 sm:flex">
-             <Button variant="ghost" className="h-10 cursor-pointer rounded-full px-5 text-sm font-bold text-slate-600 hover:bg-slate-100/50 dark:text-slate-400">
-               Sign In
-             </Button>
-          </div>
-          <Button size="sm" className="h-10 cursor-pointer rounded-full bg-primary px-6 text-sm font-bold text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:scale-105 hover:bg-primary/90 active:scale-95">
-            Start a Project
+          <Button size="sm" className="h-10 cursor-pointer rounded-full bg-primary px-6 text-sm font-bold text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:scale-105 hover:bg-primary/90 active:scale-95" asChild>
+            <Link href="/schedule" className="inline-flex items-center gap-2">
+              <Calendar className={cn("h-4 w-4", ICON_ON_PRIMARY)} aria-hidden />
+              Schedule a Call
+            </Link>
           </Button>
 
           {/* Mobile Toggle */}
@@ -103,8 +102,12 @@ export function Navbar() {
                    <Link href="/testimonials" className="cursor-pointer text-xl font-bold hover:text-primary transition-colors">Testimonials</Link>
                 </div>
                 <div className="mt-8 flex flex-col gap-4">
-                   <Button className="h-12 w-full cursor-pointer rounded-2xl bg-primary text-base font-bold shadow-xl shadow-primary/20">Contact Me</Button>
-                   <Button variant="outline" className="h-12 w-full cursor-pointer rounded-2xl border-slate-200 text-base font-bold">Sign In</Button>
+                   <Button className="h-12 w-full cursor-pointer rounded-2xl bg-primary text-base font-bold shadow-xl shadow-primary/20" asChild>
+                     <Link href="/schedule" className="inline-flex items-center justify-center gap-2">
+                       <Calendar className={cn("h-5 w-5", ICON_ON_PRIMARY)} aria-hidden />
+                       Schedule a Call
+                     </Link>
+                   </Button>
                 </div>
               </div>
             </SheetContent>

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { faqs } from "@/lib/data";
 import { Icon } from "@iconify/react";
 import { cn } from "@/lib/utils";
+import { getIconAccent } from "@/lib/icon-accents";
 import { SectionHeader } from "@/components/ui/section-header";
 import { ScrollReveal } from "@/components/motion/scroll-reveal";
 
@@ -34,6 +35,7 @@ export function FAQ() {
                 <ScrollReveal key={index} delay={index * 0.05}>
                 <FAQItem 
                   faq={faq} 
+                  index={index}
                   isOpen={activeId === index} 
                   onClick={() => setActiveId(activeId === index ? null : index)}
                 />
@@ -50,7 +52,9 @@ export function FAQ() {
   );
 }
 
-function FAQItem({ faq, isOpen, onClick }: { faq: any; isOpen: boolean; onClick: () => void }) {
+function FAQItem({ faq, index, isOpen, onClick }: { faq: { question: string; answer: string; icon: string }; index: number; isOpen: boolean; onClick: () => void }) {
+  const accent = getIconAccent(index);
+
   return (
     <motion.div
       layout
@@ -68,10 +72,10 @@ function FAQItem({ faq, isOpen, onClick }: { faq: any; isOpen: boolean; onClick:
       >
         <div className="flex min-w-0 items-center gap-3 sm:gap-4">
           <div className={cn(
-            "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border bg-white shadow-sm transition-all duration-300 dark:bg-slate-800",
-            isOpen ? "scale-105 border-primary/50 text-primary" : "text-slate-400 group-hover:text-slate-600"
+            "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border shadow-sm transition-all duration-300",
+            isOpen ? cn("scale-105", accent.bg, accent.border) : cn(accent.bg, accent.border, "opacity-90")
           )}>
-            <Icon icon={faq.icon} className="h-4 w-4" />
+            <Icon icon={faq.icon} className={cn("h-4 w-4", accent.icon)} />
           </div>
           <span className={cn(
             "text-sm font-bold tracking-tight transition-colors sm:text-[15px]",

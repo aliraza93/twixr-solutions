@@ -10,6 +10,7 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@calcom/embed-react": "^1.5.3",
     "@hookform/resolvers": "^5.2.2",
     "@iconify/react": "^6.0.2",
     "@prisma/client": "^6.19.2",

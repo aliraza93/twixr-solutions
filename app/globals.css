@@ -144,4 +144,10 @@
   .text-lead {
     @apply max-w-3xl text-base leading-normal text-slate-600 sm:text-lg dark:text-slate-400;
   }
+
+  /* Cal.com inline embed — transparent iframe shell */
+  .cal-embed iframe {
+    background: transparent !important;
+    color-scheme: light;
+  }
 }

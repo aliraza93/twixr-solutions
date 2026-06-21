@@ -244,7 +244,7 @@ export const footerData = {
         { name: "Official Website", href: "#" },
         { name: "Trainings", href: "/courses" },
         { name: "Newsletter", href: "#newsletter" },
-        { name: "Schedule Meeting", href: "https://calendly.com" },
+        { name: "Schedule Meeting", href: "/schedule" },
     ],
     freelance: [
         { name: "Upwork", href: "https://upwork.com" },

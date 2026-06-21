@@ -4,7 +4,9 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { ScrollReveal } from "@/components/motion/scroll-reveal";
+import { ICON_ON_PRIMARY } from "@/lib/icon-accents";
 
 const DEFAULT_EMAIL = "ali@twixrsolutions.com";
 
@@ -43,7 +45,7 @@ export function PageCta({
             >
               <a href={`mailto:${email}?subject=${encodeURIComponent(emailSubject)}`}>
                 {primaryLabel}
-                <ArrowRight className="ml-2 h-4 w-4" />
+                <ArrowRight className={cn("ml-2 h-4 w-4", ICON_ON_PRIMARY)} />
               </a>
             </Button>
             <Button

@@ -17,7 +17,6 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import {
@@ -25,6 +24,8 @@ import {
   ScrollRevealItem,
   ScrollStagger,
 } from "@/components/motion/scroll-reveal";
+import { PageCta } from "@/components/sections/page-cta";
+import { StatsStrip } from "@/components/sections/stats-strip";
 
 import type {
   ServiceCatalogCategoryId,
@@ -43,13 +44,6 @@ const SERVICE_ICONS: Record<ServiceIconName, LucideIcon> = {
   Smartphone,
 };
 
-const STATS = [
-  { value: "10+", line1: "Years", line2: "Experience" },
-  { value: "50+", line1: "Projects", line2: "Delivered" },
-  { value: "Top Rated Plus", line1: "on Upwork", line2: null },
-  { value: "99.9%", line1: "Client", line2: "Satisfaction" },
-] as const;
-
 function motionTransition(reduceMotion: boolean | null, delay = 0) {
   return {
     duration: reduceMotion ? 0 : 0.5,
@@ -65,7 +59,7 @@ export function ServicesPageClient({ services }: { services: ServiceListingItem[
       <ServicesHero reduceMotion={reduceMotion} />
       <ServicesGrid services={services} />
       <StatsStrip />
-      <ServicesCta />
+      <PageCta />
     </main>
   );
 }
@@ -336,73 +330,6 @@ function ServicesGrid({ services }: { services: ServiceListingItem[] }) {
             })}
           </ScrollStagger>
         )}
-      </div>
-    </section>
-  );
-}
-
-function StatsStrip() {
-  return (
-    <section className="bg-slate-950 py-16 text-white lg:py-20">
-      <div className="container mx-auto px-4">
-        <ScrollStagger className="grid grid-cols-2 gap-10 lg:grid-cols-4 lg:gap-6">
-          {STATS.map((stat) => (
-            <ScrollRevealItem
-              key={stat.value + stat.line1}
-              className="text-center lg:text-left"
-            >
-              <p
-                className={
-                  stat.value.length > 12
-                    ? "text-balance text-lg font-black tracking-tight text-white sm:text-xl md:text-2xl"
-                    : "text-xl font-black tracking-tight text-white sm:text-2xl md:text-3xl"
-                }
-              >
-                {stat.value}
-              </p>
-              <p className="mt-1 text-sm font-semibold text-slate-300">
-                {stat.line2 != null ? `${stat.line1} · ${stat.line2}` : stat.line1}
-              </p>
-            </ScrollRevealItem>
-          ))}
-        </ScrollStagger>
-      </div>
-    </section>
-  );
-}
-
-function ServicesCta() {
-  return (
-    <section className="bg-slate-50/90 py-20 dark:bg-slate-900/30">
-      <div className="container mx-auto max-w-2xl px-4 text-center">
-        <ScrollReveal>
-          <h2 className="text-section-title text-slate-900 dark:text-white">
-            Ready to start your project?
-          </h2>
-          <p className="text-section-desc mx-auto mt-3">
-            Let&apos;s discuss your requirements and build something great together.
-          </p>
-          <div className="mt-8 flex flex-wrap justify-center gap-4">
-            <Button
-              size="lg"
-              className="h-12 cursor-pointer rounded-full px-8 text-base font-bold shadow-lg shadow-primary/10"
-              asChild
-            >
-              <a href="mailto:ali@twixrsolutions.com">
-                Start a Project
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </a>
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="h-12 cursor-pointer rounded-full border-slate-200 px-8 text-base dark:border-slate-700"
-              asChild
-            >
-              <Link href="/portfolio">View Portfolio</Link>
-            </Button>
-          </div>
-        </ScrollReveal>
       </div>
     </section>
   );

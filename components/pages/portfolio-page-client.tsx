@@ -5,39 +5,41 @@ import Link from "next/link";
 import { Icon } from "@iconify/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { ArrowRight, LayoutGrid, Search, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { LayoutGrid, Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import {
-  getFeaturedProjects,
   getPortfolioProjects,
   portfolioCategories,
   type PortfolioCategoryId,
   type PortfolioProject,
 } from "@/lib/data/portfolio";
+import { FeaturedPortfolio } from "@/components/sections/featured-portfolio";
+import { PageCta } from "@/components/sections/page-cta";
+import { StatsStrip } from "@/components/sections/stats-strip";
 import { GsapReveal, GsapStagger, GsapStaggerItem } from "@/components/motion/gsap-reveal";
-
-const STATS = [
-  { value: "50+", line1: "Projects", line2: "Delivered" },
-  { value: "10+", line1: "Years", line2: "Experience" },
-  { value: "Top Rated Plus", line1: "on Upwork", line2: null },
-  { value: "99.9%", line1: "Client", line2: "Satisfaction" },
-] as const;
-
-const CONTACT_EMAIL = "ali@twixrsolutions.com";
 
 export function PortfolioPageClient() {
   const projects = getPortfolioProjects();
-  const featured = getFeaturedProjects();
 
   return (
     <main className="min-h-screen bg-background pt-[120px] lg:pt-[140px]">
       <PortfolioHero />
-      <FeaturedShowcase projects={featured} />
+      <FeaturedPortfolio />
       <ProjectCatalog projects={projects} />
-      <StatsStrip />
-      <PortfolioCta />
+      <StatsStrip variant="primary" />
+      <PageCta
+        title={
+          <>
+            Ready to build your <span className="font-black italic text-primary">next product</span>?
+          </>
+        }
+        description="Let's turn your idea into a scalable SaaS or web application."
+        emailSubject="New project inquiry"
+        secondaryLabel="View Services"
+        secondaryHref="/services"
+        className="bg-slate-50/90 py-14 dark:bg-slate-900/30 md:py-16"
+      />
     </main>
   );
 }
@@ -93,85 +95,6 @@ function PortfolioHero() {
         </p>
       </div>
     </section>
-  );
-}
-
-function FeaturedShowcase({ projects }: { projects: PortfolioProject[] }) {
-  if (projects.length === 0) return null;
-
-  return (
-    <section className="bg-slate-50/60 py-12 dark:bg-slate-900/30 md:py-14">
-      <div className="container mx-auto max-w-6xl px-4">
-        <GsapReveal className="mb-6 text-center md:mb-8">
-          <span className="mb-3 inline-block rounded-full bg-primary/5 px-4 py-1 text-[20px] font-bold uppercase tracking-[0.2em] text-primary dark:bg-primary/10">
-            Featured
-          </span>
-          <h2 className="text-section-title font-semibold text-slate-900 dark:text-white">
-            Flagship <span className="font-black italic text-primary">Projects</span>
-          </h2>
-        </GsapReveal>
-
-        <GsapStagger className="grid gap-4 lg:grid-cols-2">
-          {projects.map((project) => (
-            <GsapStaggerItem key={project.slug}>
-              <FeaturedCard project={project} />
-            </GsapStaggerItem>
-          ))}
-        </GsapStagger>
-      </div>
-    </section>
-  );
-}
-
-function FeaturedCard({ project }: { project: PortfolioProject }) {
-  return (
-    <article className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm transition-all duration-300 hover:border-primary/30 hover:shadow-lg dark:border-slate-700 dark:bg-slate-950/60">
-      <Link href={`/portfolio/${project.slug}`} className="relative block aspect-16/10 overflow-hidden">
-        <img
-          src={project.image}
-          alt={project.title}
-          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/70 via-slate-900/20 to-transparent" />
-        <div className="absolute left-4 top-4">
-          <span className="rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-slate-800 backdrop-blur-sm">
-            {project.categoryLabel}
-          </span>
-        </div>
-        <div className="absolute bottom-4 left-4 right-4">
-          <h3 className="text-lg font-bold text-white sm:text-xl">{project.title}</h3>
-          <p className="mt-1 line-clamp-2 text-sm text-slate-200">{project.description}</p>
-        </div>
-      </Link>
-
-      <div className="flex flex-1 flex-col p-4 sm:p-5">
-        <div className="mb-4 flex flex-wrap gap-3">
-          {project.metrics.map((m) => (
-            <div key={m.label} className="rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-900/80">
-              <p className="text-sm font-bold text-slate-900 dark:text-white">{m.value}</p>
-              <p className="text-[10px] text-muted-foreground">{m.label}</p>
-            </div>
-          ))}
-        </div>
-        <div className="mt-auto flex flex-wrap gap-1.5">
-          {project.tags.map((tag) => (
-            <span
-              key={tag}
-              className="rounded-md border border-slate-200/90 bg-white px-2 py-0.5 text-[11px] font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
-        <Link
-          href={`/portfolio/${project.slug}`}
-          className="mt-4 inline-flex cursor-pointer items-center gap-2 text-sm font-bold text-primary transition-all hover:gap-3"
-        >
-          View case study
-          <ArrowRight className="h-4 w-4" />
-        </Link>
-      </div>
-    </article>
   );
 }
 
@@ -316,70 +239,5 @@ function ProjectCard({ project }: { project: PortfolioProject }) {
         </span>
       </div>
     </Link>
-  );
-}
-
-function StatsStrip() {
-  return (
-    <section className="bg-primary py-12 text-primary-foreground md:py-14">
-      <div className="container mx-auto max-w-6xl px-4">
-        <GsapStagger className="grid grid-cols-2 gap-8 lg:grid-cols-4 lg:gap-6">
-          {STATS.map((stat) => (
-            <GsapStaggerItem key={stat.value + stat.line1} className="text-center lg:text-left">
-              <p
-                className={cn(
-                  "font-black tracking-tight text-white",
-                  stat.value.length > 12
-                    ? "text-balance text-lg sm:text-xl md:text-2xl"
-                    : "text-xl sm:text-2xl md:text-3xl"
-                )}
-              >
-                {stat.value}
-              </p>
-              <p className="mt-1 text-sm font-semibold text-slate-300">
-                {stat.line2 != null ? `${stat.line1} · ${stat.line2}` : stat.line1}
-              </p>
-            </GsapStaggerItem>
-          ))}
-        </GsapStagger>
-      </div>
-    </section>
-  );
-}
-
-function PortfolioCta() {
-  return (
-    <section className="bg-slate-50/90 py-14 dark:bg-slate-900/30 md:py-16">
-      <div className="container mx-auto max-w-2xl px-4 text-center">
-        <GsapReveal>
-          <h2 className="text-section-title text-slate-900 dark:text-white">
-            Ready to build your <span className="font-black italic text-primary">next product</span>?
-          </h2>
-          <p className="text-section-desc mx-auto mt-3">
-            Let&apos;s turn your idea into a scalable SaaS or web application.
-          </p>
-          <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <Button
-              size="lg"
-              className="h-10 cursor-pointer rounded-full px-6 text-sm font-bold shadow-lg shadow-primary/10"
-              asChild
-            >
-              <a href={`mailto:${CONTACT_EMAIL}?subject=New project inquiry`}>
-                Start a Project
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </a>
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="h-10 cursor-pointer rounded-full border-slate-200 px-6 text-sm font-bold dark:border-slate-700"
-              asChild
-            >
-              <Link href="/services">View Services</Link>
-            </Button>
-          </div>
-        </GsapReveal>
-      </div>
-    </section>
   );
 }

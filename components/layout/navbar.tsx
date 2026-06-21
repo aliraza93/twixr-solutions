@@ -32,6 +32,14 @@ export function Navbar() {
             <NavigationMenuList className="gap-2">
               <NavigationMenuItem>
                 <NavigationMenuLink asChild>
+                  <Link href="/about" className={cn(navigationMenuTriggerStyle(), "h-10 bg-transparent px-4 text-sm font-semibold text-slate-600 hover:bg-slate-100/50 hover:text-primary focus:bg-transparent dark:text-slate-400 dark:hover:bg-slate-800/50")}>
+                    About
+                  </Link>
+                </NavigationMenuLink>
+              </NavigationMenuItem>
+
+              <NavigationMenuItem>
+                <NavigationMenuLink asChild>
                   <Link href="/services" className={cn(navigationMenuTriggerStyle(), "h-10 bg-transparent px-4 text-sm font-semibold text-slate-600 hover:bg-slate-100/50 hover:text-primary focus:bg-transparent dark:text-slate-400 dark:hover:bg-slate-800/50")}>
                     Services
                   </Link>
@@ -88,6 +96,7 @@ export function Navbar() {
                 <div className="flex flex-col gap-2">
                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Navigation</p>
                    <Link href="/" className="cursor-pointer text-xl font-bold hover:text-primary transition-colors">Home</Link>
+                   <Link href="/about" className="cursor-pointer text-xl font-bold hover:text-primary transition-colors">About</Link>
                    <Link href="/services" className="cursor-pointer text-xl font-bold hover:text-primary transition-colors">Services</Link>
                    <Link href="/portfolio" className="cursor-pointer text-xl font-bold hover:text-primary transition-colors">Portfolio</Link>
                    <Link href="/blog" className="cursor-pointer text-xl font-bold hover:text-primary transition-colors">Blog</Link>

@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { SectionHeader } from "@/components/ui/section-header";
+import { ScrollReveal } from "@/components/motion/scroll-reveal";
 
 export function Testimonials() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -35,14 +36,14 @@ export function Testimonials() {
         </div>
 
         {/* Action Button */}
-        <div className="mt-20 text-center">
+        <ScrollReveal className="mt-20 text-center">
           <Button asChild variant="outline" size="lg" className="cursor-pointer rounded-full px-8 py-6 text-base font-bold transition-all hover:bg-primary hover:text-primary-foreground">
             <Link href="/testimonials" className="flex items-center gap-2">
               View All Testimonials
               <Icon icon="lucide:arrow-right" />
             </Link>
           </Button>
-        </div>
+        </ScrollReveal>
       </div>
 
       {/* Decorative Glow */}

@@ -1,12 +1,12 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { blogPosts } from "@/lib/data";
 import { Icon } from "@iconify/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { SectionHeader } from "@/components/ui/section-header";
+import { ScrollReveal, ScrollRevealItem, ScrollStagger } from "@/components/motion/scroll-reveal";
 
 export function BlogPosts() {
   return (
@@ -20,34 +20,31 @@ export function BlogPosts() {
           description="Sharing my discoveries, technical deep-dives, and life experiences in software engineering."
         />
 
-        {/* Blog Grid */}
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {blogPosts.map((post, idx) => (
-            <BlogCard key={post.slug} post={post} index={idx} />
+        <ScrollStagger className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+          {blogPosts.map((post) => (
+            <ScrollRevealItem key={post.slug}>
+              <BlogCard post={post} />
+            </ScrollRevealItem>
           ))}
-        </div>
+        </ScrollStagger>
 
         {/* Action Button */}
-        <div className="mt-20 text-center">
+        <ScrollReveal className="mt-20 text-center">
           <Button asChild variant="outline" size="lg" className="cursor-pointer rounded-full px-8 py-6 text-base font-bold transition-all hover:bg-primary hover:text-primary-foreground">
             <Link href="/blog" className="flex items-center gap-2">
               View All Posts
               <Icon icon="lucide:arrow-right" />
             </Link>
           </Button>
-        </div>
+        </ScrollReveal>
       </div>
     </section>
   );
 }
 
-function BlogCard({ post, index }: { post: any; index: number }) {
+function BlogCard({ post }: { post: (typeof blogPosts)[number] }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.1 }}
-      viewport={{ once: true }}
+    <div
       className="group relative flex cursor-pointer flex-col overflow-hidden rounded-[2.5rem] border border-slate-100 bg-white transition-all duration-500 hover:border-primary/30 hover:shadow-2xl hover:shadow-slate-200/50 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-primary/30"
     >
       {/* Thumbnail */}
@@ -91,6 +88,6 @@ function BlogCard({ post, index }: { post: any; index: number }) {
 
       {/* Decorative Brand Glow on Hover */}
       <div className="absolute -bottom-20 -right-20 -z-10 h-40 w-40 rounded-full bg-primary/5 blur-3xl transition-opacity opacity-0 group-hover:opacity-100" />
-    </motion.div>
+    </div>
   );
 }

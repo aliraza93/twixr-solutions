@@ -6,6 +6,7 @@ import { experiences } from "@/lib/data";
 import { Icon } from "@iconify/react";
 import { cn } from "@/lib/utils";
 import { SectionHeader } from "@/components/ui/section-header";
+import { ScrollReveal } from "@/components/motion/scroll-reveal";
 
 export function Experience() {
   const [expandedIndex, setExpandedIndex] = useState<number | null>(0);
@@ -34,12 +35,13 @@ export function Experience() {
 
           <div className="relative space-y-4">
             {sortedExperiences.map((exp, index) => (
+              <ScrollReveal key={exp.company} delay={index * 0.06}>
               <ExperienceBar 
-                key={exp.company} 
                 exp={exp} 
                 isOpen={expandedIndex === index}
                 onClick={() => setExpandedIndex(expandedIndex === index ? null : index)}
               />
+              </ScrollReveal>
             ))}
           </div>
         </div>

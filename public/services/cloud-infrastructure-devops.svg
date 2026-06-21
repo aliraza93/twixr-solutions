@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" fill="none">
+  <defs>
+    <linearGradient id="g5" x1="0" y1="0" x2="800" y2="500" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0891B2" stop-opacity="0.28"/>
+      <stop offset="0.55" stop-color="#22D3EE" stop-opacity="0.14"/>
+      <stop offset="1" stop-color="#ECFEFF"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="500" fill="url(#g5)"/>
+  <g fill="white" fill-opacity="0.55" stroke="#0E7490" stroke-width="2">
+    <path d="M200 220 C200 170 250 140 320 150 C360 100 480 100 520 150 C590 140 640 170 640 220 C680 230 700 270 660 310 C670 360 620 400 540 390 C500 420 360 420 300 390 C220 400 170 360 180 310 C140 270 160 230 200 220Z"/>
+  </g>
+  <g stroke="#155E75" stroke-width="2.5" stroke-linecap="round" opacity="0.85">
+    <path d="M240 280 L320 280 M360 280 L440 280 M480 280 L560 280"/>
+    <path d="M280 240 L280 320 M400 220 L400 340 M520 240 L520 320"/>
+    <polygon points="600,200 620,230 580,230" fill="#0891B2" fill-opacity="0.35" stroke="#0E7490"/>
+    <polygon points="640,260 660,290 620,290" fill="#0891B2" fill-opacity="0.25" stroke="#0E7490"/>
+  </g>
+  <rect x="130" y="320" width="100" height="56" rx="8" fill="white" fill-opacity="0.4" stroke="#155E75"/>
+  <rect x="570" y="300" width="100" height="56" rx="8" fill="white" fill-opacity="0.4" stroke="#155E75"/>
+</svg>

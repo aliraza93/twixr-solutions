@@ -5,10 +5,14 @@ import { approachSteps } from "@/lib/data";
 import { Icon } from "@iconify/react";
 import { cn } from "@/lib/utils";
 import { SectionHeader } from "@/components/ui/section-header";
+import { ScrollReveal } from "@/components/motion/scroll-reveal";
 
 export function Approach() {
   return (
-    <section className="relative overflow-hidden bg-white py-24 dark:bg-slate-950">
+    <section
+      id="process"
+      className="relative overflow-hidden bg-white py-24 dark:bg-slate-950"
+    >
       <div className="container relative z-10 mx-auto px-4">
         <SectionHeader
           badge="Our Methodology"
@@ -67,13 +71,7 @@ export function Approach() {
 
 function StepCard({ step, index }: { step: any; index: number }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.1, duration: 0.5 }}
-      viewport={{ once: true }}
-      className="group relative z-10 flex flex-col items-center text-center lg:items-start lg:text-left"
-    >
+    <ScrollReveal delay={index * 0.08} className="group relative z-10 flex flex-col items-center text-center lg:items-start lg:text-left">
       {/* Icon Container */}
       <div className="relative mb-8">
         <motion.div 
@@ -114,6 +112,6 @@ function StepCard({ step, index }: { step: any; index: number }) {
           <Icon icon="lucide:chevron-down" className="h-6 w-6 animate-bounce text-slate-200" />
         </div>
       )}
-    </motion.div>
+    </ScrollReveal>
   );
 }

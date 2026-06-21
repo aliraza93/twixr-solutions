@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { ArrowRight, CheckCircle2, GitBranch, Terminal, Zap } from "lucide-react";
 import { SectionHeader } from "@/components/ui/section-header";
-import { Card } from "@/components/ui/card";
+import { ScrollReveal } from "@/components/motion/scroll-reveal";
 
 export function Workflow() {
   return (
@@ -20,11 +20,8 @@ export function Workflow() {
 
         <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
           {/* Left Column: 3D Visualization */}
+          <ScrollReveal distance={40}>
             <motion.div 
-            initial={{ opacity: 0, x: -50 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
             className="relative mx-auto aspect-square w-full max-w-md perspective-1000"
           >
             {/* 3D Floating Cards Stack */}
@@ -93,7 +90,8 @@ export function Workflow() {
 
             {/* Connecting Lines/Glow (Abstract) */}
             <div className="absolute inset-0 -z-10 rounded-full bg-gradient-to-tr from-blue-500/20 to-purple-500/20 blur-3xl" />
-          </motion.div>
+            </motion.div>
+          </ScrollReveal>
 
           {/* Right Column: Steps */}
           <div className="space-y-8">
@@ -102,14 +100,8 @@ export function Workflow() {
               { title: "Precision Engineering", desc: "Developing robust features with Next.js, Laravel, and AI-driven automation.", icon: Terminal, color: "bg-primary" },
               { title: "Optimized Deployment", desc: "Automated CI/CD pipelines, SEO supremacy, and sub-second performance.", icon: Zap, color: "bg-purple-500" },
             ].map((step, i) => (
-              <motion.div 
-                key={i}
-                initial={{ opacity: 0, x: 20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.2 }}
-                className="flex gap-4"
-              >
+              <ScrollReveal key={i} delay={i * 0.1}>
+              <div className="flex gap-4">
                 <div className={`mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${step.color} text-white shadow-lg`}>
                   <step.icon className="h-5 w-5" />
                 </div>
@@ -117,7 +109,8 @@ export function Workflow() {
                    <h3 className="text-xl font-bold text-white">{step.title}</h3>
                   <p className="mt-1 text-muted-foreground">{step.desc}</p>
                 </div>
-              </motion.div>
+              </div>
+              </ScrollReveal>
             ))}
           </div>
         </div>

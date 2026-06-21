@@ -1,16 +1,17 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { footerData } from "@/lib/data";
 import { Icon } from "@iconify/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
+import { ScrollReveal } from "@/components/motion/scroll-reveal";
 
 export function Footer() {
   return (
     <footer className="relative overflow-hidden border-t border-slate-100 bg-white pt-24 pb-12 dark:border-slate-800 dark:bg-slate-950">
       <div className="container relative z-10 mx-auto px-4">
+        <ScrollReveal>
         {/* Main Footer Content */}
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-8">
           {/* Brand Column */}
@@ -127,6 +128,7 @@ export function Footer() {
             © {new Date().getFullYear()} Ali Raza. All rights reserved.
           </p>
         </div>
+        </ScrollReveal>
       </div>
     </footer>
   );

@@ -6,6 +6,7 @@ import { faqs } from "@/lib/data";
 import { Icon } from "@iconify/react";
 import { cn } from "@/lib/utils";
 import { SectionHeader } from "@/components/ui/section-header";
+import { ScrollReveal } from "@/components/motion/scroll-reveal";
 
 export function FAQ() {
   const [activeId, setActiveId] = useState<number | null>(0);
@@ -30,12 +31,13 @@ export function FAQ() {
           <div className="lg:col-span-7">
             <div className="space-y-4">
               {faqs.map((faq, index) => (
+                <ScrollReveal key={index} delay={index * 0.05}>
                 <FAQItem 
-                  key={index} 
                   faq={faq} 
                   isOpen={activeId === index} 
                   onClick={() => setActiveId(activeId === index ? null : index)}
                 />
+                </ScrollReveal>
               ))}
             </div>
           </div>

@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Icon } from "@iconify/react";
 import { cn } from "@/lib/utils";
 import { SectionHeader } from "@/components/ui/section-header";
+import { ScrollReveal } from "@/components/motion/scroll-reveal";
 
 const tools = [
   { name: "JavaScript", icon: "logos:javascript" },
@@ -84,6 +85,7 @@ export function TechStack() {
           description="Building scalable solutions with cutting-edge tools across web, mobile, AI, and cloud technologies."
         />
 
+        <ScrollReveal>
         <div className="relative flex flex-col gap-6 lg:gap-8">
           <MarqueeRow items={row1} direction="left" speed={70} />
           <MarqueeRow items={row2} direction="right" speed={80} />
@@ -93,6 +95,7 @@ export function TechStack() {
           <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-white to-transparent pointer-events-none z-20" />
           <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-white to-transparent pointer-events-none z-20" />
         </div>
+        </ScrollReveal>
       </div>
     </section>
   );

@@ -1,20 +1,17 @@
 "use client";
 
-import * as React from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import {
   NavigationMenu,
-  NavigationMenuContent,
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
-  NavigationMenuTrigger,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, Terminal, Code2, Cpu, Globe, ArrowRight } from "lucide-react";
+import { Menu } from "lucide-react";
 
 export function Navbar() {
   return (
@@ -34,46 +31,11 @@ export function Navbar() {
           <NavigationMenu>
             <NavigationMenuList className="gap-2">
               <NavigationMenuItem>
-                <NavigationMenuTrigger className="h-10 bg-transparent px-4 text-sm font-semibold text-slate-600 hover:bg-slate-100/50 hover:text-primary focus:bg-transparent dark:text-slate-400 dark:hover:bg-slate-800/50">
-                  Services
-                </NavigationMenuTrigger>
-                <NavigationMenuContent>
-                  <ul className="grid gap-6 p-6 md:w-[500px] lg:w-[650px] lg:grid-cols-[0.8fr_1fr]">
-                    <li className="row-span-3">
-                      <NavigationMenuLink asChild>
-                        <a
-                          className="group/card flex h-full w-full select-none flex-col justify-end rounded-[2rem] bg-gradient-to-br from-primary/5 via-primary/[0.02] to-transparent p-8 no-underline outline-none transition-all hover:bg-primary/[0.08] border border-primary/10 hover:border-primary/20 hover:shadow-2xl hover:shadow-primary/5"
-                          href="/services"
-                        >
-                          <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-xl shadow-primary/20 transition-transform group-hover/card:scale-110">
-                             <Terminal className="h-7 w-7" />
-                          </div>
-                          <div className="mb-2 text-xl font-bold tracking-tight text-slate-950 dark:text-white">
-                            Strategic <span className="text-primary italic">Dev</span>
-                          </div>
-                          <p className="text-sm leading-relaxed text-slate-500 dark:text-slate-400">
-                            Custom software ecosystems engineered for massive scale and market dominance.
-                          </p>
-                          <div className="mt-6 flex items-center gap-2 text-xs font-black uppercase tracking-widest text-primary opacity-0 transition-all group-hover/card:opacity-100 group-hover/card:translate-x-1">
-                            Explore Strategy <ArrowRight className="h-3 w-3" />
-                          </div>
-                        </a>
-                      </NavigationMenuLink>
-                    </li>
-                    <div className="flex flex-col gap-1">
-                      <p className="mb-2 px-3 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Core Expertise</p>
-                      <ListItem href="/services/laravel-api-backend" title="API Engineering" icon={<ServerIcon className="h-5 w-5" />}>
-                        Scalable backends & cloud-native architectures.
-                      </ListItem>
-                      <ListItem href="/services/nextjs-frontend" title="Interaction Design" icon={<LayoutIcon className="h-5 w-5" />}>
-                        Immersive, high-performance user interfaces.
-                      </ListItem>
-                      <ListItem href="/services/cloud-infrastructure-devops" title="Systems & Cloud" icon={<CloudIcon className="h-5 w-5" />}>
-                        Automated, secure, and resilient infrastructure.
-                      </ListItem>
-                    </div>
-                  </ul>
-                </NavigationMenuContent>
+                <NavigationMenuLink asChild>
+                  <Link href="/services" className={cn(navigationMenuTriggerStyle(), "h-10 bg-transparent px-4 text-sm font-semibold text-slate-600 hover:bg-slate-100/50 hover:text-primary focus:bg-transparent dark:text-slate-400 dark:hover:bg-slate-800/50")}>
+                    Services
+                  </Link>
+                </NavigationMenuLink>
               </NavigationMenuItem>
               
               <NavigationMenuItem>
@@ -134,59 +96,3 @@ export function Navbar() {
     </header>
   );
 }
-
-const components: { title: string; href: string; description: string }[] = [
-  {
-    title: "Laravel & PHP",
-    href: "/skills/laravel",
-    description: "Enterprise-grade backend solutions using the TALL stack.",
-  },
-  {
-    title: "Next.js & React",
-    href: "/skills/nextjs",
-    description: "Modern, SEO-friendly frontend applications.",
-  },
-  {
-    title: "E-commerce",
-    href: "/skills/ecommerce",
-    description: "Stripe integrations and custom checkout flows.",
-  },
-  {
-    title: "SaaS Development",
-    href: "/skills/saas",
-    description: "Multi-tenant architecture and subscription systems.",
-  },
-];
-
-const ListItem = React.forwardRef<
-  React.ElementRef<"a">,
-  React.ComponentPropsWithoutRef<"a"> & { icon?: React.ReactNode }
->(({ className, title, children, icon, ...props }, ref) => {
-  return (
-    <li>
-      <NavigationMenuLink asChild>
-        <a
-          ref={ref}
-          className={cn(
-            "block cursor-pointer select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
-            className
-          )}
-          {...props}
-        >
-          <div className="flex items-center gap-2 text-sm font-medium leading-none">
-            {icon && <span className="text-primary">{icon}</span>}
-            {title}
-          </div>
-          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground mt-1">
-            {children}
-          </p>
-        </a>
-      </NavigationMenuLink>
-    </li>
-  );
-});
-ListItem.displayName = "ListItem";
-
-function ServerIcon({ className }: { className?: string }) { return <Terminal className={cn("h-4 w-4", className)} />; }
-function LayoutIcon({ className }: { className?: string }) { return <Code2 className={cn("h-4 w-4", className)} />; }
-function CloudIcon({ className }: { className?: string }) { return <Cpu className={cn("h-4 w-4", className)} />; }

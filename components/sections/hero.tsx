@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight, ChevronRight, Terminal, Globe, Code2, Cpu, Database, Layout } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,7 +8,7 @@ import { Icon } from "@iconify/react";
 
 export function Hero() {
   return (
-    <section className="relative w-full overflow-hidden pt-[120px] pb-24 lg:pt-[140px] lg:pb-32 bg-white">
+    <section className="relative w-full overflow-hidden bg-white">
       
       {/* Light Mode: Stripe-like Vibrant Mesh Overlay */}
       <div className="absolute inset-0 top-0 z-0 h-full w-full overflow-hidden">
@@ -19,18 +20,18 @@ export function Hero() {
          <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.4]" />
       </div>
           
-      <div className="container relative z-10 mx-auto px-4 text-slate-900">
-        <div className="grid grid-cols-1 gap-16 lg:grid-cols-2 lg:items-center">
+      <div className="container relative z-10 mx-auto flex min-h-[calc(100svh-5rem)] flex-col justify-center px-4 pb-20 pt-[6.25rem] sm:pb-24 sm:pt-28 lg:min-h-[calc(100svh-4rem)] lg:pb-28 lg:pt-32">
+        <div className="grid w-full grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-14">
           
           {/* Left Column: Text Content */}
-          <div className="flex flex-col items-start text-left">
+          <div className="flex flex-col items-start text-left text-slate-900">
             
             {/* Pill Badge */}
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5 }}
-              className="mb-8 inline-flex items-center gap-1 rounded-full bg-slate-50 px-3 py-1 pr-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 group cursor-pointer border border-slate-200 dark:bg-slate-900/50 dark:border-slate-800"
+              className="mb-5 inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 pr-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 group cursor-pointer dark:border-slate-800 dark:bg-slate-900/50"
             >
               <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] uppercase font-black text-primary tracking-wide">Available</span>
               <span className="ml-1 text-xs">Taking new projects for 2026</span>
@@ -42,7 +43,7 @@ export function Hero() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-display mb-5 text-slate-900"
+              className="text-display mb-4 text-slate-900"
             >
               Build Scalable{" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-violet-600">
@@ -55,7 +56,7 @@ export function Hero() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="text-lead mb-8"
+              className="text-lead mb-6"
             >
                Senior Full Stack Engineer (7+ Years) specializing in Laravel, Next.js, and Cloud Infrastructure. 
                I transform complex technical challenges into high-performance solutions.
@@ -66,14 +67,14 @@ export function Hero() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
-              className="flex flex-wrap gap-4 mb-12"
+              className="mb-8 flex flex-wrap gap-4"
             >
               <Button size="lg" className="h-12 cursor-pointer rounded-full px-8 text-base font-bold shadow-lg shadow-primary/10">
                 Start a Project
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
-              <Button size="lg" variant="outline" className="h-12 cursor-pointer rounded-full px-8 text-base border-slate-200">
-                View Portfolio
+              <Button size="lg" variant="outline" className="h-12 cursor-pointer rounded-full px-8 text-base border-slate-200" asChild>
+                <Link href="/portfolio">View Portfolio</Link>
               </Button>
             </motion.div>
 
@@ -140,7 +141,7 @@ export function Hero() {
             initial={{ opacity: 0, scale: 0.9, rotate: -2 }}
             animate={{ opacity: 1, scale: 1, rotate: 0 }}
             transition={{ duration: 0.8, delay: 0.2, type: "spring" }}
-            className="relative mx-auto w-full max-w-[500px] perspective-1000"
+            className="relative mx-auto w-full max-w-[500px] lg:mx-0 lg:justify-self-center perspective-1000"
           >
              {/* Abstract Dev Environment */}
             <div className="relative z-10 rounded-2xl border border-slate-200 bg-white/80 backdrop-blur-xl shadow-2xl shadow-slate-200/50 overflow-hidden transform rotate-y-12 rotate-x-6 hover:rotate-0 transition-transform duration-500 ease-out">

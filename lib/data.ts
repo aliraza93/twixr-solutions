@@ -1,4 +1,5 @@
 import { Code2, Server, Cloud, Smartphone, Layout, Database, Cpu } from "lucide-react";
+import { getBlogListings } from "./data/blog";
 
 export const services = [
     {
@@ -192,32 +193,7 @@ export const testimonials = [
     },
 ];
 
-export const blogPosts = [
-    {
-        title: "11 Best Shadcn React Libraries (Plus 1 Bonus)",
-        excerpt: "A developer's guide to the best Shadcn-compatible React libraries and UI kits—what they do well, trade-offs, ratings, and when to use each.",
-        date: "October 7, 2025",
-        image: "https://images.unsplash.com/photo-1633356122544-f134324a6cee?q=80&w=800&auto=format&fit=crop",
-        category: "React",
-        slug: "best-shadcn-react-libraries"
-    },
-    {
-        title: "Dubai's Hidden Gems: Free Coworking Spaces That Rival Premium Memberships",
-        excerpt: "Discover 5 exceptional free coworking spaces in Dubai, from mall hubs to creative galleries. Complete guide with access details, amenities, and insider tips.",
-        date: "September 30, 2025",
-        image: "https://images.unsplash.com/photo-1527192491265-7e15c55b1ed2?q=80&w=800&auto=format&fit=crop",
-        category: "Lifestyle",
-        slug: "dubai-hidden-gems-coworking"
-    },
-    {
-        title: "My Honest Feedback on the Dubai Virtual Work Visa, Two Years Later",
-        excerpt: "Honest review of the Dubai Virtual Work Visa after two years: real pros, cons, costs, and practical insights from a remote worker's experience living in Dubai.",
-        date: "September 23, 2025",
-        image: "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?q=80&w=800&auto=format&fit=crop",
-        category: "Remote Work",
-        slug: "dubai-virtual-work-visa-review"
-    }
-];
+export const blogPosts = getBlogListings();
 
 export const faqs = [
     {

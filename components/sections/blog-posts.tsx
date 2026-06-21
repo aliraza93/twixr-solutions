@@ -1,6 +1,6 @@
 "use client";
 
-import { blogPosts } from "@/lib/data";
+import { getBlogListings, type BlogListing } from "@/lib/data/blog";
 import { Icon } from "@iconify/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { SectionHeader } from "@/components/ui/section-header";
 import { ScrollReveal, ScrollRevealItem, ScrollStagger } from "@/components/motion/scroll-reveal";
 
 export function BlogPosts() {
+  const blogPosts = getBlogListings();
   return (
     <section className="relative overflow-hidden bg-white py-24 dark:bg-slate-950">
       <div className="container relative z-10 mx-auto px-4">
@@ -42,7 +43,7 @@ export function BlogPosts() {
   );
 }
 
-function BlogCard({ post }: { post: (typeof blogPosts)[number] }) {
+function BlogCard({ post }: { post: BlogListing }) {
   return (
     <div
       className="group relative flex cursor-pointer flex-col overflow-hidden rounded-[2.5rem] border border-slate-100 bg-white transition-all duration-500 hover:border-primary/30 hover:shadow-2xl hover:shadow-slate-200/50 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-primary/30"

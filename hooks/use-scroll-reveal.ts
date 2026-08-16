@@ -66,11 +66,18 @@ export function useScrollReveal<T extends HTMLElement = HTMLDivElement>(
     if (!el) return;
 
     if (prefersReducedMotion()) {
-      el.classList.remove("scroll-reveal");
-      el.style.opacity = "";
-      el.style.transform = "";
-      el.style.transitionDelay = "";
-      return;
+      el.classList.add("scroll-reveal");
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) {
+            el.classList.add("is-inview");
+            if (once) observer.unobserve(el);
+          }
+        },
+        { rootMargin, threshold }
+      );
+      observer.observe(el);
+      return () => observer.disconnect();
     }
 
     el.classList.add("scroll-reveal");

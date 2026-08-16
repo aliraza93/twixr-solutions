@@ -142,7 +142,18 @@ export function Navbar() {
           </nav>
 
           <div className="site-nav__actions">
-            <Button variant="primary" className="hidden h-10 px-5 py-2 text-sm lg:inline-flex" asChild>
+            <Button
+              variant="ghost"
+              className="hidden h-10 px-5 py-2 text-sm xl:inline-flex"
+              asChild
+            >
+              <Link href="/schedule">Start a Project</Link>
+            </Button>
+            <Button
+              variant="primary"
+              className="hidden h-10 px-5 py-2 text-sm lg:inline-flex"
+              asChild
+            >
               <Link href="/schedule">
                 Schedule a Call
                 <span
@@ -158,8 +169,9 @@ export function Navbar() {
               <Dialog.Trigger asChild>
                 <button
                   type="button"
-                  className="inline-flex h-11 w-11 items-center justify-center rounded-full text-ink transition-colors hover:bg-surface lg:hidden"
+                  className="site-nav__menu inline-flex h-11 w-11 items-center justify-center rounded-full text-ink transition-colors hover:bg-surface lg:hidden"
                   aria-label={open ? "Close menu" : "Open menu"}
+                  aria-expanded={open}
                 >
                   {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
                 </button>
@@ -169,6 +181,7 @@ export function Navbar() {
                 <Dialog.Overlay className="fixed inset-0 z-[90] bg-ink" />
                 <Dialog.Content
                   className="nav-overlay fixed inset-0 z-[91] flex flex-col bg-ink text-d-text outline-none"
+                  data-cursor-dark
                   aria-describedby={undefined}
                 >
                   <Dialog.Title className="sr-only">Navigation</Dialog.Title>
@@ -220,11 +233,16 @@ export function Navbar() {
                     </ul>
                   </nav>
 
-                  <div className="px-[clamp(20px,5vw,40px)] pb-8 pt-4">
+                  <div className="px-[clamp(20px,5vw,40px)] pb-[max(2rem,env(safe-area-inset-bottom))] pt-4">
                     <Button variant="primary" className="h-12 w-full text-base" asChild>
                       <Link href="/schedule" onClick={() => setOpen(false)}>
-                        Schedule a Call
-                        <span aria-hidden>→</span>
+                        Start a Project
+                        <span
+                          aria-hidden
+                          className="inline-block transition-transform duration-[var(--dur-fast)] ease-[var(--ease-out)] group-hover:translate-x-[3px]"
+                        >
+                          →
+                        </span>
                       </Link>
                     </Button>
                   </div>

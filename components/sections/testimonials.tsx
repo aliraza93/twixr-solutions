@@ -1,43 +1,45 @@
 "use client";
 
-import { Icon } from "@iconify/react";
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { testimonials } from "@/lib/data";
-import { SectionHeader } from "@/components/ui/section-header";
+import { Eyebrow } from "@/components/ui/eyebrow";
+import { Button } from "@/components/ui/button";
+import { TestimonialCarousel } from "@/components/ui/testimonial-carousel";
 import { ScrollReveal } from "@/components/motion/scroll-reveal";
-import { TestimonialMarquee } from "@/components/sections/testimonial-marquee";
 
 export function Testimonials() {
   return (
-    <section className="relative overflow-hidden bg-white py-16 dark:bg-slate-950 md:py-20">
-      <div className="container relative z-10 mx-auto px-4">
-        <SectionHeader
-          badge="Client Success"
-          titlePrefix="Trusted"
-          titleHighlight="Client"
-          titleSuffix="Feedback"
-          description="Real results from professionals and companies I've collaborated with across global platforms."
+    <section
+      id="testimonials"
+      className="relative overflow-x-hidden bg-canvas py-[var(--section-py)]"
+    >
+      <div className="ds-container">
+        <ScrollReveal>
+          <header className="max-w-[40rem]">
+            <Eyebrow>Client Success</Eyebrow>
+            <h2 className="mt-5 font-sora text-[length:var(--fs-h1)] font-extrabold leading-[1.06] tracking-[-0.02em] text-ink">
+              Trusted{" "}
+              <span className="text-pine">Client</span> Feedback
+            </h2>
+            <p className="mt-5 max-w-[62ch] text-[length:var(--fs-lead)] text-muted">
+              Real results from professionals and companies I&apos;ve
+              collaborated with across global platforms.
+            </p>
+          </header>
+        </ScrollReveal>
+
+        <TestimonialCarousel
+          className="mt-12 md:mt-16"
+          items={testimonials}
+          featuredIndex={0}
         />
 
-        <TestimonialMarquee items={testimonials} rows={2} />
-
-        <ScrollReveal className="mt-12 text-center md:mt-14">
-          <Button
-            asChild
-            variant="outline"
-            size="lg"
-            className="h-10 cursor-pointer rounded-full px-6 text-sm font-bold transition-all hover:bg-primary hover:text-primary-foreground"
-          >
-            <Link href="/testimonials" className="flex items-center gap-2">
-              View All Testimonials
-              <Icon icon="lucide:arrow-right" />
-            </Link>
+        <ScrollReveal className="mt-10 md:mt-12" delay={0.08}>
+          <Button asChild variant="text">
+            <Link href="/testimonials">View all testimonials</Link>
           </Button>
         </ScrollReveal>
       </div>
-
-      <div className="absolute left-1/2 top-1/2 -z-10 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 bg-primary/5 blur-[120px]" />
     </section>
   );
 }

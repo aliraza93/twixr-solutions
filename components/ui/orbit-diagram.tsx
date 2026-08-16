@@ -3,7 +3,6 @@
 import {
   useCallback,
   useEffect,
-  useId,
   useRef,
   useState,
   type KeyboardEvent,
@@ -185,7 +184,7 @@ export function OrbitDiagram({
   className,
 }: OrbitDiagramProps) {
   const fallback = useOrbitMode();
-  const liveId = useId();
+  const liveId = "orbit-live";
   const stageRef = useRef<HTMLDivElement>(null);
   const pathRef = useRef<SVGPathElement>(null);
   const dotRef = useRef<HTMLDivElement>(null);
@@ -342,8 +341,8 @@ export function OrbitDiagram({
             >
               <defs>
                 <linearGradient id="orbit-grad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#7fe3b0" />
-                  <stop offset="100%" stopColor="#bef03a" />
+                  <stop offset="0%" stopColor="var(--d-mint)" />
+                  <stop offset="100%" stopColor="var(--d-lime)" />
                 </linearGradient>
               </defs>
               <path

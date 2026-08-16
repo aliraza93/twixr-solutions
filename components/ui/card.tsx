@@ -42,6 +42,7 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
           className
         )}
         {...props}
+        {...(variant === "feature" ? { "data-cursor-dark": true } : {})}
       >
         {variant === "numbered" && numbered && (
           <span className="mb-6 block font-mono text-[length:var(--fs-eyebrow)] uppercase tracking-[0.18em] text-muted-2">

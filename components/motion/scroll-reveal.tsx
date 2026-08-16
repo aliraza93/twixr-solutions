@@ -78,7 +78,10 @@ export function ScrollStagger({
     const items = Array.from(root.querySelectorAll<HTMLElement>("[data-reveal-item]"));
     if (!items.length) return;
 
-    if (prefersReducedMotion()) return;
+    if (prefersReducedMotion()) {
+      items.forEach((el) => el.classList.add("is-inview"));
+      return;
+    }
 
     items.forEach((el, i) => {
       el.classList.add("scroll-reveal");

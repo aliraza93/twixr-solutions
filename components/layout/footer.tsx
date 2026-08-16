@@ -1,136 +1,142 @@
 "use client";
 
-import { footerData } from "@/lib/data";
-import { Icon } from "@iconify/react";
-import { ICON_LOCATION, ICON_MAIL } from "@/lib/icon-accents";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { Input } from "@/components/ui/input";
 import Link from "next/link";
-import { ScrollReveal } from "@/components/motion/scroll-reveal";
+import { Icon } from "@iconify/react";
+import { footerData } from "@/lib/data";
+
+const COLUMNS = [
+  {
+    label: "Services",
+    links: [
+      { name: "SaaS & Web Apps", href: "/services/saas-web-app-development" },
+      { name: "Laravel API", href: "/services/laravel-api-backend" },
+      { name: "Next.js Frontend", href: "/services/nextjs-frontend" },
+      { name: "AI Automation", href: "/services/ai-automation-chatbots" },
+      { name: "Cloud & DevOps", href: "/services/cloud-infrastructure-devops" },
+      { name: "Mobile Apps", href: "/services/mobile-app-development" },
+    ],
+  },
+  {
+    label: "Company",
+    links: [
+      { name: "About", href: "/about" },
+      { name: "Portfolio", href: "/portfolio" },
+      { name: "Results", href: "/testimonials" },
+      { name: "Schedule a Call", href: "/schedule" },
+    ],
+  },
+  {
+    label: "Resources",
+    links: [
+      { name: "Blog", href: "/blog" },
+      { name: "Trainings", href: "/courses" },
+      { name: "All services", href: "/services" },
+      { name: "Newsletter", href: "#newsletter" },
+    ],
+  },
+  {
+    label: "Contact",
+    links: [
+      { name: "Email", href: "mailto:ali@twixrsolutions.com" },
+      { name: "Upwork", href: "https://upwork.com" },
+      { name: "Fiverr", href: "https://fiverr.com" },
+      { name: "Schedule a Call", href: "/schedule" },
+    ],
+  },
+] as const;
+
+function FooterLogo() {
+  return (
+    <Link
+      href="/"
+      className="inline-flex items-center gap-2 font-sora text-base font-semibold tracking-[-0.02em] text-ink"
+    >
+      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-lime font-sora text-sm font-bold text-d-bg">
+        A
+      </span>
+      Ali Raza
+    </Link>
+  );
+}
 
 export function Footer() {
+  const year = new Date().getFullYear();
+
   return (
-    <footer className="relative overflow-hidden border-t border-slate-100 bg-white pt-24 pb-12 dark:border-slate-800 dark:bg-slate-950">
-      <div className="container relative z-10 mx-auto px-4">
-        <ScrollReveal>
-        {/* Main Footer Content */}
-        <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-8">
-          {/* Brand Column */}
-          <div className="lg:col-span-5">
-            <div className="mb-8 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 dark:bg-white">
-                <span className="text-lg font-black text-white dark:text-slate-900">A</span>
-              </div>
-              <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Ali Raza</span>
-            </div>
-            <p className="mb-8 max-w-sm text-base leading-normal text-slate-500 dark:text-slate-400">
-              Developer & Trainer — Freelancing, Programming & AI. Top Rated Plus on Upwork with 10+ years of experience.
+    <footer className="band-dark">
+      <div className="ds-container py-16 md:py-20">
+        <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-10">
+          <div className="lg:col-span-4">
+            <FooterLogo />
+            <p className="mt-5 max-w-[32ch] text-sm leading-relaxed text-muted">
+              Developer &amp; Trainer — Freelancing, Programming &amp; AI. Top
+              Rated Plus on Upwork with 10+ years of experience.
             </p>
-            <div className="space-y-4">
-              <a href="mailto:ali@twixrsolutions.com" className="flex items-center gap-3 text-slate-600 transition-colors hover:text-primary dark:text-slate-400 dark:hover:text-primary">
-                <Icon icon="lucide:mail" className={cn("h-5 w-5", ICON_MAIL)} />
-                <span className="font-medium">ali@twixrsolutions.com</span>
-              </a>
-              <div className="flex items-center gap-3 text-slate-600 dark:text-slate-400">
-                <Icon icon="lucide:map-pin" className={cn("h-5 w-5", ICON_LOCATION)} />
-                <span className="font-medium">Lahore, Dubai & Remote</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Links Columns */}
-          <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:col-span-7">
-            <div>
-              <h4 className="mb-6 text-sm font-bold uppercase tracking-widest text-slate-900 dark:text-white">Main Platforms</h4>
-              <ul className="space-y-4">
-                {footerData.platforms.map((link) => (
-                  <li key={link.name}>
-                    <Link href={link.href} className="text-base text-slate-500 transition-colors hover:text-primary dark:text-slate-400 dark:hover:text-primary">
-                      {link.name}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <h4 className="mb-6 text-sm font-bold uppercase tracking-widest text-slate-900 dark:text-white">Freelance</h4>
-              <ul className="space-y-4">
-                {footerData.freelance.map((link) => (
-                  <li key={link.name}>
-                    <Link href={link.href} className="text-base text-slate-500 transition-colors hover:text-primary dark:text-slate-400 dark:hover:text-primary">
-                      {link.name}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-              <h4 className="mt-8 mb-6 text-sm font-bold uppercase tracking-widest text-slate-900 dark:text-white">Contact</h4>
-              <ul className="space-y-4">
-                <li><Link href="#" className="text-base text-slate-500 transition-colors hover:text-primary dark:text-slate-400 dark:hover:text-primary">WhatsApp</Link></li>
-                <li><Link href="#" className="text-base text-slate-500 transition-colors hover:text-primary dark:text-slate-400 dark:hover:text-primary">Email</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="mb-6 text-sm font-bold uppercase tracking-widest text-slate-900 dark:text-white">Community</h4>
-              <ul className="space-y-4">
-                {footerData.community.map((link) => (
-                  <li key={link.name}>
-                    <Link href={link.href} className="text-base text-slate-500 transition-colors hover:text-primary dark:text-slate-400 dark:hover:text-primary">
-                      {link.name}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
-
-        {/* Newsletter Section */}
-        <div className="mt-24 border-t border-slate-100 pt-12 dark:border-slate-800">
-          <div className="flex flex-col items-center justify-between gap-8 lg:flex-row">
-            <div className="max-w-md">
-              <h4 className="mb-2 text-lg font-bold text-slate-900 dark:text-white">Subscribe to my Newsletter</h4>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
-                Get tips on freelancing, programming & AI directly to your inbox.
-              </p>
-            </div>
-            <div className="flex w-full max-w-md gap-3">
-              <Input 
-                type="email" 
-                placeholder="you@example.com" 
-                className="h-12 rounded-xl border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
-              />
-              <Button className="h-12 rounded-xl bg-primary px-8 font-bold text-primary-foreground hover:bg-primary/90">
-                Subscribe
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom Bar */}
-        <div className="mt-12 flex flex-col items-center justify-between gap-6 border-t border-slate-100 pt-12 lg:flex-row dark:border-slate-800">
-          <div className="flex items-center gap-6">
-            <span className="text-sm font-bold text-slate-400">Follow me:</span>
-            <div className="flex gap-4">
+            <ul className="mt-6 flex flex-wrap gap-2">
               {footerData.socials.map((social) => (
-                <a 
-                  key={social.name} 
-                  href={social.href}
-                  className="group flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 transition-all hover:scale-110 hover:bg-white hover:shadow-lg dark:bg-slate-900"
-                >
-                  <Icon 
-                    icon={social.icon} 
-                    className="h-5 w-5 transition-transform" 
-                  />
-                </a>
+                <li key={social.name}>
+                  <a
+                    href={social.href}
+                    target={social.href.startsWith("http") ? "_blank" : undefined}
+                    rel={
+                      social.href.startsWith("http")
+                        ? "noopener noreferrer"
+                        : undefined
+                    }
+                    aria-label={social.name}
+                    className="flex h-10 w-10 items-center justify-center rounded-full border border-hairline text-ink-soft transition-colors duration-[var(--dur-fast)] ease-[var(--ease-out)] hover:border-lime hover:text-lime"
+                  >
+                    <Icon icon={social.icon} className="h-4 w-4" />
+                  </a>
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
-          <p className="text-sm font-medium text-slate-400">
-            © {new Date().getFullYear()} Ali Raza. All rights reserved.
+
+          <div className="grid grid-cols-2 gap-8 sm:grid-cols-4 lg:col-span-8">
+            {COLUMNS.map((column) => (
+              <div key={column.label}>
+                <h2 className="font-mono text-[length:var(--fs-eyebrow)] font-medium uppercase tracking-[0.18em] text-lime">
+                  {column.label}
+                </h2>
+                <ul className="mt-4 flex flex-col gap-2.5">
+                  {column.links.map((link) => {
+                    const external = link.href.startsWith("http");
+                    const className =
+                      "text-sm text-muted transition-colors duration-[var(--dur-fast)] ease-[var(--ease-out)] hover:text-ink";
+                    return (
+                      <li key={link.name}>
+                        {external ? (
+                          <a
+                            href={link.href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={className}
+                          >
+                            {link.name}
+                          </a>
+                        ) : (
+                          <Link href={link.href} className={className}>
+                            {link.name}
+                          </Link>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-14 flex flex-col items-start justify-between gap-3 border-t border-hairline pt-6 sm:flex-row sm:items-center">
+          <p className="text-sm text-muted">
+            © {year} Ali Raza. All rights reserved.
+          </p>
+          <p className="font-mono text-[11px] font-medium uppercase tracking-[0.16em] text-muted-2">
+            Shipped with care · Top Rated Plus
           </p>
         </div>
-        </ScrollReveal>
       </div>
     </footer>
   );

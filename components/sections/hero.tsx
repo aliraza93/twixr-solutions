@@ -62,7 +62,6 @@ function wordClass(kind: "plain" | "emphasis") {
 export function Hero({ screenshot }: { screenshot?: HeroVisualImage }) {
   const [moreOpen, setMoreOpen] = useState(false);
   const [Particles, setParticles] = useState<ComponentType | null>(null);
-  const [Cursor, setCursor] = useState<ComponentType | null>(null);
 
   useEffect(() => {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -74,9 +73,6 @@ export function Hero({ screenshot }: { screenshot?: HeroVisualImage }) {
     const run = () => {
       void import("@/components/sections/hero-particles").then((mod) => {
         setParticles(() => mod.HeroParticles);
-      });
-      void import("@/components/sections/hero-cursor").then((mod) => {
-        setCursor(() => mod.HeroCursor);
       });
     };
 
@@ -102,7 +98,7 @@ export function Hero({ screenshot }: { screenshot?: HeroVisualImage }) {
         className="pointer-events-none absolute inset-0 z-0"
         style={{
           backgroundImage:
-            "radial-gradient(rgba(11,15,13,0.03) 1px, transparent 1px)",
+            "radial-gradient(color-mix(in srgb, var(--ink) 3%, transparent) 1px, transparent 1px)",
           backgroundSize: "22px 22px",
         }}
         aria-hidden
@@ -239,8 +235,6 @@ export function Hero({ screenshot }: { screenshot?: HeroVisualImage }) {
           />
         </a>
       </div>
-
-      {Cursor ? <Cursor /> : null}
     </section>
   );
 }

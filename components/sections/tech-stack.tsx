@@ -1,10 +1,8 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { Icon } from "@iconify/react";
+import { Eyebrow } from "@/components/ui/eyebrow";
 import { cn } from "@/lib/utils";
-import { SectionHeader } from "@/components/ui/section-header";
-import { ScrollReveal } from "@/components/motion/scroll-reveal";
 
 const tools = [
   { name: "JavaScript", icon: "logos:javascript" },
@@ -27,6 +25,7 @@ const tools = [
   { name: "Stripe", icon: "logos:stripe" },
   { name: "OpenAI", icon: "logos:openai-icon" },
   { name: "Docker", icon: "logos:docker-icon" },
+  { name: "Nuxt", icon: "logos:nuxt-icon" },
   { name: "MongoDB", icon: "logos:mongodb-icon" },
   { name: "AWS", icon: "skill-icons:aws-light" },
   { name: "GCP", icon: "logos:google-cloud-icon" },
@@ -69,77 +68,102 @@ const tools = [
   { name: "LinkedIn", icon: "logos:linkedin-icon" },
 ];
 
-const row1 = tools.slice(0, 20);
-const row2 = tools.slice(20, 40);
-const row3 = tools.slice(40);
+const split = Math.ceil(tools.length / 2);
+const row1 = tools.slice(0, split);
+const row2 = tools.slice(split);
 
-export function TechStack() {
+function LogoTile({
+  name,
+  icon,
+}: {
+  name: string;
+  icon: string;
+}) {
   return (
-    <section className="relative overflow-hidden bg-white py-24 group/section dark:bg-slate-950">
-      <div className="container mx-auto px-4 relative z-10">
-        <SectionHeader
-          badge="Our Tech Stack"
-          titlePrefix="Modern"
-          titleHighlight="Tech"
-          titleSuffix="Stack"
-          description="Building scalable solutions with cutting-edge tools across web, mobile, AI, and cloud technologies."
-        />
-
-        <ScrollReveal>
-        <div className="relative flex flex-col gap-6 lg:gap-8">
-          <MarqueeRow items={row1} direction="left" speed={70} />
-          <MarqueeRow items={row2} direction="right" speed={80} />
-          <MarqueeRow items={row3} direction="left" speed={75} />
-
-          {/* Faded edges */}
-          <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-white to-transparent pointer-events-none z-20" />
-          <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-white to-transparent pointer-events-none z-20" />
-        </div>
-        </ScrollReveal>
-      </div>
-    </section>
+    <div
+      title={name}
+      className="group/tile flex h-16 w-16 shrink-0 items-center justify-center rounded-md border border-hairline bg-canvas transition-[transform,opacity,filter] duration-[var(--dur-fast)] ease-[var(--ease-out)] hover:-translate-y-0.5"
+    >
+      <Icon
+        icon={icon}
+        className="h-7 w-7 opacity-70 grayscale transition-[opacity,filter] duration-[var(--dur-fast)] ease-[var(--ease-out)] group-hover/tile:opacity-100 group-hover/tile:grayscale-0"
+      />
+      <span className="sr-only">{name}</span>
+    </div>
   );
 }
 
-function MarqueeRow({ items, direction = "left", speed = 30 }: { items: typeof tools, direction?: "left" | "right", speed?: number }) {
-  const tripledItems = [...items, ...items, ...items];
-
+function LogoSet({
+  items,
+  hidden,
+}: {
+  items: typeof tools;
+  hidden?: boolean;
+}) {
   return (
-    <div className="flex overflow-hidden py-4">
-      <motion.div
-        className="flex gap-8 lg:gap-10 shrink-0 px-4"
-        animate={{
-          x: direction === "left" ? ["0%", "-33.33%"] : ["-33.33%", "0%"]
-        }}
-        transition={{
-          duration: speed,
-          repeat: Infinity,
-          ease: "linear"
-        }}
-      >
-        {tripledItems.map((tool, index) => (
-          <div
-            key={`${tool.name}-${index}`}
-            className="group relative flex flex-col items-center justify-center min-w-[100px]"
-          >
-            <div
-              className="relative flex h-20 w-20 items-center justify-center rounded-2xl border border-slate-100 bg-white shadow-sm transition-all duration-300 group-hover:border-2 group-hover:border-indigo-500/40 group-hover:shadow-[0_10px_30px_rgba(79,70,229,0.1)] group-hover:-translate-y-1 group-hover:scale-110"
-            >
-              <Icon
-                icon={tool.icon}
-                className="h-10 w-10 transition-all duration-300"
-              />
-            </div>
-
-            {/* Title - Visible for ALL when section is hovered */}
-            <span
-              className="mt-3 text-[11px] font-semibold text-slate-500 opacity-0 transition-all duration-500 group-hover/section:opacity-100 group-hover:text-indigo-600 whitespace-nowrap"
-            >
-              {tool.name}
-            </span>
-          </div>
-        ))}
-      </motion.div>
+    <div
+      className="tech-marquee__set"
+      aria-hidden={hidden || undefined}
+    >
+      {items.map((tool) => (
+        <LogoTile key={tool.name} name={tool.name} icon={tool.icon} />
+      ))}
     </div>
+  );
+}
+
+function MarqueeRow({
+  items,
+  reverse = false,
+}: {
+  items: typeof tools;
+  reverse?: boolean;
+}) {
+  return (
+    <div className="tech-marquee">
+      <div
+        className={cn(
+          "tech-marquee__track",
+          reverse && "tech-marquee__track--reverse"
+        )}
+      >
+        <LogoSet items={items} />
+        <LogoSet items={items} hidden />
+      </div>
+    </div>
+  );
+}
+
+export function TechStack() {
+  return (
+    <section className="relative overflow-x-hidden bg-surface py-[var(--section-py)]">
+      <div className="ds-container">
+        <header className="max-w-[38rem]">
+          <Eyebrow>Our Tech Stack</Eyebrow>
+          <h2 className="mt-5 font-sora text-[length:var(--fs-h1)] font-extrabold leading-[1.06] tracking-[-0.02em] text-ink">
+            Modern{" "}
+            <span className="bg-[image:var(--grad-emphasis)] bg-clip-text text-transparent">
+              Tech
+            </span>{" "}
+            Stack
+          </h2>
+          <p className="mt-5 max-w-[52ch] text-[length:var(--fs-lead)] text-muted">
+            Building scalable solutions with cutting-edge tools across web, mobile,
+            AI, and cloud technologies.
+          </p>
+        </header>
+      </div>
+
+      <div className="tech-marquee-stack mt-12 md:mt-14">
+        <MarqueeRow items={row1} />
+        <MarqueeRow items={row2} reverse />
+      </div>
+
+      <div className="tech-grid ds-container mt-12">
+        {tools.map((tool) => (
+          <LogoTile key={tool.name} name={tool.name} icon={tool.icon} />
+        ))}
+      </div>
+    </section>
   );
 }

@@ -37,7 +37,33 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
     gsap.ticker.add(ticker);
     gsap.ticker.lagSmoothing(0);
 
+    const onAnchorClick = (event: MouseEvent) => {
+      const link = (event.target as Element | null)?.closest("a[href^='#']");
+      if (!link) return;
+      const href = link.getAttribute("href");
+      if (!href || href === "#") return;
+      const id = decodeURIComponent(href.slice(1));
+      const target = document.getElementById(id);
+      if (!target) return;
+      event.preventDefault();
+      lenis.scrollTo(target, { offset: -72, duration: 1.1 });
+      history.replaceState(null, "", href);
+    };
+
+    document.addEventListener("click", onAnchorClick);
+
+    if (window.location.hash) {
+      const id = decodeURIComponent(window.location.hash.slice(1));
+      const target = document.getElementById(id);
+      if (target) {
+        requestAnimationFrame(() => {
+          lenis.scrollTo(target, { offset: -72, immediate: true });
+        });
+      }
+    }
+
     return () => {
+      document.removeEventListener("click", onAnchorClick);
       gsap.ticker.remove(ticker);
       lenis.off("scroll", onScroll);
       lenis.destroy();

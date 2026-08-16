@@ -19,14 +19,32 @@ type EquationRowProps = {
   className?: string;
 };
 
-function Operator({ glyph, index }: { glyph: "+" | "="; index: number }) {
+function Operator({
+  glyph,
+  index,
+  circled,
+}: {
+  glyph: "+" | "=";
+  index: number;
+  circled?: boolean;
+}) {
   return (
     <span
-      className="eq-op-wrap eq-reveal relative z-[1] flex h-8 items-center justify-center md:h-[132px]"
+      className={cn(
+        "eq-op-wrap eq-reveal relative z-[1] flex h-8 items-center justify-center",
+        circled ? "md:h-24" : "md:h-[132px]"
+      )}
       style={{ "--i": index } as CSSProperties}
       aria-hidden
     >
-      <span className="eq-op font-sora text-[length:var(--fs-h2)] font-bold leading-none text-muted">
+      <span
+        className={cn(
+          "eq-op font-sora font-bold leading-none text-muted",
+          circled
+            ? "eq-op--node text-base"
+            : "text-[length:var(--fs-h2)]"
+        )}
+      >
         {glyph}
       </span>
     </span>
@@ -64,8 +82,12 @@ function CircleNode({
 }) {
   return (
     <div
-      className="eq-reveal relative z-[1]"
+      className={cn(
+        "eq-reveal relative z-[1]",
+        variant !== "result" && "md:pt-3"
+      )}
       style={{ "--i": index } as CSSProperties}
+      {...(variant === "result" ? { "data-eq-result": true } : {})}
     >
       <IconNode
         label={item.label}
@@ -87,11 +109,13 @@ export function EquationRow({
   className,
 }: EquationRowProps) {
   const Node = shape === "circle" ? CircleNode : SquareNode;
+  const circled = shape === "circle";
 
   return (
     <div
       className={cn(
         "eq-row relative flex w-full flex-col items-center gap-5 md:flex-row md:items-start md:justify-center md:gap-[clamp(16px,3vw,40px)]",
+        circled && "eq-row--circle",
         className
       )}
       role="group"
@@ -99,10 +123,18 @@ export function EquationRow({
     >
       <span className="eq-row__rail" aria-hidden />
       <Node item={a} variant="default" index={1} />
-      <Operator glyph="+" index={2} />
-      <Node item={b} variant="default" index={3} />
-      <Operator glyph="=" index={4} />
-      <Node item={c} variant="result" index={5} />
+      <Operator glyph="+" index={2} circled={circled} />
+      <Node
+        item={b}
+        variant={circled ? "result" : "default"}
+        index={3}
+      />
+      <Operator glyph="=" index={4} circled={circled} />
+      <Node
+        item={c}
+        variant={circled ? "default" : "result"}
+        index={5}
+      />
     </div>
   );
 }

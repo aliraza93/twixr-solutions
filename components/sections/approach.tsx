@@ -1,124 +1,73 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { approachSteps } from "@/lib/data";
-import { Icon } from "@iconify/react";
-import { cn } from "@/lib/utils";
-import { getNamedIconAccent } from "@/lib/icon-accents";
-import { SectionHeader } from "@/components/ui/section-header";
-import { ScrollReveal } from "@/components/motion/scroll-reveal";
+import { Eyebrow } from "@/components/ui/eyebrow";
+import { ProgressTimeline } from "@/components/ui/progress-timeline";
+import { TypingTerminal, type TerminalLine } from "@/components/ui/typing-terminal";
+
+const STEP_NAMES = ["Discover", "Architect", "Build", "Test", "Deploy"] as const;
+
+const TIMELINE_NODES = approachSteps.map((step, i) => ({
+  index: String(i + 1).padStart(2, "0"),
+  title: STEP_NAMES[i] ?? step.title,
+  description: step.description,
+}));
+
+const TERMINAL_LINES: TerminalLine[] = [
+  { kind: "cmd", text: "$ twixr deployment" },
+  { kind: "ok", text: "Tests passing" },
+  { kind: "ok", text: "Docker image built" },
+  { kind: "ok", text: "Migrations run" },
+  { kind: "ok", text: "SSL & CDN configured" },
+  { kind: "run", text: "Deploying to production…" },
+];
 
 export function Approach() {
   return (
     <section
       id="process"
-      className="relative overflow-hidden bg-white py-24 dark:bg-slate-950"
+      className="relative overflow-x-hidden bg-canvas py-[var(--section-py)]"
     >
-      <div className="container relative z-10 mx-auto px-4">
-        <SectionHeader
-          badge="Our Methodology"
-          titlePrefix="Strategic"
-          titleHighlight="Proven"
-          titleSuffix="Approach"
-          description="I follow a structured, results-driven process designed to transform complex challenges into scalable, high-performing solutions."
-        />
+      <div className="ds-container">
+        <header className="max-w-[38rem]">
+          <Eyebrow>How we work</Eyebrow>
+          <h2 className="mt-5 font-sora text-[length:var(--fs-h1)] font-extrabold leading-[1.06] tracking-[-0.02em] text-ink">
+            <span className="block">From a messy brief</span>
+            <span className="mt-1 block">
+              to a process that{" "}
+              <span className="bg-[image:var(--grad-emphasis)] bg-clip-text text-transparent">
+                ships.
+              </span>
+            </span>
+          </h2>
+          <p className="mt-5 max-w-[52ch] text-[length:var(--fs-lead)] text-muted">
+            I follow a structured, results-driven process designed to transform
+            complex challenges into scalable, high-performing solutions.
+          </p>
+        </header>
 
-        {/* Steps Flow */}
-        <div className="relative mx-auto max-w-[1440px]">
-          {/* Animated SVG Path for Connections (Desktop) */}
-          <svg
-            className="absolute left-0 top-10 hidden h-20 w-full lg:block"
-            viewBox="0 0 1200 80"
-            preserveAspectRatio="none"
-          >
-            <path
-              d="M 120 40 Q 250 -10 380 40 Q 510 90 640 40 Q 770 -10 900 40 Q 945 90 990 40"
-              fill="none"
-              stroke="url(#approach-flow-gradient)"
-              strokeWidth="2"
-              strokeDasharray="8 8"
-              className="animate-flow-dash"
-            />
-            <defs>
-              <linearGradient id="approach-flow-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.2" />
-                <stop offset="50%" stopColor="hsl(var(--primary))" stopOpacity="0.6" />
-                <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0.2" />
-              </linearGradient>
-            </defs>
-          </svg>
+        <ProgressTimeline className="mt-14 md:mt-16" nodes={TIMELINE_NODES} />
 
-          <div className="grid grid-cols-1 gap-12 sm:grid-cols-2 lg:grid-cols-5 lg:gap-12">
-            {approachSteps.map((step, index) => (
-              <StepCard key={index} step={step} index={index} />
-            ))}
+        <div className="mt-16 grid items-center gap-10 lg:mt-20 lg:grid-cols-12 lg:gap-16">
+          <TypingTerminal
+            className="lg:col-span-6"
+            title="twixr · deployment"
+            lines={TERMINAL_LINES}
+          />
+          <div className="lg:col-span-6">
+            <Eyebrow>In practice</Eyebrow>
+            <h3 className="mt-5 font-sora text-[length:var(--fs-h2)] font-bold leading-[1.12] tracking-[-0.02em] text-ink">
+              <span className="block">From whiteboard to</span>
+              <span className="mt-1 block text-pine">production.</span>
+            </h3>
+            <p className="mt-4 max-w-[48ch] text-[length:var(--fs-lead)] text-muted">
+              The same five steps run on every engagement — discovery notes become
+              architecture, architecture becomes a pipeline, and the pipeline is
+              what ships. No theatre, no mystery phase after “done.”
+            </p>
           </div>
         </div>
       </div>
-
-      <style jsx global>{`
-        @keyframes flow-dash {
-          to {
-            stroke-dashoffset: -100;
-          }
-        }
-        .animate-flow-dash {
-          animation: flow-dash 10s linear infinite;
-        }
-      `}</style>
     </section>
-  );
-}
-
-function StepCard({ step, index }: { step: { icon: string; title: string; description: string; color?: string }; index: number }) {
-  const accent = getNamedIconAccent(step.color ?? "indigo", index);
-
-  return (
-    <ScrollReveal delay={index * 0.08} className="group relative z-10 flex flex-col items-center text-center lg:items-start lg:text-left">
-      {/* Icon Container */}
-      <div className="relative mb-8">
-        <motion.div 
-          whileHover={{ scale: 1.1, rotate: 5 }}
-          className={cn(
-            "relative flex h-24 w-24 items-center justify-center rounded-[2rem] bg-white shadow-2xl transition-all duration-500 dark:bg-slate-900",
-            "border group-hover:shadow-lg",
-            accent.border
-          )}
-        >
-          <div 
-            className={cn(
-              "absolute inset-4 rounded-xl opacity-30 blur-xl transition-opacity duration-500 group-hover:opacity-50",
-              accent.glow
-            )}
-          />
-          <Icon 
-            icon={step.icon} 
-            className={cn("relative h-10 w-10 transition-transform duration-500 group-hover:scale-110", accent.icon)} 
-          />
-        </motion.div>
-        
-        {/* Step Counter Bubble */}
-        <div className="absolute -right-2 -top-2 flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-[10px] font-black text-white shadow-lg dark:bg-white dark:text-slate-900">
-          {index + 1}
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="relative">
-        <h3 className="mb-3 text-lg font-black tracking-tight text-slate-900 transition-colors group-hover:text-primary dark:text-white dark:group-hover:text-primary">
-          {step.title}
-        </h3>
-        <p className="text-sm leading-relaxed text-slate-500 transition-colors group-hover:text-slate-600 dark:text-slate-400 dark:group-hover:text-slate-300">
-          {step.description}
-        </p>
-      </div>
-
-      {/* Mobile Flow Indicator */}
-      {index < approachSteps.length - 1 && (
-        <div className="mt-8 block lg:hidden">
-          <Icon icon="lucide:chevron-down" className="h-6 w-6 animate-bounce text-slate-200" />
-        </div>
-      )}
-    </ScrollReveal>
   );
 }

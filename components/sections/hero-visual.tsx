@@ -87,12 +87,12 @@ function DashboardMock() {
           >
             <defs>
               <linearGradient id="hero-chart-fill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#0F5132" stopOpacity="0.22" />
-                <stop offset="100%" stopColor="#BEF03A" stopOpacity="0.04" />
+                <stop offset="0%" stopColor="var(--pine)" stopOpacity="0.22" />
+                <stop offset="100%" stopColor="var(--lime)" stopOpacity="0.04" />
               </linearGradient>
               <linearGradient id="hero-chart-stroke" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stopColor="#0F5132" />
-                <stop offset="100%" stopColor="#7A9A00" />
+                <stop offset="0%" stopColor="var(--pine)" />
+                <stop offset="100%" stopColor="var(--lime-deep)" />
               </linearGradient>
             </defs>
             <path
@@ -106,7 +106,7 @@ function DashboardMock() {
               strokeWidth="2"
               strokeLinecap="round"
             />
-            <circle cx="240" cy="8" r="3.5" fill="#BEF03A" />
+            <circle cx="240" cy="8" r="3.5" fill="var(--lime)" />
           </svg>
         </div>
       </div>

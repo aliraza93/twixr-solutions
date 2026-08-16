@@ -30,7 +30,7 @@ export function EquationTile({
         className={cn(
           "eq-tile__face flex size-[132px] items-center justify-center rounded-lg border bg-canvas",
           result
-            ? "eq-tile__face--result border-lime text-lime-deep"
+            ? "eq-tile__face--result border-lime text-lime-ink"
             : "border-hairline text-pine"
         )}
       >

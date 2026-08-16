@@ -7,6 +7,7 @@ const config = {
         './components/**/*.{ts,tsx}',
         './app/**/*.{ts,tsx}',
         './src/**/*.{ts,tsx}',
+        './hooks/**/*.{ts,tsx}',
     ],
     prefix: "",
     theme: {
@@ -36,14 +37,6 @@ const config = {
                     DEFAULT: "hsl(var(--destructive))",
                     foreground: "hsl(var(--destructive-foreground))",
                 },
-                muted: {
-                    DEFAULT: "hsl(var(--muted))",
-                    foreground: "hsl(var(--muted-foreground))",
-                },
-                accent: {
-                    DEFAULT: "hsl(var(--accent))",
-                    foreground: "hsl(var(--accent-foreground))",
-                },
                 popover: {
                     DEFAULT: "hsl(var(--popover))",
                     foreground: "hsl(var(--popover-foreground))",
@@ -52,11 +45,81 @@ const config = {
                     DEFAULT: "hsl(var(--card))",
                     foreground: "hsl(var(--card-foreground))",
                 },
+                canvas: "var(--canvas)",
+                surface: {
+                    DEFAULT: "var(--surface)",
+                    2: "var(--surface-2)",
+                },
+                ink: {
+                    DEFAULT: "var(--ink)",
+                    soft: "var(--ink-soft)",
+                },
+                muted: {
+                    DEFAULT: "var(--muted)",
+                    2: "var(--muted-2)",
+                    foreground: "hsl(var(--muted-foreground))",
+                },
+                hairline: {
+                    DEFAULT: "var(--hairline)",
+                    strong: "var(--hairline-strong)",
+                },
+                pine: {
+                    DEFAULT: "var(--pine)",
+                    600: "var(--pine-600)",
+                    tint: "var(--pine-tint)",
+                },
+                lime: {
+                    DEFAULT: "var(--lime)",
+                    ink: "var(--lime-ink)",
+                    deep: "var(--lime-deep)",
+                },
+                d: {
+                    bg: "var(--d-bg)",
+                    "bg-2": "var(--d-bg-2)",
+                    text: "var(--d-text)",
+                    muted: "var(--d-muted)",
+                    hairline: "var(--d-hairline)",
+                    lime: "var(--d-lime)",
+                    mint: "var(--d-mint)",
+                    glow: "var(--d-glow)",
+                },
+                accent: {
+                    DEFAULT: "hsl(var(--ui-accent))",
+                    foreground: "hsl(var(--accent-foreground))",
+                },
             },
             borderRadius: {
-                lg: "var(--radius)",
-                md: "calc(var(--radius) - 2px)",
-                sm: "calc(var(--radius) - 4px)",
+                sm: "var(--r-sm)",
+                md: "var(--r-md)",
+                lg: "var(--r-lg)",
+                xl: "var(--r-xl)",
+                pill: "var(--r-pill)",
+            },
+            boxShadow: {
+                sm: "var(--shadow-sm)",
+                md: "var(--shadow-md)",
+                lg: "var(--shadow-lg)",
+                lime: "var(--shadow-lime)",
+                pine: "var(--shadow-accent)",
+            },
+            fontFamily: {
+                sans: ["var(--font-inter)", "ui-sans-serif", "system-ui", "sans-serif"],
+                heading: ["var(--font-sora)", "ui-sans-serif", "system-ui", "sans-serif"],
+                sora: ["var(--font-sora)", "ui-sans-serif", "system-ui", "sans-serif"],
+                inter: ["var(--font-inter)", "ui-sans-serif", "system-ui", "sans-serif"],
+                mono: ["var(--font-mono)", "ui-monospace", "SFMono-Regular", "monospace"],
+            },
+            transitionTimingFunction: {
+                out: "var(--ease-out)",
+                inout: "var(--ease-inout)",
+            },
+            transitionDuration: {
+                fast: "var(--dur-fast)",
+                DEFAULT: "var(--dur)",
+                slow: "var(--dur-slow)",
+            },
+            spacing: {
+                30: "var(--space-30)",
             },
             keyframes: {
                 "accordion-down": {
@@ -67,10 +130,6 @@ const config = {
                     from: { height: "var(--radix-accordion-content-height)" },
                     to: { height: "0" },
                 },
-            },
-            fontFamily: {
-                sans: ["var(--font-inter)", "ui-sans-serif", "system-ui"],
-                heading: ["var(--font-outfit)", "ui-sans-serif", "system-ui"],
             },
             animation: {
                 "accordion-down": "accordion-down 0.2s ease-out",

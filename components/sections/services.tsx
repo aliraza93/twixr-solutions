@@ -22,7 +22,7 @@ const item = {
 
 export function Services() {
   return (
-    <section className="py-24 bg-muted/50">
+    <section className="bg-surface py-24">
       <div className="container px-4 mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

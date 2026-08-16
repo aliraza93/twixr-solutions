@@ -1,18 +1,12 @@
 "use client";
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-  type ReactNode,
-} from "react";
-import { motion, useInView, useReducedMotion } from "framer-motion";
+import { useEffect, useRef, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import {
-  SCROLL_REVEAL_TRANSITION,
+  DURATION,
+  EASE,
+  REVEAL_DISTANCE,
+  STAGGER,
   useScrollReveal,
   type ScrollRevealOptions,
 } from "@/hooks/use-scroll-reveal";
@@ -29,27 +23,30 @@ export function ScrollReveal({
   distance,
   delay,
   margin,
+  stagger,
+  staggerIndex,
+  once,
+  rootMargin,
+  threshold,
 }: ScrollRevealProps) {
-  const reveal = useScrollReveal({ amount, distance, delay, margin });
-
-  if (reveal.reduceMotion) {
-    return <div className={className}>{children}</div>;
-  }
+  const { ref } = useScrollReveal({
+    amount,
+    distance,
+    delay,
+    margin,
+    stagger,
+    staggerIndex,
+    once,
+    rootMargin,
+    threshold,
+  });
 
   return (
-    <motion.div
-      ref={reveal.ref}
-      className={className}
-      initial={reveal.initial}
-      animate={reveal.animate}
-      transition={reveal.transition}
-    >
+    <div ref={ref} className={cn("scroll-reveal", className)}>
       {children}
-    </motion.div>
+    </div>
   );
 }
-
-const StaggerOffsetContext = createContext(28);
 
 type ScrollStaggerProps = {
   children: ReactNode;
@@ -60,62 +57,59 @@ type ScrollStaggerProps = {
   distance?: number;
 };
 
+function prefersReducedMotion() {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
 export function ScrollStagger({
   children,
   className,
-  stagger = 0.06,
+  stagger = STAGGER,
   amount = 0.08,
   margin = "0px 0px -6% 0px",
-  distance = 24,
+  distance = REVEAL_DISTANCE,
 }: ScrollStaggerProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, {
-    amount,
-    margin: margin as `${number}px ${number}px ${number}px ${number}px`,
-  });
-  const reduceMotion = useReducedMotion();
-  const [hiddenY, setHiddenY] = useState(distance);
-
-  const updateHiddenOffset = useCallback(() => {
-    const el = ref.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const viewportMid = window.innerHeight / 2;
-    const elementMid = rect.top + rect.height / 2;
-    setHiddenY(elementMid > viewportMid ? distance : -distance);
-  }, [distance]);
 
   useEffect(() => {
-    updateHiddenOffset();
-    if (isInView) return;
+    const root = ref.current;
+    if (!root) return;
 
-    window.addEventListener("scroll", updateHiddenOffset, { passive: true });
-    window.addEventListener("resize", updateHiddenOffset);
+    const items = Array.from(root.querySelectorAll<HTMLElement>("[data-reveal-item]"));
+    if (!items.length) return;
+
+    if (prefersReducedMotion()) return;
+
+    items.forEach((el, i) => {
+      el.classList.add("scroll-reveal");
+      el.style.transitionDelay = `${i * stagger}s`;
+      if (distance !== REVEAL_DISTANCE) {
+        el.style.transform = `translateY(${distance}px)`;
+      }
+    });
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        items.forEach((el) => el.classList.add("is-inview"));
+        observer.disconnect();
+      },
+      { threshold: amount, rootMargin: margin }
+    );
+
+    observer.observe(root);
     return () => {
-      window.removeEventListener("scroll", updateHiddenOffset);
-      window.removeEventListener("resize", updateHiddenOffset);
+      observer.disconnect();
+      items.forEach((el) => {
+        el.style.transitionDelay = "";
+      });
     };
-  }, [isInView, updateHiddenOffset]);
-
-  if (reduceMotion) {
-    return <div className={className}>{children}</div>;
-  }
+  }, [amount, distance, margin, stagger]);
 
   return (
-    <StaggerOffsetContext.Provider value={hiddenY}>
-      <motion.div
-        ref={ref}
-        className={className}
-        initial={false}
-        animate={isInView ? "visible" : "hidden"}
-        variants={{
-          hidden: {},
-          visible: { transition: { staggerChildren: stagger } },
-        }}
-      >
-        {children}
-      </motion.div>
-    </StaggerOffsetContext.Provider>
+    <div ref={ref} className={className}>
+      {children}
+    </div>
   );
 }
 
@@ -125,26 +119,11 @@ type ScrollRevealItemProps = {
 };
 
 export function ScrollRevealItem({ children, className }: ScrollRevealItemProps) {
-  const hiddenY = useContext(StaggerOffsetContext);
-  const reduceMotion = useReducedMotion();
-
-  if (reduceMotion) {
-    return <div className={className}>{children}</div>;
-  }
-
   return (
-    <motion.div
-      className={cn(className)}
-      variants={{
-        hidden: { opacity: 0, y: hiddenY },
-        visible: {
-          opacity: 1,
-          y: 0,
-          transition: SCROLL_REVEAL_TRANSITION,
-        },
-      }}
-    >
+    <div data-reveal-item className={cn("scroll-reveal", className)}>
       {children}
-    </motion.div>
+    </div>
   );
 }
+
+export { DURATION, EASE };

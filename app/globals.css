@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@config "../tailwind.config.ts";
 
 /* `dark:` = `.dark` ancestor only (v4 default is system prefers-color-scheme). */
 @custom-variant dark (&:where(.dark, .dark *));
@@ -19,10 +20,9 @@
   --color-destructive: hsl(var(--destructive));
   --color-destructive-foreground: hsl(var(--destructive-foreground));
 
-  --color-muted: hsl(var(--muted));
   --color-muted-foreground: hsl(var(--muted-foreground));
 
-  --color-accent: hsl(var(--accent));
+  --color-accent: hsl(var(--ui-accent));
   --color-accent-foreground: hsl(var(--accent-foreground));
 
   --color-popover: hsl(var(--popover));
@@ -30,16 +30,158 @@
 
   --color-card: hsl(var(--card));
   --color-card-foreground: hsl(var(--card-foreground));
+}
 
-  --radius-lg: var(--radius);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-sm: calc(var(--radius) - 4px);
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-muted: var(--muted);
+  --color-muted-2: var(--muted-2);
+  --color-hairline: var(--hairline);
+  --color-hairline-strong: var(--hairline-strong);
+  --color-pine: var(--pine);
+  --color-pine-600: var(--pine-600);
+  --color-pine-tint: var(--pine-tint);
+  --color-lime: var(--lime);
+  --color-lime-ink: var(--lime-ink);
+  --color-lime-deep: var(--lime-deep);
+  --color-d-bg: var(--d-bg);
+  --color-d-bg-2: var(--d-bg-2);
+  --color-d-text: var(--d-text);
+  --color-d-muted: var(--d-muted);
+  --color-d-hairline: var(--d-hairline);
+  --color-d-lime: var(--d-lime);
+  --color-d-mint: var(--d-mint);
+  --color-d-glow: var(--d-glow);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-info: var(--info);
 
-  --font-heading: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
+  --radius-sm: var(--r-sm);
+  --radius-md: var(--r-md);
+  --radius-lg: var(--r-lg);
+  --radius-xl: var(--r-xl);
+  --radius-pill: var(--r-pill);
+
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+  --shadow-lime: var(--shadow-lime);
+  --shadow-pine: var(--shadow-accent);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-sora), ui-sans-serif, system-ui, sans-serif;
+  --font-sora: var(--font-sora), ui-sans-serif, system-ui, sans-serif;
+  --font-inter: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-mono), ui-monospace, "SFMono-Regular", monospace;
+
+  --ease-out: var(--ease-out);
+  --ease-inout: var(--ease-inout);
+  --duration-fast: var(--dur-fast);
+  --duration-DEFAULT: var(--dur);
+  --duration-slow: var(--dur-slow);
 }
 
 @layer base {
   :root {
+    /* ── Design tokens (docs/design.md §1–§3, §5) ── */
+    --canvas: #ffffff;
+    --surface: #f5f7f4;
+    --surface-2: #eaeeea;
+    --ink: #0b0f0d;
+    --ink-soft: #363a38;
+    --muted: #5a6360;
+    --muted-2: #99a09c;
+    --hairline: #e4e8e4;
+    --hairline-strong: #d0d6d0;
+
+    --accent: #0f5132;
+    --accent-600: #0a3a26;
+    --accent-tint: #e7f1ec;
+    --pine: #0f5132;
+    --pine-600: #0a3a26;
+    --pine-tint: #e7f1ec;
+
+    --lime: #bef03a;
+    --lime-ink: #3b4d00;
+    --lime-deep: #7a9a00;
+
+    --d-bg: #0b0f0d;
+    --d-bg-2: #121814;
+    --d-text: #edf2ef;
+    --d-muted: #9aa69f;
+    --d-hairline: rgba(255, 255, 255, 0.1);
+    --d-lime: #bef03a;
+    --d-mint: #7fe3b0;
+    --d-glow: rgba(199, 240, 58, 0.16);
+
+    --success: #16a34a;
+    --warning: #d97706;
+    --danger: #dc2626;
+    --info: var(--accent);
+
+    --glow-accent-light: radial-gradient(60% 60% at 80% 0%, rgba(15, 81, 50, 0.1) 0%, transparent 70%);
+    --glow-lime-light: radial-gradient(50% 50% at 10% 100%, rgba(190, 240, 58, 0.14) 0%, transparent 70%);
+    --glow-dark: radial-gradient(50% 50% at 85% 0%, rgba(199, 240, 58, 0.22) 0%, transparent 70%);
+    --grad-emphasis: linear-gradient(90deg, #0f5132 0%, #1e7a4e 100%);
+    --grad-connector: linear-gradient(90deg, #bef03a 0%, #0f5132 100%);
+
+    --fs-display: clamp(2.75rem, 6vw, 5.5rem);
+    --fs-h1: clamp(2.25rem, 4.5vw, 3.75rem);
+    --fs-h2: clamp(1.75rem, 3vw, 2.5rem);
+    --fs-h3: clamp(1.25rem, 2vw, 1.5rem);
+    --fs-lead: clamp(1.05rem, 1.4vw, 1.25rem);
+    --fs-body: 1rem;
+    --fs-sm: 0.875rem;
+    --fs-eyebrow: 0.75rem;
+
+    --container: 1200px;
+    --section-py: clamp(72px, 10vw, 140px);
+    --grid-gap: 24px;
+
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 20px;
+    --space-6: 24px;
+    --space-8: 32px;
+    --space-10: 40px;
+    --space-12: 48px;
+    --space-16: 64px;
+    --space-20: 80px;
+    --space-24: 96px;
+    --space-30: 120px;
+    --space-40: 160px;
+
+    --r-sm: 8px;
+    --r-md: 14px;
+    --r-lg: 20px;
+    --r-xl: 28px;
+    --r-pill: 999px;
+
+    --shadow-sm: 0 1px 2px rgba(11, 15, 13, 0.04), 0 1px 3px rgba(11, 15, 13, 0.06);
+    --shadow-md: 0 6px 16px rgba(11, 15, 13, 0.06), 0 2px 6px rgba(11, 15, 13, 0.04);
+    --shadow-lg: 0 20px 40px rgba(11, 15, 13, 0.08), 0 8px 16px rgba(11, 15, 13, 0.05);
+    --shadow-lime: 0 8px 30px rgba(190, 240, 58, 0.35);
+    --shadow-accent: 0 8px 30px rgba(15, 81, 50, 0.28);
+    --shadow-node: 0 0 24px rgba(15, 81, 50, 0.18);
+
+    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-inout: cubic-bezier(0.65, 0.05, 0.36, 1);
+    --dur-fast: 0.2s;
+    --dur: 0.4s;
+    --dur-slow: 0.8s;
+
+    --eyebrow: var(--pine);
+    --eyebrow-rule: var(--muted);
+    --feature-bg: var(--d-bg);
+
+    /* ── shadcn semantic tokens (existing UI) ── */
     --background: 0 0% 100%;
     --foreground: 224 71% 4%;
 
@@ -55,10 +197,9 @@
     --secondary: 0 0% 100%;
     --secondary-foreground: 222.2 47.4% 11.2%;
 
-    --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
-
-    --accent: 210 40% 96.1%;
+    --ui-muted: 210 40% 96.1%;
+    --ui-accent: 210 40% 96.1%;
     --accent-foreground: 222.2 47.4% 11.2%;
 
     --destructive: 0 84.2% 60.2%;
@@ -87,10 +228,10 @@
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 217.2 32.6% 17.5%;
+    --ui-muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 217.2 32.6% 17.5%;
+    --ui-accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
 
     --destructive: 0 62.8% 30.6%;
@@ -100,6 +241,41 @@
     --input: 217.2 32.6% 17.5%;
     --ring: 210 40% 98%;
   }
+
+  /* Dark feature band — remaps semantic tokens so children auto-adapt */
+  .band-dark {
+    --canvas: var(--d-bg);
+    --surface: var(--d-bg-2);
+    --surface-2: #1a211c;
+    --ink: var(--d-text);
+    --ink-soft: #c5d0c9;
+    --muted: var(--d-muted);
+    --muted-2: #6d7a73;
+    --hairline: var(--d-hairline);
+    --hairline-strong: rgba(255, 255, 255, 0.18);
+    --accent: var(--d-mint);
+    --accent-600: var(--d-lime);
+    --accent-tint: rgba(127, 227, 176, 0.12);
+    --pine: var(--d-mint);
+    --pine-600: var(--d-lime);
+    --pine-tint: rgba(127, 227, 176, 0.12);
+    --lime: var(--d-lime);
+    --lime-ink: var(--d-lime);
+    --lime-deep: var(--d-lime);
+    --info: var(--d-mint);
+    --eyebrow: var(--d-lime);
+    --eyebrow-rule: var(--d-lime);
+    --feature-bg: var(--d-bg-2);
+    --shadow-sm: 0 0 0 1px var(--d-hairline);
+    --shadow-md: 0 0 0 1px var(--d-hairline), 0 0 40px var(--d-glow);
+    --shadow-lg: 0 0 0 1px var(--d-hairline), 0 0 60px var(--d-glow);
+    --shadow-node: 0 0 32px var(--d-glow);
+
+    background-color: var(--d-bg);
+    color: var(--d-text);
+    background-image: var(--glow-dark);
+    background-repeat: no-repeat;
+  }
 }
 
 @layer base {
@@ -107,19 +283,38 @@
     @apply border-border;
   }
 
+  html {
+    scroll-behavior: auto;
+  }
+
   body {
-    @apply bg-background text-foreground text-[15px] leading-normal;
+    background-color: var(--canvas);
+    color: var(--ink);
+    font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+    font-size: var(--fs-body);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
   }
 
   h1,
   h2,
   h3,
   h4 {
-    @apply tracking-tight;
+    font-family: var(--font-sora), ui-sans-serif, system-ui, sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.08;
+    color: var(--ink);
   }
 }
 
 @layer components {
+  .ds-container {
+    width: min(100%, var(--container));
+    margin-inline: auto;
+    padding-inline: clamp(20px, 5vw, 40px);
+  }
+
   /* Hero / page-level headlines */
   .text-display {
     @apply font-heading text-3xl font-bold leading-[1.15] tracking-tight sm:text-4xl lg:text-5xl;
@@ -149,5 +344,30 @@
   .cal-embed iframe {
     background: transparent !important;
     color-scheme: light;
+  }
+}
+
+@layer utilities {
+  .scroll-reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition:
+      opacity var(--dur-slow) var(--ease-out),
+      transform var(--dur-slow) var(--ease-out);
+    will-change: opacity, transform;
+  }
+
+  .scroll-reveal.is-inview {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .scroll-reveal {
+      opacity: 1;
+      transform: none;
+      transition: none;
+      will-change: auto;
+    }
   }
 }

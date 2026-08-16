@@ -152,7 +152,7 @@ function ServicesGrid({ services }: { services: ServiceListingItem[] }) {
   const hasActiveFilters = query.trim().length > 0 || activeCategory !== "all";
 
   return (
-    <section className="relative overflow-hidden border-t border-border bg-muted/35 py-20 md:py-24 dark:bg-slate-900/35">
+    <section className="relative overflow-hidden border-t border-border bg-surface py-20 md:py-24 dark:bg-slate-900/35">
       <div className="pointer-events-none absolute inset-0" aria-hidden>
         <div className="absolute -top-[30%] right-[-15%] h-[min(560px,70vw)] w-[min(560px,70vw)] rounded-full bg-[radial-gradient(circle_at_center,rgba(99,91,255,0.08)_0,transparent_65%)] blur-3xl dark:opacity-70" />
         <div className="absolute bottom-[-20%] left-[-10%] h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle_at_center,rgba(14,165,233,0.07)_0,transparent_65%)] blur-3xl dark:opacity-60" />
@@ -191,7 +191,7 @@ function ServicesGrid({ services }: { services: ServiceListingItem[] }) {
                 <button
                   type="button"
                   onClick={() => setQuery("")}
-                  className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   aria-label="Clear search"
                 >
                   <X className="h-3.5 w-3.5" />
@@ -248,7 +248,7 @@ function ServicesGrid({ services }: { services: ServiceListingItem[] }) {
         </p>
 
         {filtered.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-border bg-muted/30 py-14 text-center text-sm text-muted-foreground">
+          <p className="rounded-xl border border-dashed border-border bg-surface py-14 text-center text-sm text-muted-foreground">
             No services match. Try another category or clear your search.
           </p>
         ) : (

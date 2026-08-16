@@ -1,77 +1,102 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useInView, useReducedMotion, type Transition } from "framer-motion";
+import { useEffect, useRef } from "react";
+import {
+  DURATION,
+  REVEAL_DISTANCE,
+  STAGGER,
+} from "@/lib/motion";
 
+export {
+  DURATION,
+  DURATION_BASE,
+  DURATION_FAST,
+  DURATION_SLOW,
+  EASE,
+  EASE_INOUT,
+  REVEAL_DISTANCE,
+  STAGGER,
+} from "@/lib/motion";
+
+/** @deprecated Use `EASE` — kept for existing Framer Motion callers */
 export const SCROLL_REVEAL_EASE = [0.22, 1, 0.36, 1] as const;
 
-export const SCROLL_REVEAL_TRANSITION: Transition = {
-  duration: 0.55,
+/** @deprecated Use `DURATION` + `EASE` */
+export const SCROLL_REVEAL_TRANSITION = {
+  duration: DURATION,
   ease: SCROLL_REVEAL_EASE,
-};
+} as const;
 
 export type ScrollRevealOptions = {
-  amount?: number;
-  distance?: number;
   delay?: number;
+  stagger?: number;
+  staggerIndex?: number;
+  distance?: number;
+  once?: boolean;
+  rootMargin?: string;
+  threshold?: number;
+  /** @deprecated Ignored — IntersectionObserver uses `threshold` */
+  amount?: number;
+  /** @deprecated Use `rootMargin` */
   margin?: string;
 };
 
-function getHiddenOffset(el: HTMLElement, distance: number) {
-  const rect = el.getBoundingClientRect();
-  const viewportMid = window.innerHeight / 2;
-  const elementMid = rect.top + rect.height / 2;
-  return elementMid > viewportMid ? distance : -distance;
+function prefersReducedMotion() {
+  if (typeof window === "undefined") return false;
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
 export function useScrollReveal<T extends HTMLElement = HTMLDivElement>(
   options: ScrollRevealOptions = {}
 ) {
-  const distance = options.distance ?? 28;
-  const ref = useRef<T>(null);
-  const isInView = useInView(ref, {
-    amount: options.amount ?? 0.12,
-    margin: (options.margin ?? "0px 0px -6% 0px") as `${number}px ${number}px ${number}px ${number}px`,
-  });
-  const reduceMotion = useReducedMotion();
-  const [hiddenY, setHiddenY] = useState(distance);
+  const {
+    delay = 0,
+    stagger = STAGGER,
+    staggerIndex = 0,
+    distance = REVEAL_DISTANCE,
+    once = true,
+    rootMargin = options.margin ?? "0px 0px -8% 0px",
+    threshold = options.amount ?? 0.12,
+  } = options;
 
-  const updateHiddenOffset = useCallback(() => {
-    const el = ref.current;
-    if (!el) return;
-    setHiddenY(getHiddenOffset(el, distance));
-  }, [distance]);
+  const ref = useRef<T>(null);
 
   useEffect(() => {
-    updateHiddenOffset();
-    if (isInView) return;
+    const el = ref.current;
+    if (!el) return;
 
-    window.addEventListener("scroll", updateHiddenOffset, { passive: true });
-    window.addEventListener("resize", updateHiddenOffset);
+    if (prefersReducedMotion()) {
+      el.classList.remove("scroll-reveal");
+      el.style.opacity = "";
+      el.style.transform = "";
+      el.style.transitionDelay = "";
+      return;
+    }
+
+    el.classList.add("scroll-reveal");
+    el.style.transitionDelay = `${delay + staggerIndex * stagger}s`;
+    if (distance !== REVEAL_DISTANCE) {
+      el.style.transform = `translateY(${distance}px)`;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          el.classList.add("is-inview");
+          if (once) observer.unobserve(el);
+        } else if (!once) {
+          el.classList.remove("is-inview");
+        }
+      },
+      { rootMargin, threshold }
+    );
+
+    observer.observe(el);
     return () => {
-      window.removeEventListener("scroll", updateHiddenOffset);
-      window.removeEventListener("resize", updateHiddenOffset);
+      observer.disconnect();
+      el.style.transitionDelay = "";
     };
-  }, [isInView, updateHiddenOffset]);
+  }, [delay, stagger, staggerIndex, distance, once, rootMargin, threshold]);
 
-  const transition: Transition = {
-    ...SCROLL_REVEAL_TRANSITION,
-    delay: options.delay ?? 0,
-  };
-
-  if (reduceMotion) {
-    return { ref, isInView, reduceMotion: true as const };
-  }
-
-  return {
-    ref,
-    isInView,
-    reduceMotion: false as const,
-    initial: false as const,
-    animate: isInView
-      ? { opacity: 1, y: 0 }
-      : { opacity: 0, y: hiddenY },
-    transition,
-    hiddenY,
-  };
+  return { ref, reduceMotion: prefersReducedMotion() };
 }

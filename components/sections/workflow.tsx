@@ -7,7 +7,7 @@ import { ScrollReveal } from "@/components/motion/scroll-reveal";
 
 export function Workflow() {
   return (
-    <section className="overflow-hidden bg-slate-950 py-24">
+    <section id="workflow" className="overflow-hidden bg-slate-950 py-24">
       <div className="container mx-auto px-4">
         <SectionHeader
           invert={true}

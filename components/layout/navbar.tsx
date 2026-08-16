@@ -1,117 +1,237 @@
 "use client";
 
+import { useEffect, useState, type CSSProperties } from "react";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
-import {
-  NavigationMenu,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  navigationMenuTriggerStyle,
-} from "@/components/ui/navigation-menu";
+import { usePathname } from "next/navigation";
+import * as Dialog from "@radix-ui/react-dialog";
+import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Calendar, Menu } from "lucide-react";
-import { ICON_ON_PRIMARY } from "@/lib/icon-accents";
+import { cn } from "@/lib/utils";
+
+const LINKS = [
+  { href: "/about", label: "About" },
+  { href: "/services", label: "Services" },
+  { href: "/portfolio", label: "Portfolio" },
+  { href: "/blog", label: "Blog" },
+  { href: "/testimonials", label: "Results" },
+] as const;
+
+const OVERLAY_LINKS = [{ href: "/", label: "Home" }, ...LINKS] as const;
+
+function isActive(pathname: string, href: string) {
+  if (href === "/") return pathname === "/";
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+function Logo({ onClick, inverted = false }: { onClick?: () => void; inverted?: boolean }) {
+  return (
+    <Link
+      href="/"
+      onClick={onClick}
+      className={cn(
+        "flex shrink-0 items-center gap-2 font-sora text-base font-semibold tracking-[-0.02em]",
+        inverted ? "text-d-text" : "text-ink"
+      )}
+    >
+      <span
+        className={cn(
+          "flex h-8 w-8 items-center justify-center rounded-full font-sora text-sm font-bold",
+          inverted ? "bg-lime text-ink" : "bg-pine text-canvas"
+        )}
+      >
+        A
+      </span>
+      Ali Raza
+    </Link>
+  );
+}
+
+function NavLinks({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
+  return (
+    <ul className="hidden items-center gap-1 lg:flex">
+      {LINKS.map((link) => {
+        const active = isActive(pathname, link.href);
+        return (
+          <li key={link.href}>
+            <Link
+              href={link.href}
+              onClick={onNavigate}
+              aria-current={active ? "page" : undefined}
+              className={cn(
+                "relative inline-flex items-center px-3 py-2 font-inter text-sm font-medium transition-colors duration-[var(--dur-fast)] ease-[var(--ease-out)]",
+                active ? "text-pine" : "text-ink-soft hover:text-pine"
+              )}
+            >
+              {link.label}
+              <span
+                aria-hidden
+                className={cn(
+                  "absolute inset-x-3 -bottom-0.5 h-px origin-left bg-pine transition-transform duration-[var(--dur-fast)] ease-[var(--ease-out)]",
+                  active ? "scale-x-100" : "scale-x-0"
+                )}
+              />
+              {active && (
+                <span
+                  aria-hidden
+                  className="absolute -bottom-[5px] left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-pine"
+                />
+              )}
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
 
 export function Navbar() {
+  const pathname = usePathname();
+  const [scrolled, setScrolled] = useState(false);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!open) return;
+    const html = document.documentElement;
+    const prev = html.style.overflow;
+    html.style.overflow = "hidden";
+    return () => {
+      html.style.overflow = prev;
+    };
+  }, [open]);
+
+  useEffect(() => {
+    let raf = 0;
+    let last = false;
+
+    const read = () => {
+      raf = 0;
+      const next = window.scrollY > 80;
+      if (next === last) return;
+      last = next;
+      setScrolled(next);
+    };
+
+    const onScroll = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(read);
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    read();
+
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
+
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 flex justify-center p-4 sm:p-6 pointer-events-none">
-      <div className="flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-8 rounded-full border border-slate-200/50 bg-white/70 backdrop-blur-xl shadow-2xl shadow-slate-200/20 transition-all pointer-events-auto dark:border-slate-800/50 dark:bg-slate-950/70 dark:shadow-none">
-        
-        {/* Left: Logo */}
-        <Link href="/" className="flex cursor-pointer items-center gap-2 font-bold text-lg text-slate-900 dark:text-white">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/20">
-            A
+    <header className={cn("site-nav", scrolled && "is-scrolled")}>
+      <div className="site-nav__bar">
+        <div className="site-nav__inner">
+          <div className="site-nav__brand">
+            <Logo />
           </div>
-          <span className="hidden sm:inline-block">Ali Raza</span>
-        </Link>
 
-        {/* Center: Desktop Navigation */}
-        <div className="hidden md:block">
-          <NavigationMenu>
-            <NavigationMenuList className="gap-2">
-              <NavigationMenuItem>
-                <NavigationMenuLink asChild>
-                  <Link href="/about" className={cn(navigationMenuTriggerStyle(), "h-10 bg-transparent px-4 text-sm font-semibold text-slate-600 hover:bg-slate-100/50 hover:text-primary focus:bg-transparent dark:text-slate-400 dark:hover:bg-slate-800/50")}>
-                    About
-                  </Link>
-                </NavigationMenuLink>
-              </NavigationMenuItem>
+          <nav className="site-nav__links" aria-label="Primary">
+            <NavLinks pathname={pathname} />
+          </nav>
 
-              <NavigationMenuItem>
-                <NavigationMenuLink asChild>
-                  <Link href="/services" className={cn(navigationMenuTriggerStyle(), "h-10 bg-transparent px-4 text-sm font-semibold text-slate-600 hover:bg-slate-100/50 hover:text-primary focus:bg-transparent dark:text-slate-400 dark:hover:bg-slate-800/50")}>
-                    Services
-                  </Link>
-                </NavigationMenuLink>
-              </NavigationMenuItem>
-              
-              <NavigationMenuItem>
-                <NavigationMenuLink asChild>
-                  <Link href="/portfolio" className={cn(navigationMenuTriggerStyle(), "h-10 bg-transparent px-4 text-sm font-semibold text-slate-600 hover:bg-slate-100/50 hover:text-primary focus:bg-transparent dark:text-slate-400 dark:hover:bg-slate-800/50")}>
-                    Portfolio
-                  </Link>
-                </NavigationMenuLink>
-              </NavigationMenuItem>
+          <div className="site-nav__actions">
+            <Button variant="primary" className="hidden h-10 px-5 py-2 text-sm lg:inline-flex" asChild>
+              <Link href="/schedule">
+                Schedule a Call
+                <span
+                  aria-hidden
+                  className="inline-block transition-transform duration-[var(--dur-fast)] ease-[var(--ease-out)] group-hover:translate-x-[3px]"
+                >
+                  →
+                </span>
+              </Link>
+            </Button>
 
-              <NavigationMenuItem>
-                <NavigationMenuLink asChild>
-                  <Link href="/blog" className={cn(navigationMenuTriggerStyle(), "h-10 bg-transparent px-4 text-sm font-semibold text-slate-600 hover:bg-slate-100/50 hover:text-primary focus:bg-transparent dark:text-slate-400 dark:hover:bg-slate-800/50")}>
-                    Blog
-                  </Link>
-                </NavigationMenuLink>
-              </NavigationMenuItem>
+            <Dialog.Root open={open} onOpenChange={setOpen}>
+              <Dialog.Trigger asChild>
+                <button
+                  type="button"
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-full text-ink transition-colors hover:bg-surface lg:hidden"
+                  aria-label={open ? "Close menu" : "Open menu"}
+                >
+                  {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                </button>
+              </Dialog.Trigger>
 
-              <NavigationMenuItem>
-                <NavigationMenuLink asChild>
-                  <Link href="/testimonials" className={cn(navigationMenuTriggerStyle(), "h-10 bg-transparent px-4 text-sm font-semibold text-slate-600 hover:bg-slate-100/50 hover:text-primary focus:bg-transparent dark:text-slate-400 dark:hover:bg-slate-800/50")}>
-                    Results
-                  </Link>
-                </NavigationMenuLink>
-              </NavigationMenuItem>
-            </NavigationMenuList>
-          </NavigationMenu>
-        </div>
+              <Dialog.Portal>
+                <Dialog.Overlay className="fixed inset-0 z-[90] bg-ink" />
+                <Dialog.Content
+                  className="nav-overlay fixed inset-0 z-[91] flex flex-col bg-ink text-d-text outline-none"
+                  aria-describedby={undefined}
+                >
+                  <Dialog.Title className="sr-only">Navigation</Dialog.Title>
 
-        {/* Right: Actions */}
-        <div className="flex items-center gap-2">
-          <Button size="sm" className="h-10 cursor-pointer rounded-full bg-primary px-6 text-sm font-bold text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:scale-105 hover:bg-primary/90 active:scale-95" asChild>
-            <Link href="/schedule" className="inline-flex items-center gap-2">
-              <Calendar className={cn("h-4 w-4", ICON_ON_PRIMARY)} aria-hidden />
-              Schedule a Call
-            </Link>
-          </Button>
+                  <div className="flex items-center justify-between px-[clamp(20px,5vw,40px)] py-5">
+                    <Logo inverted onClick={() => setOpen(false)} />
+                    <Dialog.Close asChild>
+                      <button
+                        type="button"
+                        className="inline-flex h-11 w-11 items-center justify-center rounded-full text-d-text transition-colors hover:bg-white/10"
+                        aria-label="Close menu"
+                      >
+                        <X className="h-5 w-5" />
+                      </button>
+                    </Dialog.Close>
+                  </div>
 
-          {/* Mobile Toggle */}
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden h-10 w-10 rounded-full text-slate-900 border border-slate-100 dark:text-white dark:border-slate-800">
-                <Menu className="h-5 w-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="rounded-l-[2rem] border-l-primary/10">
-              <div className="flex flex-col gap-6 pt-12">
-                <div className="flex flex-col gap-2">
-                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Navigation</p>
-                   <Link href="/" className="cursor-pointer text-xl font-bold hover:text-primary transition-colors">Home</Link>
-                   <Link href="/about" className="cursor-pointer text-xl font-bold hover:text-primary transition-colors">About</Link>
-                   <Link href="/services" className="cursor-pointer text-xl font-bold hover:text-primary transition-colors">Services</Link>
-                   <Link href="/portfolio" className="cursor-pointer text-xl font-bold hover:text-primary transition-colors">Portfolio</Link>
-                   <Link href="/blog" className="cursor-pointer text-xl font-bold hover:text-primary transition-colors">Blog</Link>
-                   <Link href="/testimonials" className="cursor-pointer text-xl font-bold hover:text-primary transition-colors">Testimonials</Link>
-                </div>
-                <div className="mt-8 flex flex-col gap-4">
-                   <Button className="h-12 w-full cursor-pointer rounded-2xl bg-primary text-base font-bold shadow-xl shadow-primary/20" asChild>
-                     <Link href="/schedule" className="inline-flex items-center justify-center gap-2">
-                       <Calendar className={cn("h-5 w-5", ICON_ON_PRIMARY)} aria-hidden />
-                       Schedule a Call
-                     </Link>
-                   </Button>
-                </div>
-              </div>
-            </SheetContent>
-          </Sheet>
+                  <nav
+                    aria-label="Mobile"
+                    className="flex flex-1 flex-col justify-center px-[clamp(20px,5vw,40px)]"
+                  >
+                    <ul className="flex flex-col gap-1">
+                      {OVERLAY_LINKS.map((link, i) => {
+                        const active = isActive(pathname, link.href);
+                        return (
+                          <li key={link.href}>
+                            <Link
+                              href={link.href}
+                              onClick={() => setOpen(false)}
+                              aria-current={active ? "page" : undefined}
+                              style={{ "--i": i } as CSSProperties}
+                              className={cn(
+                                "nav-overlay__link group flex items-center gap-3 py-2 font-sora text-[clamp(2rem,8vw,3.25rem)] font-bold leading-[1.08] tracking-[-0.02em] transition-colors",
+                                active ? "text-d-lime" : "text-d-text hover:text-d-lime"
+                              )}
+                            >
+                              <span
+                                aria-hidden
+                                className={cn(
+                                  "h-2 w-2 shrink-0 rounded-full bg-d-lime transition-opacity",
+                                  active ? "opacity-100" : "opacity-0 group-hover:opacity-40"
+                                )}
+                              />
+                              {link.label}
+                            </Link>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </nav>
+
+                  <div className="px-[clamp(20px,5vw,40px)] pb-8 pt-4">
+                    <Button variant="primary" className="h-12 w-full text-base" asChild>
+                      <Link href="/schedule" onClick={() => setOpen(false)}>
+                        Schedule a Call
+                        <span aria-hidden>→</span>
+                      </Link>
+                    </Button>
+                  </div>
+                </Dialog.Content>
+              </Dialog.Portal>
+            </Dialog.Root>
+          </div>
         </div>
       </div>
     </header>

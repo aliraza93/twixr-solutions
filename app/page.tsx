@@ -10,11 +10,9 @@ import { ScrollReveal } from "@/components/motion/scroll-reveal";
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-background">
+    <div className="bg-canvas">
       <Hero />
-      <ScrollReveal>
-        <Workflow />
-      </ScrollReveal>
+      <Workflow />
       <ScrollReveal>
         <Approach />
       </ScrollReveal>
@@ -33,6 +31,6 @@ export default function Home() {
       <ScrollReveal>
         <FAQ />
       </ScrollReveal>
-    </main>
+    </div>
   );
 }

@@ -142,9 +142,7 @@ export function TechStack() {
           <Eyebrow>Our Tech Stack</Eyebrow>
           <h2 className="mt-5 font-sora text-[length:var(--fs-h1)] font-extrabold leading-[1.06] tracking-[-0.02em] text-ink">
             Modern{" "}
-            <span className="bg-[image:var(--grad-emphasis)] bg-clip-text text-transparent">
-              Tech
-            </span>{" "}
+            <span className="text-pine">Tech</span>{" "}
             Stack
           </h2>
           <p className="mt-5 max-w-[52ch] text-[length:var(--fs-lead)] text-muted">

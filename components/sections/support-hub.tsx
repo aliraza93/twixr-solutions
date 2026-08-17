@@ -42,11 +42,6 @@ export function SupportHub() {
             variant="feature"
             className="relative overflow-hidden px-6 py-16 text-center sm:px-10 md:px-16 md:py-24"
           >
-            <div
-              className="pointer-events-none absolute inset-0"
-              style={{ backgroundImage: "var(--glow-dark)" }}
-              aria-hidden
-            />
             <div className="relative z-10 mx-auto max-w-[40rem]">
               <h2 className="font-sora text-[length:var(--fs-h1)] font-extrabold leading-[1.06] tracking-[-0.02em] text-d-text">
                 Let&apos;s build your next{" "}

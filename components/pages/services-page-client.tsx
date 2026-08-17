@@ -72,8 +72,6 @@ function ServicesHero({ reduceMotion }: { reduceMotion: boolean | null }) {
   return (
     <section className="relative w-full overflow-hidden bg-white pb-20 pt-8 lg:pb-28 dark:bg-slate-950">
       <div className="pointer-events-none absolute inset-0 z-0 h-full w-full overflow-hidden">
-        <div className="absolute -top-[20%] -right-[10%] h-[800px] w-[800px] rounded-full bg-[radial-gradient(circle_at_center,rgba(99,91,255,0.12)_0,rgba(255,255,255,0)_60%)] blur-[80px] dark:opacity-50" />
-        <div className="absolute top-[10%] right-[0%] h-[500px] w-[500px] rounded-full bg-[radial-gradient(circle_at_center,rgba(0,212,255,0.1)_0,rgba(255,255,255,0)_60%)] blur-[80px] dark:opacity-40" />
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.35] dark:opacity-20" />
       </div>
 
@@ -125,16 +123,6 @@ const CATALOG_CATEGORIES: {
   { id: "mobile", label: "Mobile", icon: Smartphone },
 ];
 
-/** Light card headers — soft washes that align with hero mesh (violet / cyan family). */
-const SERVICE_MEDIA_WASH: Record<ServiceListingItem["icon"], string> = {
-  Layers: "from-violet-500/[0.14] via-slate-100/90 to-white dark:from-violet-500/20 dark:via-slate-900 dark:to-slate-950",
-  Server: "from-emerald-500/[0.1] via-slate-50 to-white dark:from-emerald-500/15 dark:via-slate-900 dark:to-slate-950",
-  Monitor: "from-sky-500/[0.12] via-slate-50 to-white dark:from-sky-500/18 dark:via-slate-900 dark:to-slate-950",
-  Bot: "from-primary/[0.08] via-slate-50 to-white dark:from-primary/15 dark:via-slate-900 dark:to-slate-950",
-  Cloud: "from-cyan-500/[0.1] via-slate-50 to-white dark:from-cyan-500/15 dark:via-slate-900 dark:to-slate-950",
-  Smartphone: "from-fuchsia-500/[0.1] via-slate-50 to-white dark:from-fuchsia-500/15 dark:via-slate-900 dark:to-slate-950",
-};
-
 function ServicesGrid({ services }: { services: ServiceListingItem[] }) {
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<"all" | ServiceCatalogCategoryId>("all");
@@ -154,8 +142,6 @@ function ServicesGrid({ services }: { services: ServiceListingItem[] }) {
   return (
     <section className="relative overflow-hidden border-t border-border bg-surface py-20 md:py-24 dark:bg-slate-900/35">
       <div className="pointer-events-none absolute inset-0" aria-hidden>
-        <div className="absolute -top-[30%] right-[-15%] h-[min(560px,70vw)] w-[min(560px,70vw)] rounded-full bg-[radial-gradient(circle_at_center,rgba(99,91,255,0.08)_0,transparent_65%)] blur-3xl dark:opacity-70" />
-        <div className="absolute bottom-[-20%] left-[-10%] h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle_at_center,rgba(14,165,233,0.07)_0,transparent_65%)] blur-3xl dark:opacity-60" />
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.22] dark:opacity-15" />
       </div>
 
@@ -258,9 +244,6 @@ function ServicesGrid({ services }: { services: ServiceListingItem[] }) {
           >
             {filtered.map((service) => {
               const Icon = SERVICE_ICONS[service.icon] ?? Layers;
-              const wash =
-                SERVICE_MEDIA_WASH[service.icon] ??
-                "from-slate-200/80 via-slate-50 to-white dark:from-slate-800 dark:via-slate-900 dark:to-slate-950";
               const previewTags = service.tags.slice(0, 3);
               const moreCount = service.tags.length - previewTags.length;
 
@@ -279,14 +262,6 @@ function ServicesGrid({ services }: { services: ServiceListingItem[] }) {
                         className="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-300 ease-out group-hover:scale-[1.03] motion-reduce:group-hover:scale-100"
                         loading="lazy"
                         decoding="async"
-                      />
-                      <div
-                        className={cn("pointer-events-none absolute inset-0 bg-gradient-to-br opacity-40 mix-blend-multiply dark:opacity-30 dark:mix-blend-soft-light", wash)}
-                        aria-hidden
-                      />
-                      <div
-                        className="absolute inset-0 bg-gradient-to-t from-slate-900/30 via-slate-900/5 to-transparent dark:from-black/50 dark:via-transparent"
-                        aria-hidden
                       />
                       <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 p-3">
                         <span className="inline-flex max-w-[68%] items-center gap-1.5 rounded-lg border border-white/70 bg-white/90 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-800 shadow-sm backdrop-blur-sm dark:border-slate-600/80 dark:bg-slate-900/85 dark:text-slate-100">

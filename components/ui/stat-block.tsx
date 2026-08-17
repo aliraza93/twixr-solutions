@@ -23,19 +23,16 @@ function prefersReducedMotion() {
 export function StatBlock({ value, label, className }: StatBlockProps) {
   const parsed = parseValue(value);
   const ref = useRef<HTMLDivElement>(null);
-  const [display, setDisplay] = useState(parsed ? `${parsed.prefix}0${parsed.suffix}` : value);
+  const [n, setN] = useState(parsed ? 0 : 0);
 
   useEffect(() => {
-    if (!parsed) {
-      setDisplay(value);
-      return;
-    }
+    if (!parsed) return;
 
     const el = ref.current;
     if (!el) return;
 
     if (prefersReducedMotion()) {
-      setDisplay(value);
+      setN(parsed.n);
       return;
     }
 
@@ -50,8 +47,7 @@ export function StatBlock({ value, label, className }: StatBlockProps) {
         const tick = (now: number) => {
           const t = Math.min(1, (now - start) / duration);
           const eased = 1 - Math.pow(1 - t, 3);
-          const current = Math.round(parsed.n * eased);
-          setDisplay(`${parsed.prefix}${current}${parsed.suffix}`);
+          setN(Math.round(parsed.n * eased));
           if (t < 1) frame = requestAnimationFrame(tick);
         };
         frame = requestAnimationFrame(tick);
@@ -69,7 +65,19 @@ export function StatBlock({ value, label, className }: StatBlockProps) {
   return (
     <div ref={ref} className={cn("flex flex-col gap-2", className)}>
       <p className="font-sora text-[length:var(--fs-h1)] font-extrabold leading-[1.04] tracking-[-0.02em] text-ink">
-        {display}
+        {parsed ? (
+          <>
+            {parsed.prefix}
+            {n}
+            {parsed.suffix ? (
+              <span className="ml-[0.12em] font-mono text-[0.42em] font-medium tracking-[0.08em] text-muted">
+                {parsed.suffix}
+              </span>
+            ) : null}
+          </>
+        ) : (
+          value
+        )}
       </p>
       <p className="font-mono text-[length:var(--fs-eyebrow)] font-medium uppercase tracking-[0.18em] text-muted">
         {label}

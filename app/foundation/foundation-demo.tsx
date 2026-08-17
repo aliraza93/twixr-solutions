@@ -76,18 +76,11 @@ export function FoundationDemo() {
   return (
     <div className="bg-canvas text-ink">
       <section className="relative overflow-hidden border-b border-hairline py-[var(--section-py)]">
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{ backgroundImage: "var(--glow-accent-light), var(--glow-lime-light)" }}
-          aria-hidden
-        />
         <div className="ds-container relative">
           <Eyebrow>Design foundation</Eyebrow>
           <h1 className="mt-5 max-w-[18ch] font-sora text-[length:var(--fs-display)] font-extrabold leading-[1.04] tracking-[-0.02em] text-ink">
             Tokens, type, and primitives —{" "}
-            <span className="bg-[image:var(--grad-emphasis)] bg-clip-text text-transparent">
-              before sections
-            </span>
+            <span className="text-pine">before sections</span>
           </h1>
           <p className="mt-6 max-w-[60ch] text-[length:var(--fs-lead)] text-muted">
             Sora on headings, Inter on body, JetBrains Mono on eyebrows. Same

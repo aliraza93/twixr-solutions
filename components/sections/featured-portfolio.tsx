@@ -51,7 +51,7 @@ function FeaturedProjectCard({ project }: { project: PortfolioProject }) {
           alt={project.title}
           className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/70 via-slate-900/20 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-[58%] bg-ink/80" />
         <div className="absolute left-4 top-4">
           <span className="rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-slate-800 backdrop-blur-sm">
             {project.categoryLabel}

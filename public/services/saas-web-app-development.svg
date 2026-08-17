@@ -1,17 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" fill="none">
-  <defs>
-    <linearGradient id="g1" x1="0" y1="0" x2="800" y2="500" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#7C3AED" stop-opacity="0.35"/>
-      <stop offset="0.45" stop-color="#A78BFA" stop-opacity="0.2"/>
-      <stop offset="1" stop-color="#F8FAFC"/>
-    </linearGradient>
-    <linearGradient id="g1b" x1="400" y1="100" x2="400" y2="420" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#6366F1" stop-opacity="0.25"/>
-      <stop offset="1" stop-color="#8B5CF6" stop-opacity="0"/>
-    </linearGradient>
-  </defs>
-  <rect width="800" height="500" fill="url(#g1)"/>
-  <rect width="800" height="500" fill="url(#g1b)"/>
+  <rect width="800" height="500" fill="#F5F7F4"/>
   <g opacity="0.9" stroke="#4C1D95" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <rect x="120" y="140" width="280" height="200" rx="12" fill="white" fill-opacity="0.55"/>
     <rect x="140" y="165" width="120" height="10" rx="3" fill="#7C3AED" fill-opacity="0.35" stroke="none"/>

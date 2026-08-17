@@ -62,7 +62,6 @@ function AboutHero() {
   return (
     <section className="relative overflow-hidden bg-white pb-10 pt-6 lg:pb-14 dark:bg-slate-950">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -top-[20%] -right-[10%] h-[600px] w-[600px] rounded-full bg-[radial-gradient(circle_at_center,rgba(99,91,255,0.1)_0,transparent_60%)] blur-[80px]" />
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.28] dark:opacity-15" />
       </div>
 

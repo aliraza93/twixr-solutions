@@ -339,18 +339,12 @@ export function OrbitDiagram({
               className="h-auto w-full"
               aria-hidden
             >
-              <defs>
-                <linearGradient id="orbit-grad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="var(--d-mint)" />
-                  <stop offset="100%" stopColor="var(--d-lime)" />
-                </linearGradient>
-              </defs>
               <path
                 ref={pathRef}
                 className="orbit-path"
                 d={`M ${VIEW.cx} ${VIEW.cy - VIEW.ry} A ${VIEW.rx} ${VIEW.ry} 0 1 1 ${VIEW.cx} ${VIEW.cy + VIEW.ry} A ${VIEW.rx} ${VIEW.ry} 0 1 1 ${VIEW.cx} ${VIEW.cy - VIEW.ry}`}
                 fill="none"
-                stroke="url(#orbit-grad)"
+                stroke="var(--hairline)"
                 strokeWidth="1.5"
                 strokeLinecap="round"
               />

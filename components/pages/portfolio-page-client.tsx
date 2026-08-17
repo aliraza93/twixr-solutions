@@ -75,7 +75,6 @@ function PortfolioHero() {
   return (
     <section className="relative overflow-hidden bg-white pb-14 pt-6 lg:pb-20 dark:bg-slate-950">
       <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
-        <div className="absolute -top-[20%] -right-[10%] h-[700px] w-[700px] rounded-full bg-[radial-gradient(circle_at_center,rgba(99,91,255,0.12)_0,transparent_60%)] blur-[80px]" />
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.3] dark:opacity-15" />
       </div>
 

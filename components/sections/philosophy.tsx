@@ -38,19 +38,13 @@ export function Philosophy() {
       id="philosophy"
       className="philosophy-band relative overflow-hidden bg-canvas py-[var(--section-py)]"
     >
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{ backgroundImage: "var(--glow-accent-light)" }}
-        aria-hidden
-      />
-
       <div className="ds-container relative z-10 flex flex-col items-center text-center">
         <Eyebrow className="justify-center">Our Philosophy</Eyebrow>
 
         <h2 className="mt-5 max-w-[18ch] font-sora text-[length:var(--fs-h1)] font-extrabold leading-[1.06] tracking-[-0.02em] text-ink">
           <span className="block">Senior engineering,</span>
           <span
-            className="eq-reveal mt-1 block bg-[image:var(--grad-emphasis)] bg-clip-text text-transparent"
+            className="eq-reveal mt-1 block text-pine"
             style={{ "--i": 0 } as CSSProperties}
           >
             amplified by AI.

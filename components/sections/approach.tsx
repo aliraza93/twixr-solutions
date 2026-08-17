@@ -35,9 +35,7 @@ export function Approach() {
             <span className="block">From a messy brief</span>
             <span className="mt-1 block">
               to a process that{" "}
-              <span className="bg-[image:var(--grad-emphasis)] bg-clip-text text-transparent">
-                ships.
-              </span>
+              <span className="text-pine">ships.</span>
             </span>
           </h2>
           <p className="mt-5 max-w-[52ch] text-[length:var(--fs-lead)] text-muted">

@@ -37,13 +37,7 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-white p-4">
-      {/* Stripe-like Gradient Background */}
-      <div className="absolute inset-0 -z-10">
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 opacity-90" />
-        <div className="absolute -top-[40%] -right-[20%] h-[800px] w-[800px] rounded-full bg-gradient-to-br from-blue-400 to-purple-600 opacity-40 blur-3xl" />
-        <div className="absolute -bottom-[40%] -left-[20%] h-[800px] w-[800px] rounded-full bg-gradient-to-tr from-pink-400 to-orange-500 opacity-40 blur-3xl" />
-      </div>
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-ink p-4">
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}

@@ -54,9 +54,9 @@ function DashboardMock() {
 
         <div className="grid grid-cols-3 gap-2">
           {[
-            { label: "Uptime", value: "99.99%", icon: Activity },
-            { label: "Latency", value: "42ms", icon: Zap },
-            { label: "Deploys", value: "12", icon: Globe },
+            { label: "Uptime", value: "99.99", unit: "%", icon: Activity },
+            { label: "Latency", value: "42", unit: "ms", icon: Zap },
+            { label: "Deploys", value: "12", unit: "", icon: Globe },
           ].map((stat) => (
             <div
               key={stat.label}
@@ -65,6 +65,11 @@ function DashboardMock() {
               <stat.icon className="mb-1.5 h-3 w-3 text-pine" aria-hidden />
               <p className="font-sora text-sm font-bold leading-none tracking-[-0.02em] text-ink sm:text-base">
                 {stat.value}
+                {stat.unit ? (
+                  <span className="ml-[0.12em] font-mono text-[9px] font-medium tracking-[0.08em] text-muted">
+                    {stat.unit}
+                  </span>
+                ) : null}
               </p>
               <p className="mt-1 font-mono text-[9px] uppercase tracking-[0.14em] text-muted">
                 {stat.label}
@@ -85,28 +90,19 @@ function DashboardMock() {
             className="h-14 w-full"
             aria-hidden
           >
-            <defs>
-              <linearGradient id="hero-chart-fill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="var(--pine)" stopOpacity="0.22" />
-                <stop offset="100%" stopColor="var(--lime)" stopOpacity="0.04" />
-              </linearGradient>
-              <linearGradient id="hero-chart-stroke" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stopColor="var(--pine)" />
-                <stop offset="100%" stopColor="var(--lime-deep)" />
-              </linearGradient>
-            </defs>
             <path
               d="M0 48 C 20 46, 32 40, 48 38 C 72 34, 88 44, 110 28 C 128 16, 148 22, 168 18 C 188 14, 208 26, 240 8 L 240 64 L 0 64 Z"
-              fill="url(#hero-chart-fill)"
+              fill="var(--pine)"
+              fillOpacity="0.12"
             />
             <path
               d="M0 48 C 20 46, 32 40, 48 38 C 72 34, 88 44, 110 28 C 128 16, 148 22, 168 18 C 188 14, 208 26, 240 8"
               fill="none"
-              stroke="url(#hero-chart-stroke)"
+              stroke="var(--pine)"
               strokeWidth="2"
               strokeLinecap="round"
             />
-            <circle cx="240" cy="8" r="3.5" fill="var(--lime)" />
+            <circle cx="240" cy="8" r="3.5" fill="var(--pine)" />
           </svg>
         </div>
       </div>

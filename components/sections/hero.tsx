@@ -54,7 +54,7 @@ const MORE = [
 
 function wordClass(kind: "plain" | "emphasis") {
   if (kind === "emphasis") {
-    return "bg-[image:var(--grad-emphasis)] bg-clip-text text-transparent";
+    return "text-pine";
   }
   return "text-ink";
 }
@@ -87,22 +87,7 @@ export function Hero({ screenshot }: { screenshot?: HeroVisualImage }) {
 
   return (
     <section className="relative isolate min-h-svh overflow-x-hidden bg-canvas">
-      <div
-        className="pointer-events-none absolute inset-0 z-0"
-        style={{
-          backgroundImage: "var(--glow-accent-light), var(--glow-lime-light)",
-        }}
-        aria-hidden
-      />
-      <div
-        className="pointer-events-none absolute inset-0 z-0"
-        style={{
-          backgroundImage:
-            "radial-gradient(color-mix(in srgb, var(--ink) 3%, transparent) 1px, transparent 1px)",
-          backgroundSize: "22px 22px",
-        }}
-        aria-hidden
-      />
+      <div className="dot-grid pointer-events-none absolute inset-0 z-0" aria-hidden />
       {Particles ? <Particles /> : null}
 
       <div className="ds-container relative z-10 flex min-h-svh flex-col justify-center pb-20 pt-[clamp(120px,16vh,200px)] lg:pb-24">

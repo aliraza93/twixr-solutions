@@ -16,8 +16,7 @@ type SectionHeadingProps = {
 
 const emphasisClass: Record<EmphasisStyle, string> = {
   color: "text-pine",
-  gradient:
-    "bg-[image:var(--grad-emphasis)] bg-clip-text text-transparent",
+  gradient: "text-pine",
   outline:
     "text-transparent [-webkit-text-stroke:1.5px_var(--accent)]",
 };

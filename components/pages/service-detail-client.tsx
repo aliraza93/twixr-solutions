@@ -286,8 +286,6 @@ export function ServiceDetailClient({ service }: ServiceDetailClientProps) {
             description="Feedback from professionals I've worked with on similar projects."
           />
           <TestimonialMarquee items={testimonials} rows={2} />
-          <div className="pointer-events-none absolute inset-y-0 left-0 w-12 bg-gradient-to-r from-background to-transparent" />
-          <div className="pointer-events-none absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-background to-transparent" />
         </GsapReveal>
       </div>
     </main>

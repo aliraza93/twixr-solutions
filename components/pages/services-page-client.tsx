@@ -2,9 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { motion, useReducedMotion } from "framer-motion";
 import {
-  ArrowRight,
   Bot,
   Cloud,
   LayoutGrid,
@@ -18,18 +16,19 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Chip } from "@/components/ui/chip";
+import { FilterChip } from "@/components/ui/filter-chip";
+import { SectionHeading } from "@/components/ui/section-heading";
 import {
   ScrollReveal,
   ScrollRevealItem,
   ScrollStagger,
 } from "@/components/motion/scroll-reveal";
 import { PageCta } from "@/components/sections/page-cta";
+import { PageHero } from "@/components/sections/page-hero";
 import { StatsStrip } from "@/components/sections/stats-strip";
-import {
-  CATEGORY_ICON_COLORS,
-  SERVICE_ICON_COLORS,
-} from "@/lib/icon-accents";
 
 import type {
   ServiceCatalogCategoryId,
@@ -48,65 +47,19 @@ const SERVICE_ICONS: Record<ServiceIconName, LucideIcon> = {
   Smartphone,
 };
 
-function motionTransition(reduceMotion: boolean | null, delay = 0) {
-  return {
-    duration: reduceMotion ? 0 : 0.5,
-    delay: reduceMotion ? 0 : delay,
-  };
-}
-
 export function ServicesPageClient({ services }: { services: ServiceListingItem[] }) {
-  const reduceMotion = useReducedMotion();
-
   return (
-    <main className="min-h-screen bg-background pt-[120px] lg:pt-[140px]">
-      <ServicesHero reduceMotion={reduceMotion} />
+    <main className="min-h-screen bg-canvas pt-[120px] lg:pt-[140px]">
+      <PageHero
+        eyebrow="OUR SERVICES"
+        title="Full Stack Development Services"
+        emphasis="Development"
+        description="From concept to deployment — scalable SaaS, APIs, and web apps tailored to your business goals."
+      />
       <ServicesGrid services={services} />
       <StatsStrip />
       <PageCta />
     </main>
-  );
-}
-
-function ServicesHero({ reduceMotion }: { reduceMotion: boolean | null }) {
-  return (
-    <section className="relative w-full overflow-hidden bg-white pb-20 pt-8 lg:pb-28 dark:bg-slate-950">
-      <div className="pointer-events-none absolute inset-0 z-0 h-full w-full overflow-hidden">
-        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.35] dark:opacity-20" />
-      </div>
-
-      <div className="container relative z-10 mx-auto max-w-4xl px-4 text-center">
-        <motion.div
-          initial={{ opacity: 0, y: -12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={motionTransition(reduceMotion)}
-          className="mb-8 inline-block rounded-full bg-primary/5 px-4 py-1 text-[20px] font-bold uppercase tracking-[0.2em] text-primary dark:bg-primary/10"
-        >
-          OUR SERVICES
-        </motion.div>
-
-        <motion.h1
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={motionTransition(reduceMotion, 0.08)}
-          className="text-display font-medium text-slate-900 dark:text-white"
-        >
-          Full Stack{" "}
-          <span className="font-black italic text-primary">Development</span>{" "}
-          <span className="font-bold text-slate-900 dark:text-white">Services</span>
-        </motion.h1>
-
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={motionTransition(reduceMotion, 0.16)}
-          className="text-section-desc mx-auto mt-4"
-        >
-          From concept to deployment — scalable SaaS, APIs, and web apps tailored to your
-          business goals.
-        </motion.p>
-      </div>
-    </section>
   );
 }
 
@@ -139,107 +92,95 @@ function ServicesGrid({ services }: { services: ServiceListingItem[] }) {
   const hasActiveFilters = query.trim().length > 0 || activeCategory !== "all";
 
   return (
-    <section className="relative overflow-hidden border-t border-border bg-surface py-20 md:py-24 dark:bg-slate-900/35">
-      <div className="pointer-events-none absolute inset-0" aria-hidden>
-        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.22] dark:opacity-15" />
-      </div>
-
-      <div className="container relative z-10 mx-auto max-w-6xl px-4">
-        <ScrollReveal className="mb-10 text-center md:mb-12">
-          <span className="inline-block rounded-full bg-primary/5 px-4 py-1 text-[20px] font-bold uppercase tracking-[0.2em] text-primary dark:bg-primary/15">
-            Catalog
-          </span>
-          <h2 className="text-section-title mt-3 text-slate-900 dark:text-white">
-            What I build
-          </h2>
-          <p className="text-section-desc mx-auto mt-2 text-sm">
-            Browse by track or search the stack — each card links to a deeper write-up when those
-            pages go live.
-          </p>
+    <section className="relative overflow-hidden border-t border-hairline bg-surface py-20 md:py-24">
+      <div className="ds-container">
+        <ScrollReveal className="mb-10 md:mb-12">
+          <SectionHeading
+            align="center"
+            eyebrow="Catalog"
+            title="What I build"
+            description="Browse by track or search the stack — each card links to a deeper write-up."
+          />
         </ScrollReveal>
 
-        <ScrollReveal delay={0.04} className="mb-8 rounded-2xl border border-slate-200/90 bg-white/85 p-4 shadow-sm backdrop-blur-md dark:border-slate-700/80 dark:bg-slate-950/70">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <div className="relative min-w-0 flex-1">
-              <Search
-                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-                aria-hidden
-              />
-              <Input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search services, stacks, keywords…"
-                className="h-10 border-slate-200/90 bg-white pl-10 pr-10 text-sm text-slate-900 shadow-none placeholder:text-muted-foreground focus-visible:border-primary/40 focus-visible:ring-primary/25 dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-100"
-                aria-label="Search services"
-              />
-              {query.length > 0 && (
-                <button
+        <ScrollReveal delay={0.04} className="mb-8">
+          <Card variant="base" className="p-4 hover:translate-y-0">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <div className="relative min-w-0 flex-1">
+                <Search
+                  className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted"
+                  aria-hidden
+                />
+                <Input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search services, stacks, keywords…"
+                  className="h-10 border-hairline bg-canvas pl-10 pr-10 text-sm text-ink shadow-none placeholder:text-muted focus-visible:border-pine focus-visible:ring-pine"
+                  aria-label="Search services"
+                />
+                {query.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setQuery("")}
+                    className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 cursor-pointer items-center justify-center rounded-md text-muted transition-colors hover:bg-surface hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pine"
+                    aria-label="Clear search"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+              {hasActiveFilters && (
+                <Button
                   type="button"
-                  onClick={() => setQuery("")}
-                  className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  aria-label="Clear search"
+                  variant="ghost"
+                  onClick={() => {
+                    setQuery("");
+                    setActiveCategory("all");
+                  }}
                 >
-                  <X className="h-3.5 w-3.5" />
-                </button>
+                  Reset filters
+                </Button>
               )}
             </div>
-            {hasActiveFilters && (
-              <button
-                type="button"
-                onClick={() => {
-                  setQuery("");
-                  setActiveCategory("all");
-                }}
-                className="inline-flex h-10 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-xl border border-border bg-background px-4 text-sm font-medium text-slate-700 transition-colors hover:border-primary/30 hover:bg-primary/5 hover:text-primary dark:text-slate-200 dark:hover:bg-primary/10"
-              >
-                Reset filters
-              </button>
-            )}
-          </div>
 
-          <div
-            className="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-4 dark:border-slate-800"
-            role="tablist"
-            aria-label="Service categories"
-          >
-            {CATALOG_CATEGORIES.map((cat) => {
-              const active = activeCategory === cat.id;
-              const Icon = cat.icon;
-              return (
-                <button
-                  key={cat.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={active}
-                  onClick={() => setActiveCategory(cat.id)}
-                  className={cn(
-                    "inline-flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                    active
-                      ? "border-primary bg-primary text-primary-foreground shadow-sm"
-                      : "border-slate-200 bg-white text-slate-700 hover:border-primary/35 hover:bg-primary/4 dark:border-slate-600 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:border-primary/40"
-                  )}
-                >
-                  {Icon && <Icon className={cn("h-3.5 w-3.5 opacity-90", CATEGORY_ICON_COLORS[cat.id] ?? "text-primary")} aria-hidden />}
-                  {cat.label}
-                </button>
-              );
-            })}
-          </div>
+            <div
+              className="mt-4 flex flex-wrap gap-2 border-t border-hairline pt-4"
+              role="tablist"
+              aria-label="Service categories"
+            >
+              {CATALOG_CATEGORIES.map((cat) => {
+                const active = activeCategory === cat.id;
+                const Icon = cat.icon;
+                return (
+                  <FilterChip
+                    key={cat.id}
+                    active={active}
+                    role="tab"
+                    aria-selected={active}
+                    onClick={() => setActiveCategory(cat.id)}
+                  >
+                    {Icon && <Icon className="h-3.5 w-3.5 opacity-90" aria-hidden />}
+                    {cat.label}
+                  </FilterChip>
+                );
+              })}
+            </div>
+          </Card>
         </ScrollReveal>
 
-        <p className="mb-6 text-center text-xs text-muted-foreground">
+        <p className="mb-6 text-center font-mono text-xs uppercase tracking-[0.12em] text-muted">
           {filtered.length} service{filtered.length === 1 ? "" : "s"}{" "}
           {hasActiveFilters ? "match your filters" : "available"}
         </p>
 
         {filtered.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-border bg-surface py-14 text-center text-sm text-muted-foreground">
+          <p className="rounded-lg border border-dashed border-hairline bg-canvas py-14 text-center text-sm text-muted">
             No services match. Try another category or clear your search.
           </p>
         ) : (
           <ScrollStagger
             key={`${activeCategory}-${query}`}
-            className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3"
+            className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
           >
             {filtered.map((service) => {
               const Icon = SERVICE_ICONS[service.icon] ?? Layers;
@@ -247,62 +188,88 @@ function ServicesGrid({ services }: { services: ServiceListingItem[] }) {
               const moreCount = service.tags.length - previewTags.length;
 
               return (
-                <ScrollRevealItem key={service.slug}>
-                  <Link
-                    href={`/services/${service.slug}`}
-                    className="group flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-card text-card-foreground shadow-sm outline-none ring-offset-background transition-[border-color,box-shadow] duration-200 hover:border-primary/25 hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 dark:border-slate-700/90 dark:bg-slate-950/40 dark:hover:border-primary/35"
+                <ScrollRevealItem key={service.slug} className="h-full">
+                  <Card
+                    variant="base"
+                    className="group flex h-full flex-col overflow-hidden p-0"
                   >
-                    <div className="relative aspect-16/10 overflow-hidden border-b border-border">
-                      <img
-                        src={service.illustration}
-                        alt=""
-                        width={800}
-                        height={500}
-                        className="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-300 ease-out group-hover:scale-[1.03] motion-reduce:group-hover:scale-100"
-                        loading="lazy"
-                        decoding="async"
-                      />
-                      <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 p-3">
-                        <span className="inline-flex max-w-[68%] items-center gap-1.5 rounded-lg border border-white/70 bg-white/90 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-800 shadow-sm backdrop-blur-sm dark:border-slate-600/80 dark:bg-slate-900/85 dark:text-slate-100">
-                          <Icon className={cn("h-3.5 w-3.5 shrink-0", SERVICE_ICON_COLORS[service.icon])} aria-hidden />
+                    <div className="relative aspect-16/10 overflow-hidden rounded-t-lg border-b border-hairline">
+                      <Link
+                        href={`/services/${service.slug}`}
+                        className="absolute inset-0"
+                        tabIndex={-1}
+                        aria-hidden
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={service.illustration}
+                          alt=""
+                          width={800}
+                          height={500}
+                          className="h-full w-full object-cover object-center"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                      </Link>
+                      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex items-end justify-between gap-2 p-3">
+                        <Chip
+                          tabIndex={-1}
+                          className="max-w-[68%] cursor-default gap-1.5 border-hairline bg-canvas/95 px-2 py-1 text-[10px] text-ink hover:border-hairline hover:text-ink"
+                        >
+                          <Icon className="h-3.5 w-3.5 shrink-0 text-pine" aria-hidden />
                           <span className="truncate">{service.categoryLabel}</span>
-                        </span>
-                        <span className="inline-flex max-w-[min(100%,12rem)] shrink-0 items-center gap-1 rounded-lg border border-slate-200/90 bg-white/90 px-2 py-1 text-[10px] font-semibold leading-tight text-slate-700 shadow-sm backdrop-blur-sm dark:border-slate-600/80 dark:bg-slate-900/85 dark:text-slate-200">
+                        </Chip>
+                        <Chip
+                          tabIndex={-1}
+                          className="cursor-default gap-1 border-hairline bg-canvas/95 px-2 py-1 text-[10px] text-ink hover:border-hairline hover:text-ink"
+                        >
                           <Star
-                            className="h-3 w-3 shrink-0 fill-yellow-500 text-yellow-500"
+                            className="h-3 w-3 shrink-0 fill-pine text-pine"
                             aria-hidden
                           />
                           Top Rated Plus
-                        </span>
+                        </Chip>
                       </div>
                     </div>
 
-                    <div className="flex flex-1 flex-col px-4 pb-4 pt-4">
-                      <h3 className="text-base font-semibold leading-snug tracking-tight text-slate-900 dark:text-white">
-                        {service.title}
+                    <div className="flex flex-1 flex-col px-7 pb-7 pt-6">
+                      <h3 className="font-sora text-[length:var(--fs-h3)] font-bold tracking-[-0.02em]">
+                        <Link
+                          href={`/services/${service.slug}`}
+                          className="text-ink transition-colors duration-[var(--dur-fast)] ease-[var(--ease-out)] hover:text-pine focus-visible:outline-none"
+                        >
+                          {service.title}
+                        </Link>
                       </h3>
-                      <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+                      <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-muted">
                         {service.description}
                       </p>
-                      <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+                      <p className="mt-3 font-mono text-[11px] uppercase tracking-[0.08em] text-muted">
                         {previewTags.join(" · ")}
                         {moreCount > 0 ? ` · +${moreCount} more` : ""}
                       </p>
 
-                      <div className="mt-5 flex items-end justify-between gap-3 border-t border-border pt-4">
+                      <div className="mt-5 flex items-end justify-between gap-3 border-t border-hairline pt-4">
                         <div>
-                          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                          <p className="font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-muted">
                             Engagement
                           </p>
-                          <p className="text-sm font-semibold text-foreground">Scope-based</p>
+                          <p className="text-sm font-semibold text-ink">Scope-based</p>
                         </div>
-                        <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-primary/30 bg-primary/5 px-3 py-1.5 text-xs font-semibold text-primary transition-colors group-hover:border-primary group-hover:bg-primary group-hover:text-primary-foreground dark:group-hover:bg-primary dark:group-hover:text-primary-foreground">
-                          View details
-                          <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden />
-                        </span>
+                        <Button variant="text" asChild>
+                          <Link href={`/services/${service.slug}`}>
+                            View details
+                            <span
+                              aria-hidden
+                              className="inline-block transition-transform duration-[var(--dur-fast)] ease-[var(--ease-out)] group-hover:translate-x-[3px]"
+                            >
+                              →
+                            </span>
+                          </Link>
+                        </Button>
                       </div>
                     </div>
-                  </Link>
+                  </Card>
                 </ScrollRevealItem>
               );
             })}

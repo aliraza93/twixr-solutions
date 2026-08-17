@@ -2,16 +2,16 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
 import { ScrollReveal } from "@/components/motion/scroll-reveal";
-import { ICON_ON_PRIMARY } from "@/lib/icon-accents";
+import { cn } from "@/lib/utils";
 
 const DEFAULT_EMAIL = "ali@twixrsolutions.com";
 
 type PageCtaProps = {
   title?: ReactNode;
+  emphasis?: string;
   description?: string;
   email?: string;
   emailSubject?: string;
@@ -21,8 +21,37 @@ type PageCtaProps = {
   className?: string;
 };
 
+function Title({
+  title,
+  emphasis,
+}: {
+  title: ReactNode;
+  emphasis?: string;
+}) {
+  if (typeof title === "string" && emphasis) {
+    const index = title.indexOf(emphasis);
+    if (index !== -1) {
+      return (
+        <>
+          {title.slice(0, index)}
+          <span className="text-lime">{emphasis}</span>
+          {title.slice(index + emphasis.length)}
+        </>
+      );
+    }
+    return (
+      <>
+        {title} <span className="text-lime">{emphasis}</span>
+      </>
+    );
+  }
+
+  return title;
+}
+
 export function PageCta({
   title = "Ready to start your project?",
+  emphasis = "project",
   description = "Let's discuss your requirements and build something great together.",
   email = DEFAULT_EMAIL,
   emailSubject = "Project inquiry",
@@ -32,31 +61,46 @@ export function PageCta({
   className,
 }: PageCtaProps) {
   return (
-    <section className={className ?? "bg-slate-50/90 py-20 dark:bg-slate-900/30"}>
-      <div className="container mx-auto max-w-2xl px-4 text-center">
+    <section className={cn("bg-canvas py-[var(--section-py)]", className)}>
+      <div className="ds-container">
         <ScrollReveal>
-          <h2 className="text-section-title text-slate-900 dark:text-white">{title}</h2>
-          <p className="text-section-desc mx-auto mt-3">{description}</p>
-          <div className="mt-8 flex flex-wrap justify-center gap-4">
-            <Button
-              size="lg"
-              className="h-12 cursor-pointer rounded-full px-8 text-base font-bold shadow-lg shadow-primary/10"
-              asChild
-            >
-              <a href={`mailto:${email}?subject=${encodeURIComponent(emailSubject)}`}>
-                {primaryLabel}
-                <ArrowRight className={cn("ml-2 h-4 w-4", ICON_ON_PRIMARY)} />
-              </a>
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="h-12 cursor-pointer rounded-full border-slate-200 px-8 text-base dark:border-slate-700"
-              asChild
-            >
-              <Link href={secondaryHref}>{secondaryLabel}</Link>
-            </Button>
-          </div>
+          <Card
+            variant="feature"
+            className="relative overflow-hidden px-6 py-16 text-center sm:px-10 md:px-16 md:py-24"
+          >
+            <div className="relative z-10 mx-auto max-w-[40rem]">
+              <h2 className="font-sora text-[length:var(--fs-h1)] font-extrabold leading-[1.06] tracking-[-0.02em] text-d-text">
+                <Title title={title} emphasis={emphasis} />
+              </h2>
+              <p className="mx-auto mt-5 max-w-[46ch] text-[length:var(--fs-lead)] text-d-muted">
+                {description}
+              </p>
+              <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+                <Button
+                  variant="primary"
+                  asChild
+                  className="focus-visible:ring-offset-ink"
+                >
+                  <a href={`mailto:${email}?subject=${encodeURIComponent(emailSubject)}`}>
+                    {primaryLabel}
+                    <span
+                      aria-hidden
+                      className="inline-block transition-transform duration-[var(--dur-fast)] ease-[var(--ease-out)] group-hover:translate-x-[3px]"
+                    >
+                      →
+                    </span>
+                  </a>
+                </Button>
+                <Button
+                  variant="ghost"
+                  asChild
+                  className="border-d-hairline text-d-text hover:border-d-text hover:bg-white/10 focus-visible:ring-offset-ink"
+                >
+                  <Link href={secondaryHref}>{secondaryLabel}</Link>
+                </Button>
+              </div>
+            </div>
+          </Card>
         </ScrollReveal>
       </div>
     </section>

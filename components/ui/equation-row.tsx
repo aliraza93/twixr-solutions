@@ -1,14 +1,58 @@
 "use client";
 
-import type { CSSProperties, ReactNode } from "react";
+import {
+  useCallback,
+  useLayoutEffect,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import { cn } from "@/lib/utils";
 import { ConnectorLine } from "@/components/ui/connector-line";
 import { EquationTile, type EquationTileVariant } from "@/components/ui/equation-tile";
 import { IconNode } from "@/components/ui/icon-node";
 import {
-  midStations,
   useConnectorProgress,
+  type ConnectorStationAt,
 } from "@/hooks/use-connector-progress";
+
+type TrackAxis = "x" | "y";
+
+type TrackBox = {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+  axis: TrackAxis;
+};
+
+function readTrack(row: HTMLElement): TrackBox | null {
+  const faces = row.querySelectorAll<HTMLElement>(".eq-tile__face");
+  if (faces.length < 2) return null;
+
+  const rowRect = row.getBoundingClientRect();
+  const first = faces[0].getBoundingClientRect();
+  const last = faces[faces.length - 1].getBoundingClientRect();
+  const horizontal = last.left - first.right > 8;
+
+  if (horizontal) {
+    return {
+      left: first.right - rowRect.left,
+      top: first.top + first.height / 2 - rowRect.top - 1,
+      width: Math.max(0, last.left - first.right),
+      height: 2,
+      axis: "x",
+    };
+  }
+
+  return {
+    left: first.left + first.width / 2 - rowRect.left - 1,
+    top: first.bottom - rowRect.top,
+    width: 2,
+    height: Math.max(0, last.top - first.bottom),
+    axis: "y",
+  };
+}
 
 export type EquationItem = {
   icon: ReactNode;
@@ -28,6 +72,12 @@ type EquationRowProps = {
 };
 
 const STATIONS = 5;
+
+const playStations: ConnectorStationAt = (i, n) => {
+  if (n <= 0) return 1;
+  if (i === n - 1) return 1;
+  return (i + 0.5) / n;
+};
 
 function Operator({
   glyph,
@@ -129,22 +179,69 @@ function PlayEquationRow({
     durationMs,
     threshold: 0.4,
     once,
-    stationAt: midStations,
+    stationAt: playStations,
     onFinale,
   });
+  const [track, setTrack] = useState<TrackBox | null>(null);
+
+  const measure = useCallback(() => {
+    const row = ref.current;
+    if (!row) return;
+    const next = readTrack(row);
+    if (!next || (next.axis === "x" ? next.width : next.height) <= 0) return;
+    setTrack(next);
+  }, [ref]);
+
+  useLayoutEffect(() => {
+    measure();
+    const row = ref.current;
+    if (!row) return;
+
+    let cancelled = false;
+    const snap = () => {
+      if (!cancelled) measure();
+    };
+
+    const ro = new ResizeObserver(snap);
+    ro.observe(row);
+    row.querySelectorAll(".eq-tile__face").forEach((face) => ro.observe(face));
+
+    window.addEventListener("resize", snap);
+    void document.fonts?.ready.then(snap);
+
+    return () => {
+      cancelled = true;
+      ro.disconnect();
+      window.removeEventListener("resize", snap);
+    };
+  }, [measure, ref]);
 
   return (
     <div
       ref={ref}
       className={cn(
-        "eq-row eq-row--play relative flex w-full flex-col items-center gap-5 md:flex-row md:items-start md:justify-center md:gap-[clamp(16px,3vw,40px)]",
+        "eq-row eq-row--play relative flex w-full flex-col items-center gap-8 md:flex-row md:items-start md:justify-center md:gap-[clamp(56px,8vw,104px)]",
         className
       )}
+      data-eq-axis={track?.axis ?? "y"}
       style={{ "--p": "0%" } as CSSProperties}
       role="group"
       aria-label={`${a.label} plus ${b.label} equals ${c.label}`}
     >
-      <ConnectorLine detachDot />
+      {track ? (
+        <div
+          className="eq-row__track"
+          style={{
+            left: track.left,
+            top: track.top,
+            width: track.width,
+            height: track.height,
+          }}
+          aria-hidden
+        >
+          <ConnectorLine detachDot />
+        </div>
+      ) : null}
       <SquareNode
         item={a}
         variant="default"

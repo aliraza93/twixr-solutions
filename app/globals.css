@@ -802,11 +802,39 @@
     --p: 0%;
   }
 
+  .eq-row__track {
+    position: absolute;
+    pointer-events: none;
+  }
+
   .eq-row--play .connector-line {
-    left: calc(50% - 1px);
-    top: 8px;
-    bottom: 8px;
-    width: 2px;
+    inset: 0;
+    width: auto;
+    height: auto;
+  }
+
+  .eq-row--play[data-eq-axis="y"] .connector-line__fill {
+    inset: 0 auto auto 0;
+    width: 100%;
+    height: var(--p);
+  }
+
+  .eq-row--play[data-eq-axis="y"] .connector-line__dot {
+    left: 50%;
+    top: var(--p);
+    transform: translate(-50%, -50%);
+  }
+
+  .eq-row--play[data-eq-axis="x"] .connector-line__fill {
+    inset: 0 auto 0 0;
+    width: var(--p);
+    height: auto;
+  }
+
+  .eq-row--play[data-eq-axis="x"] .connector-line__dot {
+    left: var(--p);
+    top: 50%;
+    transform: translate(-50%, -50%);
   }
 
   @media (min-width: 768px) {
@@ -829,26 +857,6 @@
 
     .eq-op {
       transform: none;
-    }
-
-    .eq-row--play .connector-line {
-      left: 0;
-      right: 0;
-      top: 66px;
-      bottom: auto;
-      width: auto;
-      height: 2px;
-    }
-
-    .eq-row--play .connector-line__fill {
-      inset: 0;
-      width: var(--p);
-      height: 100%;
-    }
-
-    .eq-row--play .connector-line__dot {
-      left: var(--p);
-      top: 66px;
     }
   }
 

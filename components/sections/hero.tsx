@@ -80,7 +80,7 @@ export function Hero({ screenshot }: { screenshot?: HeroVisualImage }) {
                     word.kind === "cycle" ? (
                       <span
                         key="cycle"
-                        className="hero-word mr-[0.28em]"
+                        className="hero-word"
                         style={{ "--i": word.i } as CSSProperties}
                       >
                         <HeroRotatingWord />

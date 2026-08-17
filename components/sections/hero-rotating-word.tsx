@@ -1,8 +1,10 @@
 "use client";
 
 import {
+  useCallback,
   useEffect,
   useLayoutEffect,
+  useRef,
   useState,
   type CSSProperties,
 } from "react";
@@ -12,7 +14,7 @@ import { hero } from "@/content/hero";
 const WORDS = hero.rotatingWords;
 
 const DWELL_MS = 2000;
-const TRANSITION_MS = 500;
+const TRANSITION_MS = 400;
 
 type Phase = "in" | "enter" | "exit" | "hidden";
 
@@ -44,10 +46,48 @@ function Chars({ word }: { word: string }) {
 }
 
 export function HeroRotatingWord() {
+  const slotRef = useRef<HTMLSpanElement>(null);
+  const measureRef = useRef<HTMLSpanElement>(null);
+  const readyRef = useRef(false);
+  const reduceRef = useRef(false);
+  const indexRef = useRef(0);
+
   const [index, setIndex] = useState(0);
   const [outgoing, setOutgoing] = useState<number | null>(null);
   const [entered, setEntered] = useState(true);
   const [reduce, setReduce] = useState(false);
+  const [width, setWidth] = useState<number | null>(null);
+  const [widthReady, setWidthReady] = useState(false);
+
+  indexRef.current = index;
+  reduceRef.current = reduce;
+
+  const readWidth = useCallback((i: number) => {
+    const ghost = measureRef.current?.querySelector<HTMLElement>(
+      `[data-word="${i}"]`
+    );
+    if (!ghost) return 0;
+    return ghost.getBoundingClientRect().width;
+  }, []);
+
+  const setSlotWidth = useCallback((px: number, animate: boolean) => {
+    const slot = slotRef.current;
+    const motion = animate && readyRef.current && !reduceRef.current;
+
+    if (slot && !motion) {
+      slot.style.transition = "none";
+      slot.style.width = `${px}px`;
+      void slot.offsetWidth;
+      slot.style.removeProperty("transition");
+    }
+
+    setWidth(px);
+
+    if (!readyRef.current) {
+      readyRef.current = true;
+      setWidthReady(true);
+    }
+  }, []);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -57,9 +97,31 @@ export function HeroRotatingWord() {
     return () => mq.removeEventListener("change", apply);
   }, []);
 
-  useEffect(() => {
-    if (reduce) return;
+  useLayoutEffect(() => {
+    const px = readWidth(index);
+    if (px > 0) setSlotWidth(px, true);
+  }, [index, readWidth, setSlotWidth]);
 
+  useEffect(() => {
+    let cancelled = false;
+    const snap = () => {
+      if (cancelled) return;
+      const px = readWidth(indexRef.current);
+      if (px > 0) setSlotWidth(px, false);
+    };
+
+    void document.fonts?.ready.then(snap);
+    window.addEventListener("resize", snap);
+    document.fonts?.addEventListener("loadingdone", snap);
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener("resize", snap);
+      document.fonts?.removeEventListener("loadingdone", snap);
+    };
+  }, [readWidth, setSlotWidth]);
+
+  useEffect(() => {
     let dwellTimer = 0;
     let cancelled = false;
 
@@ -67,9 +129,16 @@ export function HeroRotatingWord() {
       window.clearTimeout(dwellTimer);
       dwellTimer = window.setTimeout(() => {
         if (cancelled || document.hidden) return;
+        const next = (index + 1) % WORDS.length;
+        if (reduce) {
+          setOutgoing(null);
+          setEntered(true);
+          setIndex(next);
+          return;
+        }
         setOutgoing(index);
         setEntered(false);
-        setIndex((i) => (i + 1) % WORDS.length);
+        setIndex(next);
       }, DWELL_MS);
     };
 
@@ -97,7 +166,7 @@ export function HeroRotatingWord() {
   }, [outgoing]);
 
   useLayoutEffect(() => {
-    if (entered) return;
+    if (entered || reduce) return;
     let inner = 0;
     const outer = requestAnimationFrame(() => {
       inner = requestAnimationFrame(() => setEntered(true));
@@ -106,15 +175,25 @@ export function HeroRotatingWord() {
       cancelAnimationFrame(outer);
       cancelAnimationFrame(inner);
     };
-  }, [entered, index]);
+  }, [entered, index, reduce]);
 
   const stagger = !reduce && outgoing !== null && entered;
+  const slotStyle =
+    width != null ? ({ width: `${width}px` } as CSSProperties) : undefined;
 
   return (
-    <span className="hero-cycle" aria-hidden="true">
+    <span
+      ref={slotRef}
+      className={`hero-cycle${widthReady && !reduce ? " is-ready" : ""}`}
+      style={slotStyle}
+      aria-hidden="true"
+    >
       <span className="hero-cycle__sizer">
-        {WORDS.map((word) => (
-          <span key={word} className="hero-cycle__ghost">
+        <Chars word={WORDS[index]} />
+      </span>
+      <span ref={measureRef} className="hero-cycle__measure">
+        {WORDS.map((word, i) => (
+          <span key={word} data-word={i} className="hero-cycle__ghost">
             <Chars word={word} />
           </span>
         ))}
@@ -122,7 +201,7 @@ export function HeroRotatingWord() {
       <span className="hero-cycle__viewport">
         {WORDS.map((word, i) => {
           const phase = reduce
-            ? i === 0
+            ? i === index
               ? "in"
               : "hidden"
             : wordPhase(i, index, outgoing, entered);

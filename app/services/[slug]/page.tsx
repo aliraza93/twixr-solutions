@@ -16,10 +16,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const service = getServiceBySlug(slug);
 
   if (!service) {
-    return { title: "Service Not Found | Ali Raza" };
+    return { title: "Service Not Found | Twixr Solutions" };
   }
 
-  const title = `${service.title} | Ali Raza — Full Stack Developer`;
+  const title = `${service.title} | Twixr Solutions — Full Stack Developer`;
   const description = service.longDescription;
 
   return {
@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       type: "website",
       locale: "en_US",
       url: `https://twixrsolutions.com/services/${service.slug}`,
-      siteName: "Ali Raza Portfolio",
+      siteName: "Twixr Solutions Portfolio",
       title,
       description,
       images: [

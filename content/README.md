@@ -6,17 +6,19 @@ All homepage (and shared) copy lives here. Edit these files and redeploy — you
 
 | File | What it controls |
 |---|---|
-| `site.ts` | Brand name, **years of experience** (single source), email, booking/CV links, Upwork/Fiverr/LinkedIn, nav, CTAs, markets |
-| `hero.ts` | H1, rotating words, subheading, tech logos, dashboard stat tiles |
+| `site.ts` | Brand name, **years of experience** (single source), email, booking/CV links, Upwork/Fiverr/LinkedIn, nav, CTAs, markets, Upwork proof |
+| `hero.ts` | H1, rotating words, subheading, proof chip, tech logos, dashboard stats |
 | `philosophy.ts` | Philosophy heading, equation tiles, mission line |
 | `process.ts` | Orbit phases (Discover → Scale): taglines, descriptions, tools, stats |
 | `howwework.ts` | How We Work steps, terminal lines, “In practice” copy |
-| `experience.ts` | Career roles, highlights, and the computed `YEARS · ROLES · COUNTRIES` row |
-| `testimonials.ts` | Client quotes (see authenticity note below) |
-| `services.ts` | Service offerings + skill groups |
+| `industries.ts` | Industries strip |
+| `experience.ts` | Career roles, education, and the proof stats row |
+| `work.ts` | Selected work cards |
+| `testimonials.ts` | Client quotes — real reviews only |
+| `services.ts` | Service cards, audience offerings, extended-team copy |
 | `faq.ts` | FAQ questions/answers |
 | `footer.ts` | Footer columns, tagline, socials |
-| `tech-stack.ts` | Marquee logos |
+| `tech-stack.ts` | Marquee logos + stack groups |
 | `delivery.ts` | “How we work together” equation + pills |
 | `support.ts` | Support Hub CTA + “Three ways in” cards |
 | `stats.ts` | Proof strip numbers |
@@ -26,8 +28,6 @@ All homepage (and shared) copy lives here. Edit these files and redeploy — you
 ## Years of experience
 
 Change `yearsOfExperience` in `site.ts` once. Hero, FAQ, footer, about, metadata, stats strip, and the career row all read from it.
-
-The career row is `experienceStatLine()` in `experience.ts`: years from `site.ts`, role count from the roles array, country count from `site.markets`.
 
 ## Blog
 
@@ -39,11 +39,11 @@ slug, order, title, excerpt, date, image, category, tags, readingTime, author, a
 
 Body supports paragraphs, `##` / `###` headings, and `- ` lists. Add a file, redeploy.
 
-## Still to fill (from the content-update guide)
+## Still to fill
 
-1. **Testimonials (A1)** — current quotes name roles at LinkedIn, Google, Facebook, Fiverr, etc. Replace with real Upwork/Fiverr/LinkedIn reviews in `testimonials.ts`.
-2. **2014–2020 gap (A2)** — add missing role(s) in `experience.ts` if you were working then.
-3. **Proof URLs** — set real `upworkHref`, `fiverrHref`, `linkedinHref`, `githubHref` in `site.ts` (placeholders are `#` or generic homepages).
-4. **CV PDF** — add `public/ali-raza-cv.pdf` and set `cvHref: "/ali-raza-cv.pdf"` in `site.ts`.
-5. **Orbit/dashboard stats (A4)** — keep as representative or swap for provable numbers in `process.ts` / `hero.ts`.
-6. **Dead links (A5)** — footer Trainings (`/courses`), Newsletter (`#newsletter`), and several socials are still `#`.
+1. **Testimonials** — add 4–7 more real Upwork reviews in `testimonials.ts`. Do not invent names.
+2. **Contact URLs** — real Fiverr and Cal.com (or keep `/schedule`). Email is `ali@twixrsolutions.com`.
+3. **CV PDF** — add `public/ali-raza-cv.pdf` (`cvHref` already points there).
+4. **Project links** — LeadQuiz / ManagePH / OSRS hrefs in `work.ts`.
+5. **DevLabs role** — confirm 2020–2022 is accurate.
+6. **Dead links** — Newsletter (`#newsletter`) and several socials are still `#`.

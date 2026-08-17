@@ -35,7 +35,7 @@ export function EquationTile({
     >
       <div
         className={cn(
-          "eq-tile__face flex size-[132px] items-center justify-center rounded-lg border bg-canvas text-pine",
+          "eq-tile__face eq-node-face flex size-[132px] items-center justify-center rounded-lg border bg-canvas text-pine",
           shine && "eq-tile__face--result"
         )}
       >

@@ -102,7 +102,7 @@ function ServicesHero({ reduceMotion }: { reduceMotion: boolean | null }) {
           transition={motionTransition(reduceMotion, 0.16)}
           className="text-section-desc mx-auto mt-4"
         >
-          From concept to deployment — scalable web apps, mobile, and AI solutions tailored to your
+          From concept to deployment — scalable SaaS, APIs, and web apps tailored to your
           business goals.
         </motion.p>
       </div>
@@ -120,7 +120,6 @@ const CATALOG_CATEGORIES: {
   { id: "backend", label: "API & backend", icon: Server },
   { id: "ai", label: "AI automation", icon: Bot },
   { id: "cloud", label: "Cloud & DevOps", icon: Cloud },
-  { id: "mobile", label: "Mobile", icon: Smartphone },
 ];
 
 function ServicesGrid({ services }: { services: ServiceListingItem[] }) {

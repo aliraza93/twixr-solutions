@@ -1,7 +1,7 @@
 import { site } from "./site";
 
 export const footer = {
-  tagline: `${site.primaryTitle} — Freelancing, Programming & AI. Top Rated Plus on Upwork with ${site.yearsOfExperience}+ years of experience.`,
+  tagline: `Senior full-stack engineer — Laravel, Node, Next.js & Vue. Top Rated Plus on Upwork, ${site.yearsOfExperience}+ years.`,
   legal: "All rights reserved.",
   shipped: "Shipped with care · Top Rated Plus",
   columns: [
@@ -9,11 +9,12 @@ export const footer = {
       label: "Services",
       links: [
         { name: "SaaS & Web Apps", href: "/services/saas-web-app-development" },
-        { name: "Laravel API", href: "/services/laravel-api-backend" },
-        { name: "Next.js Frontend", href: "/services/nextjs-frontend" },
+        { name: "Laravel & Node APIs", href: "/services/laravel-api-backend" },
+        { name: "Next.js / Vue Frontends", href: "/services/nextjs-frontend" },
+        { name: "Cloud & DevOps (AWS)", href: "/services/cloud-infrastructure-devops" },
+        { name: "E-commerce", href: "/portfolio" },
         { name: "AI Automation", href: "/services/ai-automation-chatbots" },
-        { name: "Cloud & DevOps", href: "/services/cloud-infrastructure-devops" },
-        { name: "Mobile Apps", href: "/services/mobile-app-development" },
+        { name: "Rescue & Migrations", href: "/services" },
       ],
     },
     {
@@ -29,7 +30,6 @@ export const footer = {
       label: "Resources",
       links: [
         { name: "Blog", href: "/blog" },
-        { name: "Trainings", href: "/courses" },
         { name: "All services", href: "/services" },
         { name: "Newsletter", href: "#newsletter" },
       ],
@@ -55,7 +55,6 @@ export const footer = {
   platforms: [
     { name: "YouTube Channel", href: "#" },
     { name: "Official Website", href: site.url },
-    { name: "Trainings", href: "/courses" },
     { name: "Newsletter", href: "#newsletter" },
     { name: "Schedule Meeting", href: site.bookingHref },
   ],

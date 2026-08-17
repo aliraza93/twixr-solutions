@@ -3,7 +3,7 @@
 import { type CSSProperties, useId, useState } from "react";
 import { ArrowRight, Minus, Plus } from "lucide-react";
 import { Icon } from "@iconify/react";
-import { career, experienceStatLine, experiences } from "@/content/experience";
+import { career, education, experienceStatLine, experiences } from "@/content/experience";
 import { Button } from "@/components/ui/button";
 import { ConnectorLine } from "@/components/ui/connector-line";
 import { Eyebrow } from "@/components/ui/eyebrow";
@@ -88,6 +88,18 @@ export function Experience() {
               </li>
             ))}
           </ol>
+        </div>
+        <div className="mt-10 border-t border-hairline pt-8 lg:col-span-8 lg:col-start-5">
+          <p className="font-mono text-[length:var(--fs-eyebrow)] font-medium uppercase tracking-[0.18em] text-muted">
+            Education
+          </p>
+          <p className="mt-3 font-sora text-base font-semibold tracking-[-0.02em] text-ink">
+            {education.degree}
+          </p>
+          <p className="mt-1 text-sm text-muted">{education.school}</p>
+          <p className="mt-1 font-mono text-[length:var(--fs-eyebrow)] uppercase tracking-[0.12em] text-muted">
+            {education.period}
+          </p>
         </div>
       </div>
     </section>

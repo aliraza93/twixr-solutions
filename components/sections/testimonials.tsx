@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { testimonials } from "@/content/testimonials";
+import { testimonials, testimonialsCopy } from "@/content/testimonials";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Button } from "@/components/ui/button";
 import { TestimonialCarousel } from "@/components/ui/testimonial-carousel";
@@ -16,14 +16,14 @@ export function Testimonials() {
       <div className="ds-container">
         <ScrollReveal>
           <header className="max-w-[40rem]">
-            <Eyebrow>Client Success</Eyebrow>
+            <Eyebrow>{testimonialsCopy.eyebrow}</Eyebrow>
             <h2 className="mt-5 font-sora text-[length:var(--fs-h1)] font-extrabold leading-[1.06] tracking-[-0.02em] text-ink">
-              Trusted{" "}
-              <span className="text-pine">Client</span> Feedback
+              {testimonialsCopy.headingBefore}{" "}
+              <span className="text-pine">{testimonialsCopy.headingEmphasis}</span>{" "}
+              {testimonialsCopy.headingAfter}
             </h2>
             <p className="mt-5 max-w-[62ch] text-[length:var(--fs-lead)] text-muted">
-              Real results from professionals and companies I&apos;ve
-              collaborated with across global platforms.
+              {testimonialsCopy.intro}
             </p>
           </header>
         </ScrollReveal>

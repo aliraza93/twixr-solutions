@@ -6,52 +6,56 @@ export type FaqItem = {
   icon: string;
 };
 
+export const faq = {
+  heading: "Common questions",
+} as const;
+
 export const faqs: FaqItem[] = [
   {
-    question: "Do you develop mobile apps as well as web applications?",
+    question: "Do you build multi-tenant SaaS platforms?",
     answer:
-      "Yes, I specialize in cross-platform mobile development using Flutter and React Native, alongside full-stack web development with Next.js and Node.js.",
-    icon: "lucide:smartphone",
+      "Yes — Laravel & Node, clean and built to last, with auth, billing, and data isolation designed in from day one.",
+    icon: "lucide:layers",
   },
   {
-    question: "Can you build AI-powered chatbots and automation systems?",
+    question: "Can you handle DevOps and cloud?",
     answer:
-      "Absolutely. I have extensive experience integrating LLMs like GPT-4, building custom RAG pipelines, and automating workflows using LangChain and n8n.",
-    icon: "lucide:bot",
-  },
-  {
-    question: "Do you offer training or educational consultancy?",
-    answer:
-      "Yes, I offer specialized training for engineering teams and individual consultancy for architects looking to upscale their stack.",
-    icon: "lucide:video",
-  },
-  {
-    question: "What payment systems and e-commerce solutions do you implement?",
-    answer:
-      "I primarily work with Stripe and PayPal for global payments, and I've built custom e-commerce engines as well as Shopify integrations.",
-    icon: "lucide:credit-card",
-  },
-  {
-    question: "Which cloud platforms and databases do you work with?",
-    answer:
-      "I'm proficient with AWS, DigitalOcean, and Vercel for hosting. For databases, I prefer PostgreSQL, MySQL, and MongoDB depending on the project requirements.",
+      "Yes — CI/CD, Docker, and AWS (EC2, RDS, S3, ElastiCache) with zero-downtime deploys.",
     icon: "lucide:cloud",
   },
   {
-    question: "What is your experience level and track record on freelancing platforms?",
-    answer: `I am a Top-Rated Plus developer on Upwork with a ${site.proof.jobSuccess} Job Success Score and over ${site.yearsOfExperience} years of professional engineering experience.`,
-    icon: "lucide:award",
+    question: "E-commerce and payments?",
+    answer:
+      "Custom storefronts and checkout, Stripe/PayPal, plus Shopify integrations.",
+    icon: "lucide:credit-card",
   },
   {
-    question: "Do you provide full-stack development or just frontend/backend?",
+    question: "Do you integrate AI?",
     answer:
-      "I provide end-to-end full-stack development, covering everything from UI/UX design and frontend implementation to backend architecture and DevOps.",
+      "Yes — OpenAI/Anthropic, automation, and RAG pipelines — integrated where they add real value, not as a headline feature.",
+    icon: "lucide:bot",
+  },
+  {
+    question: "Which industries have you worked in?",
+    answer:
+      "E-commerce, SaaS, real estate, education, healthcare, and payments.",
     icon: "lucide:globe",
   },
   {
-    question: "Can you help with technical mentoring or code reviews?",
+    question: "Do you take on rescue projects and migrations?",
     answer:
-      "Yes, I offer consultancy services for teams and individuals looking to optimize their codebase, improve performance, or adopt new technologies.",
+      "Yes — I regularly rebuild what others architected poorly, and migrate between monolith and microservices.",
+    icon: "lucide:wrench",
+  },
+  {
+    question: "What's your track record?",
+    answer: `Top Rated Plus (top 3%) on Upwork, ${site.proof.jobSuccess} Job Success, ${site.yearsOfExperience}+ years, ${site.proof.hours} hours.`,
+    icon: "lucide:award",
+  },
+  {
+    question: "Mentoring or code reviews?",
+    answer:
+      "Yes — for teams and individuals optimizing their performance or adopting new stacks.",
     icon: "lucide:users",
   },
 ];

@@ -517,5 +517,5 @@ export function getServiceBySlug(slug: string): ServiceDetail | undefined {
 
 /** Listing-only projection for the services index page. */
 export function getServiceListings(): ServiceListingItem[] {
-  return services;
+  return services.filter((s) => s.slug !== "mobile-app-development");
 }

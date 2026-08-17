@@ -12,7 +12,7 @@ function FooterLogo() {
       className="inline-flex items-center gap-2 font-sora text-base font-semibold tracking-[-0.02em] text-ink"
     >
       <span className="flex h-8 w-8 items-center justify-center rounded-full bg-lime font-sora text-sm font-bold text-d-bg">
-        A
+        T
       </span>
       {site.name}
     </Link>

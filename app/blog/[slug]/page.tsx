@@ -16,10 +16,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const post = getBlogBySlug(slug);
 
   if (!post) {
-    return { title: "Post Not Found | Ali Raza" };
+    return { title: "Post Not Found | Twixr Solutions" };
   }
 
-  const title = `${post.title} | Ali Raza`;
+  const title = `${post.title} | Twixr Solutions`;
   const description = post.excerpt;
 
   return {
@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       type: "article",
       locale: "en_US",
       url: `https://twixrsolutions.com/blog/${post.slug}`,
-      siteName: "Ali Raza Portfolio",
+      siteName: "Twixr Solutions Portfolio",
       title,
       description,
       publishedTime: post.date,

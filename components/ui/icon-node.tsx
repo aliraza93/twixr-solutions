@@ -12,6 +12,7 @@ type IconNodeProps = {
   size?: IconNodeSize;
   className?: string;
   active?: boolean;
+  quiet?: boolean;
   as?: "figure" | "button";
 } & Omit<ButtonHTMLAttributes<HTMLButtonElement>, "children" | "color">;
 
@@ -35,11 +36,12 @@ export function IconNode({
   size = "md",
   className,
   active = false,
+  quiet = false,
   as: Tag = "figure",
   type = "button",
   ...rest
 }: IconNodeProps) {
-  const lime = active || accent === "lime";
+  const emphasized = active || accent === "lime";
   const CaptionTag = Tag === "button" ? "span" : "figcaption";
 
   return (
@@ -54,17 +56,34 @@ export function IconNode({
     >
       <div
         className={cn(
-          "icon-node__ring flex items-center justify-center rounded-full border-[1.5px] bg-transparent transition-[border-color,box-shadow,color,opacity] duration-[var(--dur)] ease-[var(--ease-out)]",
+          "icon-node__ring eq-node-face flex items-center justify-center rounded-full border-[1.5px] bg-canvas transition-[border-color,box-shadow,color,opacity] duration-[var(--dur)] ease-[var(--ease-out)]",
           SIZE[size],
-          lime
-            ? "border-lime-deep text-lime-deep [box-shadow:0_0_28px_var(--d-glow),var(--shadow-lime)]"
-            : "border-pine text-pine [box-shadow:var(--shadow-node)]"
+          quiet
+            ? emphasized
+              ? "border-lime text-pine shadow-[0_0_14px_rgba(190,240,58,0.25)]"
+              : "border-hairline-strong text-pine shadow-none"
+            : emphasized
+              ? "border-lime-deep text-lime-deep [box-shadow:0_0_28px_var(--d-glow),var(--shadow-lime)]"
+              : "border-pine text-pine [box-shadow:var(--shadow-node)]"
         )}
       >
         <span className={cn("[&>svg]:stroke-[1.5]", ICON[size])}>{children}</span>
       </div>
       <CaptionTag className="mt-3 max-w-[16ch] font-mono text-[length:var(--fs-eyebrow)] font-medium uppercase tracking-[0.18em]">
-        <span className={cn("block", lime ? "text-lime-ink" : "text-ink")}>{label}</span>
+        <span
+          className={cn(
+            "block",
+            quiet
+              ? emphasized
+                ? "text-pine"
+                : "text-muted"
+              : emphasized
+                ? "text-lime-ink"
+                : "text-ink"
+          )}
+        >
+          {label}
+        </span>
         {sublabel && <span className="mt-1 block text-muted-2">{sublabel}</span>}
       </CaptionTag>
     </Tag>

@@ -73,7 +73,7 @@ function AboutHero() {
           About Me
         </span>
         <h1 data-hero-item className="text-display font-medium text-slate-900 dark:text-white">
-          Hi, I&apos;m <span className="font-black italic text-primary">Ali Raza</span>
+          Hi, we&apos;re <span className="font-black italic text-primary">{aboutBio.name}</span>
         </h1>
         <p data-hero-item className="text-section-desc mx-auto mt-4">
           {aboutBio.subtitle}

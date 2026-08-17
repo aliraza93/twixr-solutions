@@ -1,11 +1,22 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { Bot, Sparkles, User } from "lucide-react";
+import { Cloud, Sparkles, User, type LucideIcon } from "lucide-react";
 import { philosophy } from "@/content/philosophy";
 import { EquationRow } from "@/components/ui/equation-row";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { cn } from "@/lib/utils";
+
+const TILE_ICONS: Record<(typeof philosophy.tiles)[number]["icon"], LucideIcon> = {
+  user: User,
+  cloud: Cloud,
+  sparkles: Sparkles,
+};
+
+function tileIcon(icon: (typeof philosophy.tiles)[number]["icon"]) {
+  const Icon = TILE_ICONS[icon];
+  return <Icon />;
+}
 
 export function Philosophy() {
   const ref = useRef<HTMLElement>(null);
@@ -58,15 +69,15 @@ export function Philosophy() {
         <EquationRow
           className="mt-14 md:mt-16"
           durationMs={1800}
-          a={{ icon: <User />, label: philosophy.tiles[0].label }}
-          b={{ icon: <Bot />, label: philosophy.tiles[1].label }}
-          c={{ icon: <Sparkles />, label: philosophy.tiles[2].label }}
+          a={{ icon: tileIcon(philosophy.tiles[0].icon), label: philosophy.tiles[0].label }}
+          b={{ icon: tileIcon(philosophy.tiles[1].icon), label: philosophy.tiles[1].label }}
+          c={{ icon: tileIcon(philosophy.tiles[2].icon), label: philosophy.tiles[2].label }}
           onFinale={() => setFinale(true)}
         />
 
         <p
           className={cn(
-            "eq-mission mt-14 max-w-[22ch] font-sora text-[length:var(--fs-h2)] font-bold leading-[1.2] tracking-[-0.02em] md:mt-16",
+            "eq-mission mt-14 max-w-[40ch] font-sora text-[length:var(--fs-h2)] font-bold leading-[1.2] tracking-[-0.02em] md:mt-16",
             finale && "is-visible"
           )}
         >

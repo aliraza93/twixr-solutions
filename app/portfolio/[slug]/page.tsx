@@ -16,10 +16,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const project = getPortfolioBySlug(slug);
 
   if (!project) {
-    return { title: "Case Study Not Found | Ali Raza" };
+    return { title: "Case Study Not Found | Twixr Solutions" };
   }
 
-  const title = `${project.title} — Case Study | Ali Raza`;
+  const title = `${project.title} — Case Study | Twixr Solutions`;
   const description = project.longDescription;
 
   return {
@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       type: "article",
       locale: "en_US",
       url: `https://twixrsolutions.com/portfolio/${project.slug}`,
-      siteName: "Ali Raza Portfolio",
+      siteName: "Twixr Solutions Portfolio",
       title,
       description,
       images: [

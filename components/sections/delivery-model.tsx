@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, type CSSProperties } from "react";
-import { Bot, User, Users } from "lucide-react";
+import { Code2, User, Users } from "lucide-react";
 import { delivery } from "@/content/delivery";
 import { EquationRow } from "@/components/ui/equation-row";
 import { Eyebrow } from "@/components/ui/eyebrow";
@@ -63,7 +63,7 @@ export function DeliveryModel() {
           shape="circle"
           a={{ icon: <User />, label: delivery.tiles[0].label, sublabel: delivery.tiles[0].sublabel }}
           b={{
-            icon: <Bot />,
+            icon: <Code2 />,
             label: delivery.tiles[1].label,
             sublabel: delivery.tiles[1].sublabel,
           }}

@@ -1,12 +1,13 @@
 export const philosophy = {
   eyebrow: "Our Philosophy",
   headingLine1: "Senior engineering,",
-  headingLine2: "amplified by AI.",
+  headingLine2: "built to scale.",
   tiles: [
     { label: "Deep engineering", icon: "user" },
-    { label: "AI-augmented workflow", icon: "bot" },
-    { label: "Shipped faster", icon: "sparkles" },
+    { label: "Cloud & DevOps", icon: "cloud" },
+    { label: "Products that hold", icon: "sparkles" },
   ] as const,
-  missionMuted: "The goal isn't more code. It's to ",
-  missionEmphasis: "ship outcomes.",
+  missionMuted: "The goal isn't more code. ",
+  missionEmphasis:
+    "I think through your system's future — how it grows, where it breaks, how to prevent both — before the first line of code.",
 } as const;

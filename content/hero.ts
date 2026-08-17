@@ -1,9 +1,9 @@
 import { site } from "./site";
 
 export const hero = {
-  eyebrow: "Full-stack engineering · Cloud · AI",
-  stableHeading: "Build Scalable, Secure Web Apps with a Top 3% Developer",
-  rotatingWords: ["Secure", "Fast", "Reliable", "AI-Powered", "Scalable"] as const,
+  eyebrow: "Full-stack engineering · SaaS · Cloud & DevOps",
+  stableHeading: "Build Scalable, Reliable Web Apps with a Top 3% Engineer",
+  rotatingWords: ["Reliable", "Secure", "Fast", "Scalable", "Maintainable"] as const,
   headingLines: [
     [
       { text: "Build", kind: "plain" as const },
@@ -20,35 +20,35 @@ export const hero = {
       { text: "Top", kind: "emphasis" as const },
       { text: "3%", kind: "emphasis" as const },
     ],
-    [{ text: "Developer", kind: "emphasis" as const }],
+    [{ text: "Engineer", kind: "emphasis" as const }],
   ],
-  subheading: `Senior Full Stack Engineer (${site.yearsOfExperience}+ Years) specializing in Laravel, Next.js, and Cloud Infrastructure. ${site.valueProp}`,
+  subheading: `Senior full-stack engineer (${site.yearsOfExperience}+ years) specializing in Laravel, Node.js, Next.js & Vue, multi-tenant SaaS, and cloud/DevOps on AWS. I turn complex technical challenges into products that ship and scale — with AI automation when it adds real value.`,
+  proofChip: "Top Rated Plus · 100% Job Success · $50K+ on Upwork",
   primaryCta: site.ctas.start,
   secondaryCta: site.ctas.portfolio,
   logosCaption: "Powering solutions with",
   techLogos: [
     { icon: "logos:laravel", label: "Laravel" },
     { icon: "logos:nodejs-icon", label: "Node.js" },
-    { icon: "logos:aws", label: "AWS" },
-    { icon: "logos:react", label: "React" },
+    { icon: "logos:nextjs-icon", label: "Next.js" },
     { icon: "logos:vue", label: "Vue" },
+    { icon: "logos:aws", label: "AWS" },
   ],
   moreLogos: [
-    { icon: "logos:wordpress-icon", label: "WordPress" },
-    { icon: "logos:docker-icon", label: "DevOps" },
-    { icon: "logos:nextjs-icon", label: "Next.js" },
+    { icon: "logos:postgresql", label: "PostgreSQL" },
+    { icon: "logos:docker-icon", label: "Docker" },
   ],
   dashboard: {
-    url: "app.twixrsolutions.com/ops",
-    kicker: "Production",
-    title: "Delivery dashboard",
+    url: "upwork.com/freelancers",
+    kicker: "Upwork",
+    title: "Track record",
     stats: [
-      { label: "Uptime", value: "99.99", unit: "%" },
-      { label: "Latency", value: "42", unit: "ms" },
-      { label: "Deploys", value: "12", unit: "" },
+      { label: "Job Success", value: "100", unit: "%" },
+      { label: "Hours", value: "2,588", unit: "" },
+      { label: "Jobs", value: "48", unit: "" },
     ],
-    requests: "2.4M · +12%",
-    representative: true,
+    requests: "Top Rated Plus · $50K+",
+    representative: false,
   },
   scrollHref: "#workflow",
 } as const;

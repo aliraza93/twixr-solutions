@@ -1,17 +1,17 @@
 export const site = {
-  name: "Ali Raza",
+  name: "Twixr Solutions",
   brand: "Twixr Solutions",
   brandShort: "Twixr",
   url: "https://twixrsolutions.com",
-  primaryTitle: "Senior Full Stack Engineer & Founder",
+  primaryTitle: "Senior Full-Stack Engineer",
   /** Single source of truth — used in hero, FAQ, footer, metadata, career stats. */
-  yearsOfExperience: 10,
+  yearsOfExperience: 8,
   valueProp:
-    "I transform complex technical challenges into high-performance solutions.",
+    "Senior full-stack engineer building SaaS, e-commerce, and APIs that scale — Laravel, Node, Next.js & Vue on AWS. AI automation when it adds real value.",
   email: "ali@twixrsolutions.com",
   bookingHref: "/schedule",
-  cvHref: "mailto:ali@twixrsolutions.com?subject=CV%20request",
-  upworkHref: "https://www.upwork.com",
+  cvHref: "/ali-raza-cv.pdf",
+  upworkHref: "https://www.upwork.com/freelancers/~01e1dd4667ee1975e6",
   fiverrHref: "https://www.fiverr.com",
   linkedinHref: "#",
   githubHref: "#",
@@ -19,6 +19,9 @@ export const site = {
   proof: {
     topRatedPlus: true,
     jobSuccess: "100%",
+    earned: "$50K+",
+    jobs: "48",
+    hours: "2,588",
   },
   nav: [
     { href: "/about", label: "About" },

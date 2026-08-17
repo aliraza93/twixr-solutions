@@ -105,6 +105,9 @@ export function Hero({ screenshot }: { screenshot?: HeroVisualImage }) {
             <p className="mt-5 max-w-[52ch] text-[length:var(--fs-lead)] text-muted">
               {hero.subheading}
             </p>
+            <p className="mt-3 font-mono text-[length:var(--fs-eyebrow)] font-medium uppercase tracking-[0.14em] text-muted">
+              {hero.proofChip}
+            </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
               <Button variant="primary" asChild>

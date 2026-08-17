@@ -15,7 +15,7 @@ const AUDIENCES = support.audiences;
 export function SupportHub() {
   return (
     <section
-      id="support"
+      id="services"
       className="relative overflow-x-hidden bg-canvas py-[var(--section-py)]"
     >
       <div className="ds-container">

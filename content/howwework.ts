@@ -9,56 +9,56 @@ export const howWeWork = {
   headingLine1: "From a messy brief",
   headingLine2Before: "to a process that",
   headingEmphasis: "ships.",
-  lead: "I follow a structured, results-driven process designed to transform complex challenges into scalable, high-performing solutions.",
+  lead: "I follow a structured, results-driven process that turns complex challenges into scalable, high-performing products.",
   stepNames: ["Discover", "Architect", "Build", "Test", "Deploy"] as const,
   steps: [
     {
-      title: "Strategy & Discovery",
+      title: "Discover",
       description:
-        "We dive deep into your business goals, user needs, and technical requirements to define a clear roadmap for success.",
+        "Dig into business goals, users, and technical constraints to define a clear roadmap.",
       icon: "lucide:eye",
     },
     {
-      title: "Precision Architecture",
+      title: "Architect",
       description:
-        "Designing scalable database schemas, high-performance APIs, and intuitive UI/UX frameworks built for long-term growth.",
+        "Scalable schemas, high-performance APIs, and UI frameworks built for long-term growth.",
       icon: "lucide:map",
     },
     {
-      title: "High-Velocity Dev",
+      title: "Build",
       description:
-        "Agile sprints focused on building core features using modern stacks like Next.js, Laravel, and AI-powered automation.",
+        "Agile sprints on modern stacks — Laravel, Node, Next.js, Vue — with automation where it helps.",
       icon: "lucide:layout",
     },
     {
-      title: "Rigorous QA & Test",
+      title: "Test",
       description:
-        "Comprehensive testing for security, performance, and cross-device compatibility to ensure a flawless user experience.",
+        "Security, performance, and cross-browser testing for a flawless experience.",
       icon: "lucide:cpu",
     },
     {
-      title: "Global Launch & Scale",
+      title: "Deploy",
       description:
-        "Seamless deployment with automated CI/CD pipelines, SEO optimization, and proactive maintenance for sustained impact.",
+        "Automated CI/CD, SEO, and proactive maintenance on AWS for sustained impact.",
       icon: "lucide:rocket",
     },
   ] satisfies HowWeWorkStep[],
   terminal: {
     title: "twixr · deployment",
     lines: [
-      { kind: "cmd" as const, text: "$ twixr deployment" },
+      { kind: "cmd" as const, text: "$ twixr deploy" },
       { kind: "ok" as const, text: "Tests passing" },
       { kind: "ok" as const, text: "Docker image built" },
       { kind: "ok" as const, text: "Migrations run" },
-      { kind: "ok" as const, text: "SSL & CDN configured" },
-      { kind: "run" as const, text: "Deploying to production…" },
+      { kind: "ok" as const, text: "Deployed to AWS" },
+      { kind: "run" as const, text: "Live in production…" },
     ],
   },
   inPractice: {
     eyebrow: "In practice",
     headingLine1: "From whiteboard to",
     headingLine2: "production.",
-    body: "The same five steps run on every engagement — discovery notes become architecture, architecture becomes a pipeline, and the pipeline is what ships. No theatre, no mystery phase after “done.”",
+    body: "The same steps run on every engagement — discovery becomes architecture, architecture becomes a pipeline, and the pipeline is what ships. No theatre, no mystery phase after “done.”",
   },
 } as const;
 

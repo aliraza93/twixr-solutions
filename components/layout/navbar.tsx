@@ -33,7 +33,7 @@ function Logo({ onClick, inverted = false }: { onClick?: () => void; inverted?: 
           inverted ? "bg-lime text-ink" : "bg-pine text-canvas"
         )}
       >
-        A
+        T
       </span>
       {site.name}
     </Link>

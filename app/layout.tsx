@@ -31,30 +31,30 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://twixrsolutions.com"),
-  title: `${site.name} | ${site.primaryTitle} | ${site.brand}`,
-  description: `${site.primaryTitle} with ${site.yearsOfExperience}+ years of experience in Laravel, Next.js, and Cloud Infrastructure. Top Rated Plus on Upwork. Building scalable SaaS projects and AI automation.`,
-  keywords: ["Ali Raza", "Twixr Solutions", "Laravel Expert", "Next.js Developer", "Full Stack Engineer", "DevOps Engineer", "PHP Developer", "SaaS Development", "AI Automation", "Senior Software Engineer"],
-  authors: [{ name: site.name }],
-  creator: site.name,
+  title: `${site.brand} | ${site.primaryTitle}`,
+  description: `${site.primaryTitle} with ${site.yearsOfExperience}+ years of experience in Laravel, Node, Next.js, Vue, and AWS. Top Rated Plus on Upwork. Building SaaS, e-commerce, and APIs that scale.`,
+  keywords: ["Twixr Solutions", "Laravel Expert", "Next.js Developer", "Full Stack Engineer", "DevOps Engineer", "PHP Developer", "SaaS Development", "AI Automation", "Senior Software Engineer"],
+  authors: [{ name: site.brand }],
+  creator: site.brand,
   openGraph: {
     type: "website",
     locale: "en_US",
     url: site.url,
-    siteName: `${site.name} Portfolio`,
-    title: `${site.name} | ${site.primaryTitle}`,
-    description: "Expert web development and scalable infrastructure solutions by Ali Raza.",
+    siteName: site.brand,
+    title: `${site.brand} | ${site.primaryTitle}`,
+    description: "Expert web development and scalable infrastructure solutions by Twixr Solutions.",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: `${site.name} | Senior Full Stack Engineer`,
+        alt: `${site.brand} | Senior Full Stack Engineer`,
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: `${site.name} | ${site.primaryTitle}`,
+    title: `${site.brand} | ${site.primaryTitle}`,
     description: `Building high-performance SaaS & Web Apps with ${site.yearsOfExperience}+ years of expertise.`,
     images: ["/og-image.png"],
     creator: "@aliraza",
@@ -96,21 +96,13 @@ export default function RootLayout({
               "@context": "https://schema.org",
               "@graph": [
                 {
-                  "@type": "Person",
-                  name: site.name,
-                  jobTitle: site.primaryTitle,
-                  email: site.email,
-                  url: site.url,
-                  worksFor: { "@type": "Organization", name: site.brand },
-                  sameAs: [site.upworkHref, site.linkedinHref, site.githubHref].filter(
-                    (href) => href.startsWith("http")
-                  ),
-                },
-                {
                   "@type": "Organization",
                   name: site.brand,
                   url: site.url,
-                  sameAs: [site.upworkHref, site.fiverrHref],
+                  email: site.email,
+                  sameAs: [site.upworkHref, site.fiverrHref, site.linkedinHref, site.githubHref].filter(
+                    (href) => href.startsWith("http")
+                  ),
                 },
               ],
             }),

@@ -1,4 +1,4 @@
-import { Code2, Server, Cloud, Smartphone, Database, Cpu } from "lucide-react";
+import { Code2, Server, Cloud, Wrench, Database, Cpu } from "lucide-react";
 import { services as serviceCopy, skills as skillCopy } from "@/content/services";
 import { testimonials } from "@/content/testimonials";
 import { faqs } from "@/content/faq";
@@ -12,7 +12,7 @@ const SERVICE_ICONS = {
   Cpu,
   Cloud,
   Database,
-  Smartphone,
+  Wrench,
 } as const;
 
 export const services = serviceCopy.map((item) => ({

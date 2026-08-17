@@ -2,30 +2,15 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { faqs } from "@/lib/data";
+import { faqs } from "@/content/faq";
+import { support } from "@/content/support";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { ScrollReveal, ScrollRevealItem, ScrollStagger } from "@/components/motion/scroll-reveal";
 import { cn } from "@/lib/utils";
 
-const AUDIENCES = [
-  {
-    eyebrow: "For startups",
-    title: "First product, shipped properly.",
-    body: "End-to-end full-stack — Next.js, Laravel, mobile, and the cloud — so your first version is something you can actually run, not a demo that dies in staging.",
-  },
-  {
-    eyebrow: "For agencies",
-    title: "Senior overflow, not extra management.",
-    body: "I embed as lead engineering on client work: architecture, delivery, and an AI-assisted workflow that keeps velocity honest without adding a layer of process.",
-  },
-  {
-    eyebrow: "For product teams",
-    title: "Architecture, AI, and a second brain.",
-    body: "RAG pipelines, automation, code review, and mentoring — the same consultancy I already do for in-house teams who need a senior engineer without hiring one full-time.",
-  },
-] as const;
+const AUDIENCES = support.audiences;
 
 export function SupportHub() {
   return (
@@ -36,7 +21,7 @@ export function SupportHub() {
       <div className="ds-container">
         <ScrollReveal>
           <header className="mb-8 max-w-[40rem] md:mb-10">
-            <Eyebrow>Support Hub</Eyebrow>
+            <Eyebrow>{support.eyebrow}</Eyebrow>
           </header>
           <Card
             variant="feature"
@@ -44,13 +29,11 @@ export function SupportHub() {
           >
             <div className="relative z-10 mx-auto max-w-[40rem]">
               <h2 className="font-sora text-[length:var(--fs-h1)] font-extrabold leading-[1.06] tracking-[-0.02em] text-d-text">
-                Let&apos;s build your next{" "}
-                <span className="text-lime">product.</span>
+                {support.headingBefore}{" "}
+                <span className="text-lime">{support.headingEmphasis}</span>
               </h2>
               <p className="mx-auto mt-5 max-w-[46ch] text-[length:var(--fs-lead)] text-d-muted">
-                Can&apos;t find what you&apos;re looking for? Contact me
-                directly — I&apos;ll tell you plainly if I&apos;m the right
-                engineer for it.
+                {support.lead}
               </p>
               <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
                 <Button
@@ -58,8 +41,8 @@ export function SupportHub() {
                   asChild
                   className="focus-visible:ring-offset-ink"
                 >
-                  <Link href="/schedule">
-                    Start a Project
+                  <Link href={support.primaryCta.href}>
+                    {support.primaryCta.label}
                     <span
                       aria-hidden
                       className="inline-block transition-transform duration-[var(--dur-fast)] ease-[var(--ease-out)] group-hover:translate-x-[3px]"
@@ -73,7 +56,7 @@ export function SupportHub() {
                   asChild
                   className="border-d-hairline text-d-text hover:border-d-text hover:bg-white/10 focus-visible:ring-offset-ink"
                 >
-                  <Link href="/portfolio">View Portfolio</Link>
+                  <Link href={support.secondaryCta.href}>{support.secondaryCta.label}</Link>
                 </Button>
               </div>
             </div>
@@ -82,7 +65,7 @@ export function SupportHub() {
 
         <div className="mt-16 md:mt-20">
           <ScrollReveal>
-            <Eyebrow>Three ways in</Eyebrow>
+            <Eyebrow>{support.waysEyebrow}</Eyebrow>
           </ScrollReveal>
 
           <ScrollStagger className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -99,10 +82,10 @@ export function SupportHub() {
                     {item.body}
                   </p>
                   <Link
-                    href="/schedule"
+                    href={support.contactHref}
                     className="group mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-pine"
                   >
-                    Get in touch
+                    {support.contactLabel}
                     <span
                       aria-hidden
                       className="inline-block transition-transform duration-[var(--dur-fast)] ease-[var(--ease-out)] group-hover:translate-x-[3px]"
@@ -119,7 +102,7 @@ export function SupportHub() {
         <div className="mx-auto mt-16 max-w-3xl md:mt-20">
           <ScrollReveal>
             <h3 className="font-sora text-[length:var(--fs-h2)] font-bold tracking-[-0.02em] text-ink">
-              Common questions
+              {support.faqHeading}
             </h3>
           </ScrollReveal>
           <div className="mt-8">

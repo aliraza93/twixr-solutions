@@ -6,16 +6,10 @@ import { usePathname } from "next/navigation";
 import * as Dialog from "@radix-ui/react-dialog";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { site } from "@/content/site";
 import { cn } from "@/lib/utils";
 
-const LINKS = [
-  { href: "/about", label: "About" },
-  { href: "/services", label: "Services" },
-  { href: "/portfolio", label: "Portfolio" },
-  { href: "/blog", label: "Blog" },
-  { href: "/testimonials", label: "Results" },
-] as const;
-
+const LINKS = site.nav;
 const OVERLAY_LINKS = [{ href: "/", label: "Home" }, ...LINKS] as const;
 
 function isActive(pathname: string, href: string) {
@@ -41,7 +35,7 @@ function Logo({ onClick, inverted = false }: { onClick?: () => void; inverted?: 
       >
         A
       </span>
-      Ali Raza
+      {site.name}
     </Link>
   );
 }
@@ -147,15 +141,15 @@ export function Navbar() {
               className="hidden h-10 px-5 py-2 text-sm xl:inline-flex"
               asChild
             >
-              <Link href="/schedule">Start a Project</Link>
+              <Link href={site.ctas.start.href}>{site.ctas.start.label}</Link>
             </Button>
             <Button
               variant="primary"
               className="hidden h-10 px-5 py-2 text-sm lg:inline-flex"
               asChild
             >
-              <Link href="/schedule">
-                Schedule a Call
+              <Link href={site.ctas.schedule.href}>
+                {site.ctas.schedule.label}
                 <span
                   aria-hidden
                   className="inline-block transition-transform duration-[var(--dur-fast)] ease-[var(--ease-out)] group-hover:translate-x-[3px]"
@@ -235,8 +229,8 @@ export function Navbar() {
 
                   <div className="px-[clamp(20px,5vw,40px)] pb-[max(2rem,env(safe-area-inset-bottom))] pt-4">
                     <Button variant="primary" className="h-12 w-full text-base" asChild>
-                      <Link href="/schedule" onClick={() => setOpen(false)}>
-                        Start a Project
+                      <Link href={site.ctas.start.href} onClick={() => setOpen(false)}>
+                        {site.ctas.start.label}
                         <span
                           aria-hidden
                           className="inline-block transition-transform duration-[var(--dur-fast)] ease-[var(--ease-out)] group-hover:translate-x-[3px]"

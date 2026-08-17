@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { BlogDetailClient } from "@/components/pages/blog-detail-client";
-import { getBlogBySlug, getBlogSlugs, getRelatedPosts } from "@/lib/data/blog";
+import { getBlogBySlug, getBlogSlugs, getRelatedPosts } from "@/content/blog";
 
 type PageProps = {
   params: Promise<{ slug: string }>;

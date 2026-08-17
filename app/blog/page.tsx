@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { BlogPageClient } from "@/components/pages/blog-page-client";
+import { getBlogCategories, getBlogListings } from "@/content/blog";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://twixrsolutions.com"),
@@ -26,5 +27,10 @@ export const metadata: Metadata = {
 };
 
 export default function BlogPage() {
-  return <BlogPageClient />;
+  return (
+    <BlogPageClient
+      posts={getBlogListings()}
+      categories={getBlogCategories()}
+    />
+  );
 }

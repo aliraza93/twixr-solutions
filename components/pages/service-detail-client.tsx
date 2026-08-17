@@ -15,7 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { ServiceDetail } from "@/lib/data/services";
-import { testimonials } from "@/lib/data";
+import { testimonials } from "@/content/testimonials";
 import { GsapReveal, GsapStagger, GsapStaggerItem } from "@/components/motion/gsap-reveal";
 import { TestimonialMarquee } from "@/components/sections/testimonial-marquee";
 

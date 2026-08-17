@@ -7,10 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { HeroRotatingWord } from "@/components/sections/hero-rotating-word";
 import { HeroVisual, type HeroVisualImage } from "@/components/sections/hero-visual";
+import { hero } from "@/content/hero";
 import { cn } from "@/lib/utils";
 
-const STABLE_HEADING =
-  "Build Scalable, Secure Web Apps with a Top 3% Developer";
+const STABLE_HEADING = hero.stableHeading;
 
 const HEADING_LINES: {
   text?: string;
@@ -18,39 +18,13 @@ const HEADING_LINES: {
   i: number;
 }[][] = (() => {
   let i = 0;
-  return [
-    [
-      { text: "Build", kind: "plain" as const },
-      { text: "Scalable,", kind: "plain" as const },
-    ],
-    [
-      { kind: "cycle" as const },
-      { text: "Web", kind: "plain" as const },
-      { text: "Apps", kind: "plain" as const },
-    ],
-    [
-      { text: "with", kind: "plain" as const },
-      { text: "a", kind: "plain" as const },
-      { text: "Top", kind: "emphasis" as const },
-      { text: "3%", kind: "emphasis" as const },
-    ],
-    [{ text: "Developer", kind: "emphasis" as const }],
-  ].map((line) => line.map((word) => ({ ...word, i: i++ })));
+  return hero.headingLines.map((line) =>
+    line.map((word) => ({ ...word, i: i++ }))
+  );
 })();
 
-const LOGOS = [
-  { icon: "logos:laravel", label: "Laravel" },
-  { icon: "logos:nodejs-icon", label: "Node.js" },
-  { icon: "logos:aws", label: "AWS" },
-  { icon: "logos:react", label: "React" },
-  { icon: "logos:vue", label: "Vue" },
-];
-
-const MORE = [
-  { icon: "logos:wordpress-icon", label: "WordPress" },
-  { icon: "logos:docker-icon", label: "DevOps" },
-  { icon: "logos:nextjs-icon", label: "Next.js" },
-];
+const LOGOS = hero.techLogos;
+const MORE = hero.moreLogos;
 
 function wordClass(kind: "plain" | "emphasis") {
   if (kind === "emphasis") {
@@ -93,7 +67,7 @@ export function Hero({ screenshot }: { screenshot?: HeroVisualImage }) {
       <div className="ds-container relative z-10 flex min-h-svh flex-col justify-center pb-20 pt-[clamp(120px,16vh,200px)] lg:pb-24">
         <div className="grid w-full grid-cols-1 items-center gap-12 lg:grid-cols-[minmax(0,1.45fr)_minmax(260px,0.95fr)] lg:gap-12 xl:gap-16">
           <div className="@container relative z-10 flex min-w-0 flex-col items-start">
-            <Eyebrow>Full-stack engineering · Cloud · AI</Eyebrow>
+            <Eyebrow>{hero.eyebrow}</Eyebrow>
 
             <h1 className="sr-only">{STABLE_HEADING}</h1>
             <div
@@ -129,15 +103,13 @@ export function Hero({ screenshot }: { screenshot?: HeroVisualImage }) {
             </div>
 
             <p className="mt-5 max-w-[52ch] text-[length:var(--fs-lead)] text-muted">
-              Senior Full Stack Engineer (7+ Years) specializing in Laravel, Next.js,
-              and Cloud Infrastructure. I transform complex technical challenges into
-              high-performance solutions.
+              {hero.subheading}
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
               <Button variant="primary" asChild>
-                <Link href="/schedule">
-                  Start a Project
+                <Link href={hero.primaryCta.href}>
+                  {hero.primaryCta.label}
                   <span
                     aria-hidden
                     className="inline-block transition-transform duration-[var(--dur-fast)] ease-[var(--ease-out)] group-hover:translate-x-[3px]"
@@ -147,13 +119,13 @@ export function Hero({ screenshot }: { screenshot?: HeroVisualImage }) {
                 </Link>
               </Button>
               <Button variant="ghost" asChild>
-                <Link href="/portfolio">View Portfolio</Link>
+                <Link href={hero.secondaryCta.href}>{hero.secondaryCta.label}</Link>
               </Button>
             </div>
 
             <div className="mt-10 flex w-full min-w-0 flex-col gap-4">
               <p className="font-mono text-[length:var(--fs-eyebrow)] font-medium uppercase tracking-[0.18em] text-muted">
-                Powering solutions with
+                {hero.logosCaption}
               </p>
               <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
                 {LOGOS.map((logo) => (
@@ -179,7 +151,7 @@ export function Hero({ screenshot }: { screenshot?: HeroVisualImage }) {
                     onClick={() => setMoreOpen((open) => !open)}
                     className="rounded-pill border border-hairline px-3 py-1.5 font-mono text-[11px] font-medium uppercase tracking-[0.12em] text-muted transition-colors duration-[var(--dur-fast)] hover:border-pine hover:text-pine"
                   >
-                    +3 More
+                    +{MORE.length} More
                   </button>
                   <div
                     id="hero-more-stack"
@@ -210,7 +182,7 @@ export function Hero({ screenshot }: { screenshot?: HeroVisualImage }) {
         </div>
 
         <a
-          href="#workflow"
+          href={hero.scrollHref}
           className="mt-10 inline-flex items-center gap-3 self-start font-mono text-[length:var(--fs-eyebrow)] uppercase tracking-[0.18em] text-muted transition-colors hover:text-pine lg:mt-12"
         >
           Scroll

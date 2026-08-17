@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { testimonials } from "@/lib/data";
+import { testimonials } from "@/content/testimonials";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Button } from "@/components/ui/button";
 import { TestimonialCarousel } from "@/components/ui/testimonial-carousel";

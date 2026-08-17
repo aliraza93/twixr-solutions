@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { testimonials } from "@/lib/data";
+import { testimonials } from "@/content/testimonials";
 import { Icon } from "@iconify/react";
 import { cn } from "@/lib/utils";
 import {

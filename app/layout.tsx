@@ -6,6 +6,7 @@ import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { SmoothScroll } from "@/components/motion/smooth-scroll";
 import { SiteEffects } from "@/components/motion/site-effects";
+import { site } from "@/content/site";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -30,31 +31,31 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://twixrsolutions.com"),
-  title: "Ali Raza | Senior Full Stack Laravel & DevOps Engineer | Twixr Solutions",
-  description: "Senior Full Stack Engineer with 7+ years of experience in Laravel, Next.js, and Cloud Infrastructure. Top Rated Plus on Upwork. Building scalable SaaS projects and AI automation.",
+  title: `${site.name} | ${site.primaryTitle} | ${site.brand}`,
+  description: `${site.primaryTitle} with ${site.yearsOfExperience}+ years of experience in Laravel, Next.js, and Cloud Infrastructure. Top Rated Plus on Upwork. Building scalable SaaS projects and AI automation.`,
   keywords: ["Ali Raza", "Twixr Solutions", "Laravel Expert", "Next.js Developer", "Full Stack Engineer", "DevOps Engineer", "PHP Developer", "SaaS Development", "AI Automation", "Senior Software Engineer"],
-  authors: [{ name: "Ali Raza" }],
-  creator: "Ali Raza",
+  authors: [{ name: site.name }],
+  creator: site.name,
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://twixrsolutions.com",
-    siteName: "Ali Raza Portfolio",
-    title: "Ali Raza | Senior Full Stack Laravel & DevOps Engineer",
+    url: site.url,
+    siteName: `${site.name} Portfolio`,
+    title: `${site.name} | ${site.primaryTitle}`,
     description: "Expert web development and scalable infrastructure solutions by Ali Raza.",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Ali Raza | Senior Full Stack Engineer",
+        alt: `${site.name} | Senior Full Stack Engineer`,
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Ali Raza | Senior Full Stack Laravel & DevOps Engineer",
-    description: "Building high-performance SaaS & Web Apps with 7+ years of expertise.",
+    title: `${site.name} | ${site.primaryTitle}`,
+    description: `Building high-performance SaaS & Web Apps with ${site.yearsOfExperience}+ years of expertise.`,
     images: ["/og-image.png"],
     creator: "@aliraza",
   },
@@ -88,6 +89,33 @@ export default function RootLayout({
             <SiteEffects />
           </div>
         </SmoothScroll>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@graph": [
+                {
+                  "@type": "Person",
+                  name: site.name,
+                  jobTitle: site.primaryTitle,
+                  email: site.email,
+                  url: site.url,
+                  worksFor: { "@type": "Organization", name: site.brand },
+                  sameAs: [site.upworkHref, site.linkedinHref, site.githubHref].filter(
+                    (href) => href.startsWith("http")
+                  ),
+                },
+                {
+                  "@type": "Organization",
+                  name: site.brand,
+                  url: site.url,
+                  sameAs: [site.upworkHref, site.fiverrHref],
+                },
+              ],
+            }),
+          }}
+        />
       </body>
     </html>
   );

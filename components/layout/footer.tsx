@@ -2,48 +2,8 @@
 
 import Link from "next/link";
 import { Icon } from "@iconify/react";
-import { footerData } from "@/lib/data";
-
-const COLUMNS = [
-  {
-    label: "Services",
-    links: [
-      { name: "SaaS & Web Apps", href: "/services/saas-web-app-development" },
-      { name: "Laravel API", href: "/services/laravel-api-backend" },
-      { name: "Next.js Frontend", href: "/services/nextjs-frontend" },
-      { name: "AI Automation", href: "/services/ai-automation-chatbots" },
-      { name: "Cloud & DevOps", href: "/services/cloud-infrastructure-devops" },
-      { name: "Mobile Apps", href: "/services/mobile-app-development" },
-    ],
-  },
-  {
-    label: "Company",
-    links: [
-      { name: "About", href: "/about" },
-      { name: "Portfolio", href: "/portfolio" },
-      { name: "Results", href: "/testimonials" },
-      { name: "Schedule a Call", href: "/schedule" },
-    ],
-  },
-  {
-    label: "Resources",
-    links: [
-      { name: "Blog", href: "/blog" },
-      { name: "Trainings", href: "/courses" },
-      { name: "All services", href: "/services" },
-      { name: "Newsletter", href: "#newsletter" },
-    ],
-  },
-  {
-    label: "Contact",
-    links: [
-      { name: "Email", href: "mailto:ali@twixrsolutions.com" },
-      { name: "Upwork", href: "https://upwork.com" },
-      { name: "Fiverr", href: "https://fiverr.com" },
-      { name: "Schedule a Call", href: "/schedule" },
-    ],
-  },
-] as const;
+import { footer } from "@/content/footer";
+import { site } from "@/content/site";
 
 function FooterLogo() {
   return (
@@ -54,7 +14,7 @@ function FooterLogo() {
       <span className="flex h-8 w-8 items-center justify-center rounded-full bg-lime font-sora text-sm font-bold text-d-bg">
         A
       </span>
-      Ali Raza
+      {site.name}
     </Link>
   );
 }
@@ -69,11 +29,10 @@ export function Footer() {
           <div className="lg:col-span-4">
             <FooterLogo />
             <p className="mt-5 max-w-[32ch] text-sm leading-relaxed text-muted">
-              Developer &amp; Trainer — Freelancing, Programming &amp; AI. Top
-              Rated Plus on Upwork with 10+ years of experience.
+              {footer.tagline}
             </p>
             <ul className="mt-6 flex flex-wrap gap-2">
-              {footerData.socials.map((social) => (
+              {footer.socials.map((social) => (
                 <li key={social.name}>
                   <a
                     href={social.href}
@@ -94,14 +53,15 @@ export function Footer() {
           </div>
 
           <div className="grid grid-cols-2 gap-8 sm:grid-cols-4 lg:col-span-8">
-            {COLUMNS.map((column) => (
+            {footer.columns.map((column) => (
               <div key={column.label}>
                 <h2 className="font-mono text-[length:var(--fs-eyebrow)] font-medium uppercase tracking-[0.18em] text-lime">
                   {column.label}
                 </h2>
                 <ul className="mt-4 flex flex-col gap-2.5">
                   {column.links.map((link) => {
-                    const external = link.href.startsWith("http");
+                    const external =
+                      link.href.startsWith("http") || link.href.startsWith("mailto");
                     const className =
                       "text-sm text-muted transition-colors duration-[var(--dur-fast)] ease-[var(--ease-out)] hover:text-ink";
                     return (
@@ -131,10 +91,10 @@ export function Footer() {
 
         <div className="mt-14 flex flex-col items-start justify-between gap-3 border-t border-hairline pt-6 sm:flex-row sm:items-center">
           <p className="text-sm text-muted">
-            © {year} Ali Raza. All rights reserved.
+            © {year} {site.name}. {footer.legal}
           </p>
           <p className="font-mono text-[11px] font-medium uppercase tracking-[0.16em] text-muted-2">
-            Shipped with care · Top Rated Plus
+            {footer.shipped}
           </p>
         </div>
       </div>

@@ -1,0 +1,31 @@
+---
+slug: building-saas-with-laravel-nextjs
+order: 4
+title: Building Production SaaS with Laravel + Next.js in 2025
+excerpt: A practical architecture for multi-tenant SaaS — Laravel API, Next.js App Router, Stripe billing, and the deployment patterns I use on client projects.
+date: September 10, 2025
+image: https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=1200&auto=format&fit=crop
+category: SaaS
+tags: saas, laravel, nextjs, architecture
+readingTime: 9 min read
+author: Ali Raza
+authorRole: Senior Full Stack Engineer
+authorImage: https://api.dicebear.com/7.x/avataaars/svg?seed=Ali
+---
+
+Laravel and Next.js remain my default stack for B2B SaaS. Laravel handles auth, billing, queues, and business logic; Next.js delivers SEO, fast dashboards, and a polished marketing site in one repo or two.
+
+## Architecture overview
+
+I split marketing (Next.js static/ISR) from the authenticated app (Next.js client + Laravel API). Shared types via OpenAPI or Zod schemas keep contracts honest between teams.
+
+## Multi-tenancy patterns
+
+- Single database with tenant_id scoping for most MVPs
+- Stripe Customer + Subscription per tenant from day one
+- Queue workers for webhooks, emails, and report generation
+- Feature flags per plan tier stored in config, not hardcoded
+
+## Deployment that scales
+
+Vercel for Next.js, Forge or ECS for Laravel, Redis for cache/queues, and S3 for uploads. CI runs Pest/PHPUnit and Playwright before any production deploy.

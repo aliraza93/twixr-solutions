@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { Bot, Sparkles, User } from "lucide-react";
+import { philosophy } from "@/content/philosophy";
 import { EquationRow } from "@/components/ui/equation-row";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { cn } from "@/lib/utils";
@@ -42,24 +43,24 @@ export function Philosophy() {
       className="philosophy-band relative overflow-hidden bg-canvas py-[var(--section-py)]"
     >
       <div className="ds-container relative z-10 flex flex-col items-center text-center">
-        <Eyebrow className="justify-center">Our Philosophy</Eyebrow>
+        <Eyebrow className="justify-center">{philosophy.eyebrow}</Eyebrow>
 
         <h2 className="mt-5 max-w-[18ch] font-sora text-[length:var(--fs-h1)] font-extrabold leading-[1.06] tracking-[-0.02em] text-ink">
-          <span className="block">Senior engineering,</span>
+          <span className="block">{philosophy.headingLine1}</span>
           <span
             className="eq-reveal mt-1 block text-pine"
             style={{ "--i": 0 } as CSSProperties}
           >
-            amplified by AI.
+            {philosophy.headingLine2}
           </span>
         </h2>
 
         <EquationRow
           className="mt-14 md:mt-16"
           durationMs={1800}
-          a={{ icon: <User />, label: "Deep engineering" }}
-          b={{ icon: <Bot />, label: "AI-augmented workflow" }}
-          c={{ icon: <Sparkles />, label: "Shipped faster" }}
+          a={{ icon: <User />, label: philosophy.tiles[0].label }}
+          b={{ icon: <Bot />, label: philosophy.tiles[1].label }}
+          c={{ icon: <Sparkles />, label: philosophy.tiles[2].label }}
           onFinale={() => setFinale(true)}
         />
 
@@ -69,8 +70,8 @@ export function Philosophy() {
             finale && "is-visible"
           )}
         >
-          <span className="text-muted">The goal isn&apos;t more code. It&apos;s to </span>
-          <span className="text-ink">ship outcomes.</span>
+          <span className="text-muted">{philosophy.missionMuted}</span>
+          <span className="text-ink">{philosophy.missionEmphasis}</span>
         </p>
       </div>
     </section>

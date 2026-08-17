@@ -3,8 +3,7 @@
 import { type CSSProperties, useId, useState } from "react";
 import { ArrowRight, Minus, Plus } from "lucide-react";
 import { Icon } from "@iconify/react";
-import { aboutBio } from "@/lib/data/about";
-import { experiences } from "@/lib/data";
+import { career, experienceStatLine, experiences } from "@/content/experience";
 import { Button } from "@/components/ui/button";
 import { ConnectorLine } from "@/components/ui/connector-line";
 import { Eyebrow } from "@/components/ui/eyebrow";
@@ -23,20 +22,7 @@ const sortedExperiences = [...experiences].sort((a, b) => {
   return 0;
 });
 
-const STATS = ["7+ YEARS", "5 ROLES", "3 COUNTRIES"] as const;
-
-function highlightsOf(exp: ExperienceItem): string[] {
-  if (exp.projects.length > 0) {
-    return exp.projects.map((project) => project.title).slice(0, 3);
-  }
-
-  const items = [...exp.categories];
-  for (const tech of exp.technologies) {
-    if (items.length >= 3) break;
-    if (!items.includes(tech)) items.push(tech);
-  }
-  return items.slice(0, 3);
-}
+const STATS = experienceStatLine();
 
 export function Experience() {
   const [expandedIndex, setExpandedIndex] = useState<number | null>(0);
@@ -57,20 +43,19 @@ export function Experience() {
       <div className="ds-container grid items-start gap-10 lg:grid-cols-12 lg:gap-x-12 xl:gap-x-16">
         <ScrollReveal className="lg:sticky lg:top-[120px] lg:col-span-4 lg:self-start">
           <header>
-            <Eyebrow>Professional Path</Eyebrow>
+            <Eyebrow>{career.eyebrow}</Eyebrow>
             <h2 className="mt-5 font-sora text-[length:var(--fs-h1)] font-extrabold leading-[1.06] tracking-[-0.02em] text-ink">
-              Career <span className="text-pine">Evolution</span>
+              {career.heading} <span className="text-pine">{career.emphasis}</span>
             </h2>
             <p className="mt-5 max-w-[42ch] text-[length:var(--fs-lead)] text-muted">
-              A timeline of my professional growth, from early engineering roles
-              to technical leadership and full-stack expertise.
+              {career.lead}
             </p>
             <p className="mt-6 font-mono text-[length:var(--fs-eyebrow)] font-medium uppercase tracking-[0.16em] text-muted">
-              {STATS.join(" · ")}
+              {STATS}
             </p>
             <Button variant="ghost" asChild className="group mt-7">
-              <a href={`mailto:${aboutBio.email}?subject=CV%20request`}>
-                Download CV
+              <a href={career.cvHref}>
+                {career.cvLabel}
                 <span
                   aria-hidden
                   className="inline-block transition-transform duration-[var(--dur-fast)] ease-[var(--ease-out)] group-hover:translate-x-[3px]"
@@ -123,7 +108,7 @@ function ExperienceCard({
   onToggle: () => void;
 }) {
   const current = exp.period.includes("Present");
-  const highlights = highlightsOf(exp);
+  const highlights = exp.highlights;
 
   return (
     <article className="career-path__item">

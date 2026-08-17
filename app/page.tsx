@@ -9,8 +9,11 @@ import { BlogPosts } from "@/components/sections/blog-posts";
 import { DeliveryModel } from "@/components/sections/delivery-model";
 import { SupportHub } from "@/components/sections/support-hub";
 import { ScrollReveal } from "@/components/motion/scroll-reveal";
+import { getBlogListings } from "@/content/blog";
 
 export default function Home() {
+  const posts = getBlogListings();
+
   return (
     <div className="bg-canvas">
       <Hero />
@@ -24,7 +27,7 @@ export default function Home() {
       </ScrollReveal>
       <Experience />
       <Testimonials />
-      <BlogPosts />
+      <BlogPosts posts={posts} />
       <DeliveryModel />
       <SupportHub />
     </div>

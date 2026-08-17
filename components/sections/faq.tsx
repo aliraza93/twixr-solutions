@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { faqs } from "@/lib/data";
+import { faqs } from "@/content/faq";
 import { Icon } from "@iconify/react";
 import { cn } from "@/lib/utils";
 import { getIconAccent } from "@/lib/icon-accents";

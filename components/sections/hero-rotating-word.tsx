@@ -7,13 +7,9 @@ import {
   type CSSProperties,
 } from "react";
 
-const WORDS = [
-  "Secure",
-  "Fast",
-  "Reliable",
-  "AI-Powered",
-  "Scalable",
-] as const;
+import { hero } from "@/content/hero";
+
+const WORDS = hero.rotatingWords;
 
 const DWELL_MS = 2000;
 const TRANSITION_MS = 500;

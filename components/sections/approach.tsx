@@ -1,26 +1,15 @@
 "use client";
 
-import { approachSteps } from "@/lib/data";
+import { howWeWork } from "@/content/howwework";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { ProgressTimeline } from "@/components/ui/progress-timeline";
-import { TypingTerminal, type TerminalLine } from "@/components/ui/typing-terminal";
+import { TypingTerminal } from "@/components/ui/typing-terminal";
 
-const STEP_NAMES = ["Discover", "Architect", "Build", "Test", "Deploy"] as const;
-
-const TIMELINE_NODES = approachSteps.map((step, i) => ({
+const TIMELINE_NODES = howWeWork.steps.map((step, i) => ({
   index: String(i + 1).padStart(2, "0"),
-  title: STEP_NAMES[i] ?? step.title,
+  title: howWeWork.stepNames[i] ?? step.title,
   description: step.description,
 }));
-
-const TERMINAL_LINES: TerminalLine[] = [
-  { kind: "cmd", text: "$ twixr deployment" },
-  { kind: "ok", text: "Tests passing" },
-  { kind: "ok", text: "Docker image built" },
-  { kind: "ok", text: "Migrations run" },
-  { kind: "ok", text: "SSL & CDN configured" },
-  { kind: "run", text: "Deploying to production…" },
-];
 
 export function Approach() {
   return (
@@ -30,17 +19,16 @@ export function Approach() {
     >
       <div className="ds-container">
         <header className="max-w-[38rem]">
-          <Eyebrow>How we work</Eyebrow>
+          <Eyebrow>{howWeWork.eyebrow}</Eyebrow>
           <h2 className="mt-5 font-sora text-[length:var(--fs-h1)] font-extrabold leading-[1.06] tracking-[-0.02em] text-ink">
-            <span className="block">From a messy brief</span>
+            <span className="block">{howWeWork.headingLine1}</span>
             <span className="mt-1 block">
-              to a process that{" "}
-              <span className="text-pine">ships.</span>
+              {howWeWork.headingLine2Before}{" "}
+              <span className="text-pine">{howWeWork.headingEmphasis}</span>
             </span>
           </h2>
           <p className="mt-5 max-w-[52ch] text-[length:var(--fs-lead)] text-muted">
-            I follow a structured, results-driven process designed to transform
-            complex challenges into scalable, high-performing solutions.
+            {howWeWork.lead}
           </p>
         </header>
 
@@ -49,19 +37,19 @@ export function Approach() {
         <div className="mt-16 grid items-center gap-10 lg:mt-20 lg:grid-cols-12 lg:gap-16">
           <TypingTerminal
             className="lg:col-span-6"
-            title="twixr · deployment"
-            lines={TERMINAL_LINES}
+            title={howWeWork.terminal.title}
+            lines={[...howWeWork.terminal.lines]}
           />
           <div className="lg:col-span-6">
-            <Eyebrow>In practice</Eyebrow>
+            <Eyebrow>{howWeWork.inPractice.eyebrow}</Eyebrow>
             <h3 className="mt-5 font-sora text-[length:var(--fs-h2)] font-bold leading-[1.12] tracking-[-0.02em] text-ink">
-              <span className="block">From whiteboard to</span>
-              <span className="mt-1 block text-pine">production.</span>
+              <span className="block">{howWeWork.inPractice.headingLine1}</span>
+              <span className="mt-1 block text-pine">
+                {howWeWork.inPractice.headingLine2}
+              </span>
             </h3>
             <p className="mt-4 max-w-[48ch] text-[length:var(--fs-lead)] text-muted">
-              The same five steps run on every engagement — discovery notes become
-              architecture, architecture becomes a pipeline, and the pipeline is
-              what ships. No theatre, no mystery phase after “done.”
+              {howWeWork.inPractice.body}
             </p>
           </div>
         </div>

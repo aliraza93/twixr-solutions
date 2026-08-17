@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import Image from "next/image";
+import { hero } from "@/content/hero";
 import { Activity, Globe, Zap } from "lucide-react";
 
 const MAX_TILT = 6;
@@ -35,16 +36,19 @@ function BrowserChrome({ title }: { title: string }) {
 }
 
 function DashboardMock() {
+  const dash = hero.dashboard;
+  const statIcons = [Activity, Zap, Globe] as const;
+
   return (
     <div className="bg-canvas">
-      <BrowserChrome title="app.twixrsolutions.com/ops" />
+      <BrowserChrome title={dash.url} />
       <div className="space-y-4 p-4 sm:p-5">
         <div className="flex items-center justify-between">
           <div>
             <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-2">
-              Production
+              {dash.kicker}
             </p>
-            <p className="mt-0.5 font-sora text-sm font-semibold text-ink">Delivery dashboard</p>
+            <p className="mt-0.5 font-sora text-sm font-semibold text-ink">{dash.title}</p>
           </div>
           <span className="inline-flex items-center gap-1.5 rounded-pill bg-pine-tint px-2.5 py-1 font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-pine">
             <span className="h-1.5 w-1.5 rounded-full bg-lime-deep" />
@@ -53,29 +57,28 @@ function DashboardMock() {
         </div>
 
         <div className="grid grid-cols-3 gap-2">
-          {[
-            { label: "Uptime", value: "99.99", unit: "%", icon: Activity },
-            { label: "Latency", value: "42", unit: "ms", icon: Zap },
-            { label: "Deploys", value: "12", unit: "", icon: Globe },
-          ].map((stat) => (
-            <div
-              key={stat.label}
-              className="rounded-md border border-hairline bg-surface px-2.5 py-2"
-            >
-              <stat.icon className="mb-1.5 h-3 w-3 text-pine" aria-hidden />
-              <p className="font-sora text-sm font-bold leading-none tracking-[-0.02em] text-ink sm:text-base">
-                {stat.value}
-                {stat.unit ? (
-                  <span className="ml-[0.12em] font-mono text-[9px] font-medium tracking-[0.08em] text-muted">
-                    {stat.unit}
-                  </span>
-                ) : null}
-              </p>
-              <p className="mt-1 font-mono text-[9px] uppercase tracking-[0.14em] text-muted">
-                {stat.label}
-              </p>
-            </div>
-          ))}
+          {dash.stats.map((stat, i) => {
+            const StatIcon = statIcons[i] ?? Activity;
+            return (
+              <div
+                key={stat.label}
+                className="rounded-md border border-hairline bg-surface px-2.5 py-2"
+              >
+                <StatIcon className="mb-1.5 h-3 w-3 text-pine" aria-hidden />
+                <p className="font-sora text-sm font-bold leading-none tracking-[-0.02em] text-ink sm:text-base">
+                  {stat.value}
+                  {stat.unit ? (
+                    <span className="ml-[0.12em] font-mono text-[9px] font-medium tracking-[0.08em] text-muted">
+                      {stat.unit}
+                    </span>
+                  ) : null}
+                </p>
+                <p className="mt-1 font-mono text-[9px] uppercase tracking-[0.14em] text-muted">
+                  {stat.label}
+                </p>
+              </div>
+            );
+          })}
         </div>
 
         <div className="rounded-md border border-hairline bg-surface px-3 py-3">
@@ -83,7 +86,7 @@ function DashboardMock() {
             <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted">
               Requests
             </p>
-            <p className="font-mono text-[10px] text-pine">2.4M · +12%</p>
+            <p className="font-mono text-[10px] text-pine">{dash.requests}</p>
           </div>
           <svg
             viewBox="0 0 240 64"

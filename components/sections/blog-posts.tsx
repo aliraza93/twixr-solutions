@@ -2,15 +2,15 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { getBlogListings, type BlogListing } from "@/lib/data/blog";
+import { type BlogListing } from "@/lib/data/blog";
+import { insights } from "@/content/insights";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ScrollReveal, ScrollRevealItem, ScrollStagger } from "@/components/motion/scroll-reveal";
 import { cn } from "@/lib/utils";
 
-export function BlogPosts() {
-  const posts = getBlogListings();
+export function BlogPosts({ posts }: { posts: BlogListing[] }) {
   const [featured, ...rest] = posts;
 
   return (
@@ -22,18 +22,18 @@ export function BlogPosts() {
         <ScrollReveal>
           <header className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between md:gap-10">
             <div className="max-w-[40rem]">
-              <Eyebrow>Latest Insights</Eyebrow>
+              <Eyebrow>{insights.eyebrow}</Eyebrow>
               <h2 className="mt-5 font-sora text-[length:var(--fs-h1)] font-extrabold leading-[1.06] tracking-[-0.02em] text-ink">
-                Latest <span className="text-pine">Insights</span>
+                {insights.headingBefore}{" "}
+                <span className="text-pine">{insights.headingEmphasis}</span>
               </h2>
               <p className="mt-5 max-w-[62ch] text-[length:var(--fs-lead)] text-muted">
-                Sharing my discoveries, technical deep-dives, and life
-                experiences in software engineering.
+                {insights.lead}
               </p>
             </div>
             <Button asChild variant="text" className="self-start md:self-end md:mb-1">
-              <Link href="/blog">
-                View all
+              <Link href={insights.viewAll.href}>
+                {insights.viewAll.label}
                 <span
                   aria-hidden
                   className="inline-block transition-transform duration-[var(--dur-fast)] ease-[var(--ease-out)] group-hover:translate-x-[3px]"

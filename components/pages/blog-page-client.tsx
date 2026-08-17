@@ -7,15 +7,17 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { LayoutGrid } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
-  getBlogCategories,
-  getBlogListings,
   type BlogListing,
 } from "@/lib/data/blog";
 import { GsapReveal, GsapStagger, GsapStaggerItem } from "@/components/motion/gsap-reveal";
 
-export function BlogPageClient() {
-  const posts = getBlogListings();
-  const categories = getBlogCategories();
+export function BlogPageClient({
+  posts,
+  categories,
+}: {
+  posts: BlogListing[];
+  categories: { id: string; label: string; count: number }[];
+}) {
 
   return (
     <main className="min-h-screen bg-background pt-[120px] lg:pt-[140px]">
@@ -74,7 +76,7 @@ function BlogCatalog({
   categories,
 }: {
   posts: BlogListing[];
-  categories: ReturnType<typeof getBlogCategories>;
+  categories: { id: string; label: string; count: number }[];
 }) {
   const [activeCategory, setActiveCategory] = useState("all");
 

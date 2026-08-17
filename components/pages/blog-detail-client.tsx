@@ -137,7 +137,7 @@ export function BlogDetailClient({ post, related }: BlogDetailClientProps) {
                   <Input
                     type="email"
                     placeholder="you@company.com"
-                    className="h-11 flex-1 border-d-hairline bg-white/5 text-d-text placeholder:text-d-muted focus-visible:ring-lime"
+                    className="h-11 flex-1 border-d-hairline bg-surface text-d-text placeholder:text-d-muted focus-visible:ring-lime"
                   />
                   <Button
                     type="submit"

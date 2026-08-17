@@ -178,7 +178,7 @@ export function PortfolioDetailClient({ project, related }: PortfolioDetailClien
               {project.outcomes.map((item) => (
                 <li
                   key={item}
-                  className="flex items-start gap-2.5 rounded-lg border border-d-hairline bg-white/5 px-4 py-3"
+                  className="flex items-start gap-2.5 rounded-lg border border-d-hairline bg-surface px-4 py-3"
                 >
                   <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-lime" aria-hidden />
                   <span className="text-xs text-d-text sm:text-sm">{item}</span>

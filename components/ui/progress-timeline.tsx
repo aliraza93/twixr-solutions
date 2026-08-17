@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import type { CSSProperties } from "react";
 import { cn } from "@/lib/utils";
+import { ConnectorLine } from "@/components/ui/connector-line";
+import { useConnectorProgress } from "@/hooks/use-connector-progress";
 
 export type ProgressTimelineNode = {
   index: string;
@@ -14,79 +14,38 @@ export type ProgressTimelineNode = {
 type ProgressTimelineProps = {
   nodes: ProgressTimelineNode[];
   className?: string;
+  autoPlayOnEnter?: boolean;
+  durationMs?: number;
+  once?: boolean;
 };
 
-let registered = false;
-
-function ensureGsap() {
-  if (typeof window === "undefined" || registered) return;
-  gsap.registerPlugin(ScrollTrigger);
-  registered = true;
-}
-
-export function ProgressTimeline({ nodes, className }: ProgressTimelineProps) {
-  const rootRef = useRef<HTMLDivElement>(null);
-  const activeRef = useRef(0);
-  const [activeCount, setActiveCount] = useState(0);
-
-  useEffect(() => {
-    const root = rootRef.current;
-    if (!root) return;
-
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const last = nodes.length;
-
-    const apply = (progress: number) => {
-      const p = Math.min(1, Math.max(0, progress));
-      root.style.setProperty("--p", `${p * 100}%`);
-      let count = 0;
-      for (let i = 0; i < last; i++) {
-        if (p + 0.001 >= i / Math.max(1, last - 1)) count += 1;
-      }
-      if (count !== activeRef.current) {
-        activeRef.current = count;
-        setActiveCount(count);
-      }
-    };
-
-    if (reduce) {
-      apply(1);
-      return;
-    }
-
-    ensureGsap();
-    apply(0);
-
-    const ctx = gsap.context(() => {
-      ScrollTrigger.create({
-        trigger: root,
-        start: "top 75%",
-        end: "bottom 45%",
-        scrub: 0.7,
-        onUpdate: (self) => apply(self.progress),
-      });
-    }, root);
-
-    return () => ctx.revert();
-  }, [nodes.length]);
-
-  const lastActive = activeCount >= nodes.length;
+export function ProgressTimeline({
+  nodes,
+  className,
+  autoPlayOnEnter = true,
+  durationMs = 2500,
+  once = true,
+}: ProgressTimelineProps) {
+  const { ref, activeCount, finale } = useConnectorProgress({
+    stationCount: nodes.length,
+    durationMs,
+    threshold: 0.35,
+    autoPlayOnEnter,
+    once,
+  });
 
   return (
     <div
-      ref={rootRef}
+      ref={ref}
       className={cn("progress-timeline relative", className)}
       style={{ "--p": "0%" } as CSSProperties}
     >
-      <div className="progress-timeline__track" aria-hidden>
-        <div className="progress-timeline__fill" />
-        <div className="progress-timeline__dot" />
-      </div>
+      <ConnectorLine className="progress-timeline__track" />
 
       <ol className="progress-timeline__nodes">
         {nodes.map((node, i) => {
           const on = i < activeCount;
-          const finale = lastActive && i === nodes.length - 1;
+          const isFinale = finale && i === nodes.length - 1;
           return (
             <li key={node.index} className="progress-timeline__item">
               <span
@@ -95,7 +54,7 @@ export function ProgressTimeline({ nodes, className }: ProgressTimelineProps) {
                   on
                     ? "border-pine bg-pine-tint text-pine"
                     : "border-hairline bg-canvas text-muted",
-                  finale && "progress-timeline__mark--finale"
+                  isFinale && "progress-timeline__mark--finale"
                 )}
               >
                 {node.index}

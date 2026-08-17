@@ -41,23 +41,37 @@ type OrbitDiagramProps = {
   className?: string;
 };
 
-const VIEW = { w: 640, h: 520, cx: 320, cy: 248, rx: 248, ry: 168 };
-/** Clockwise degrees from top — Discover, Design, Build, Ship, Scale */
-const ANGLES = [0, 90, 135, 225, 270];
+/** Math degrees: 0 = 3 o'clock, clockwise as angle increases (y grows down). */
+const ANGLES = [-90, -18, 54, 126, 198] as const;
+/** Radius as % of the square stage — leaves room for 76px nodes + labels. */
+const R = 40.5;
 
-function ellipsePoint(degFromTop: number) {
-  const rad = ((degFromTop - 90) * Math.PI) / 180;
+function toRad(deg: number) {
+  return (deg * Math.PI) / 180;
+}
+
+function normalize(deg: number) {
+  return ((deg % 360) + 360) % 360;
+}
+
+function circlePoint(deg: number, radius = R) {
+  const rad = toRad(deg);
   return {
-    x: VIEW.cx + VIEW.rx * Math.cos(rad),
-    y: VIEW.cy + VIEW.ry * Math.sin(rad),
+    x: 50 + radius * Math.cos(rad),
+    y: 50 + radius * Math.sin(rad),
   };
 }
 
+function angleToT(deg: number) {
+  return normalize(deg + 90) / 360;
+}
+
 function nearestIndex(deg: number) {
+  const d = normalize(deg);
   let best = 0;
   let bestDist = 999;
   ANGLES.forEach((angle, i) => {
-    const delta = Math.abs(deg - angle) % 360;
+    const delta = Math.abs(d - normalize(angle));
     const dist = Math.min(delta, 360 - delta);
     if (dist < bestDist) {
       bestDist = dist;
@@ -67,28 +81,32 @@ function nearestIndex(deg: number) {
   return best;
 }
 
-function useOrbitMode() {
-  const [fallback, setFallback] = useState(true);
+function useMobileFallback() {
+  const [fallback, setFallback] = useState(false);
 
   useEffect(() => {
-    const apply = () => {
-      setFallback(
-        window.matchMedia("(max-width: 1023px)").matches ||
-          window.matchMedia("(prefers-reduced-motion: reduce)").matches
-      );
-    };
+    const mq = window.matchMedia("(max-width: 767px)");
+    const apply = () => setFallback(mq.matches);
     apply();
-    const mobile = window.matchMedia("(max-width: 1023px)");
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
-    mobile.addEventListener("change", apply);
-    reduce.addEventListener("change", apply);
-    return () => {
-      mobile.removeEventListener("change", apply);
-      reduce.removeEventListener("change", apply);
-    };
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
   }, []);
 
   return fallback;
+}
+
+function useReducedMotion() {
+  const [reduce, setReduce] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const apply = () => setReduce(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+
+  return reduce;
 }
 
 function DetailPanel({
@@ -100,8 +118,8 @@ function DetailPanel({
 }) {
   const { panel } = node;
   return (
-    <div key={panelKey} className="orbit-panel">
-      <p className="font-mono text-[length:var(--fs-eyebrow)] font-medium uppercase tracking-[0.18em] text-pine">
+    <div key={panelKey} className="orbit-panel text-left">
+      <p className="font-mono text-[length:var(--fs-eyebrow)] font-medium uppercase tracking-[0.18em] text-lime">
         {panel.index} · {node.label}
       </p>
       <h3 className="mt-3 font-sora text-[length:var(--fs-h3)] font-bold tracking-[-0.02em] text-ink">
@@ -111,7 +129,7 @@ function DetailPanel({
       <p className="mt-3 max-w-[42ch] text-[length:var(--fs-body)] leading-relaxed text-muted">
         {panel.desc}
       </p>
-      <div className="mt-5 flex flex-wrap gap-2">
+      <div className="mt-5 flex flex-wrap justify-start gap-2">
         {panel.tags.map((tag) => (
           <span
             key={tag}
@@ -121,19 +139,19 @@ function DetailPanel({
           </span>
         ))}
       </div>
-      <div className="mt-8 flex gap-10">
+      <div className="mt-6 flex justify-start gap-8">
         {panel.stats.map((stat) => (
-          <div key={stat.unit}>
+          <div key={stat.unit} className="text-left">
             <p className="font-sora text-[length:var(--fs-h2)] font-extrabold leading-none tracking-[-0.02em] text-ink">
               {stat.value}
             </p>
-            <p className="mt-2 font-mono text-[length:var(--fs-eyebrow)] uppercase tracking-[0.18em] text-muted">
+            <p className="mt-1.5 font-mono text-[length:var(--fs-eyebrow)] uppercase tracking-[0.18em] text-muted">
               {stat.unit}
             </p>
           </div>
         ))}
       </div>
-      <div className="mt-8">
+      <div className="mt-7">
         <Button variant="text" asChild>
           <Link href={panel.href}>{panel.linkLabel ?? "See the process"}</Link>
         </Button>
@@ -159,8 +177,8 @@ function HorizontalStepper({
             type="button"
             onClick={() => onSelect(i)}
             className={cn(
-              "font-mono text-[11px] font-medium uppercase tracking-[0.16em] transition-colors duration-[var(--dur-fast)]",
-              i === active ? "text-lime-deep" : "text-muted hover:text-ink"
+              "cursor-pointer font-mono text-[11px] font-medium uppercase tracking-[0.16em] transition-colors duration-[var(--dur-fast)]",
+              i === active ? "text-lime" : "text-muted hover:text-ink"
             )}
           >
             {node.label}
@@ -176,17 +194,64 @@ function HorizontalStepper({
   );
 }
 
+function OrbitNodeButton({
+  node,
+  selected,
+  style,
+  onSelect,
+}: {
+  node: OrbitNode;
+  selected: boolean;
+  style: { left: string; top: string };
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={selected}
+      tabIndex={selected ? 0 : -1}
+      data-cursor
+      onFocus={onSelect}
+      onPointerEnter={onSelect}
+      onClick={onSelect}
+      className="orbit-node absolute z-10 cursor-pointer"
+      style={style}
+    >
+      <span
+        className={cn(
+          "orbit-node__ring flex h-[76px] w-[76px] items-center justify-center rounded-full border-[1.5px] bg-transparent transition-[border-color,box-shadow,color] duration-[var(--dur)] ease-[var(--ease-out)] [&>svg]:h-7 [&>svg]:w-7 [&>svg]:stroke-[1.5]",
+          selected
+            ? "border-lime text-lime [box-shadow:var(--shadow-node)]"
+            : "border-hairline text-muted"
+        )}
+      >
+        {node.icon}
+      </span>
+      <span
+        className={cn(
+          "orbit-node__label font-mono text-[11px] font-medium uppercase tracking-[0.18em]",
+          selected ? "text-lime" : "text-muted"
+        )}
+      >
+        {node.label}
+      </span>
+    </button>
+  );
+}
+
 export function OrbitDiagram({
   hub,
   nodes,
   autoRotate = true,
-  rotateMs = 12000,
+  rotateMs = 16000,
   className,
 }: OrbitDiagramProps) {
-  const fallback = useOrbitMode();
+  const fallback = useMobileFallback();
+  const reduce = useReducedMotion();
   const liveId = "orbit-live";
   const stageRef = useRef<HTMLDivElement>(null);
-  const pathRef = useRef<SVGPathElement>(null);
+  const pathRef = useRef<SVGCircleElement>(null);
   const dotRef = useRef<HTMLDivElement>(null);
   const activeRef = useRef(0);
   const tRef = useRef(0);
@@ -199,18 +264,22 @@ export function OrbitDiagram({
     setActive(index);
   }, []);
 
+  const placeDot = useCallback((deg: number) => {
+    const dot = dotRef.current;
+    if (!dot) return;
+    const { x, y } = circlePoint(deg);
+    dot.style.left = `${x}%`;
+    dot.style.top = `${y}%`;
+  }, []);
+
   const snapTo = useCallback(
     (index: number, pause = true) => {
       pausedRef.current = pause;
-      tRef.current = ANGLES[index] / 360;
+      tRef.current = angleToT(ANGLES[index]);
       setActiveIndex(index);
-      const dot = dotRef.current;
-      if (!dot) return;
-      const { x, y } = ellipsePoint(ANGLES[index]);
-      dot.style.left = `${(x / VIEW.w) * 100}%`;
-      dot.style.top = `${(y / VIEW.h) * 100}%`;
+      placeDot(ANGLES[index]);
     },
-    [setActiveIndex]
+    [placeDot, setActiveIndex]
   );
 
   useEffect(() => {
@@ -222,26 +291,36 @@ export function OrbitDiagram({
       ([entry]) => {
         if (!entry.isIntersecting) return;
         stage.classList.add("is-inview");
-        if (path) {
+        if (path && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
           const len = path.getTotalLength();
-          path.style.strokeDasharray = "8 12";
+          path.style.strokeDasharray = `${len}`;
           path.style.strokeDashoffset = `${len}`;
           requestAnimationFrame(() => {
             path.style.transition = "stroke-dashoffset 1.1s var(--ease-out)";
             path.style.strokeDashoffset = "0";
+            window.setTimeout(() => {
+              path.style.transition = "none";
+              path.style.strokeDasharray = "6 10";
+              path.style.strokeDashoffset = "0";
+            }, 1100);
           });
+        } else if (path) {
+          path.style.strokeDasharray = "6 10";
         }
-        window.setTimeout(() => setDrawn(true), 700);
+        window.setTimeout(() => setDrawn(true), reduce ? 0 : 700);
         observer.disconnect();
       },
       { threshold: 0.2 }
     );
     observer.observe(stage);
     return () => observer.disconnect();
-  }, [fallback]);
+  }, [fallback, reduce]);
 
   useEffect(() => {
-    if (fallback || !autoRotate || !drawn) return;
+    if (fallback || !autoRotate || !drawn || reduce) {
+      placeDot(ANGLES[activeRef.current]);
+      return;
+    }
     const dot = dotRef.current;
     if (!dot) return;
 
@@ -253,10 +332,8 @@ export function OrbitDiagram({
       last = now;
       if (!pausedRef.current && document.visibilityState === "visible") {
         tRef.current = (tRef.current + dt / rotateMs) % 1;
-        const deg = tRef.current * 360;
-        const { x, y } = ellipsePoint(deg);
-        dot.style.left = `${(x / VIEW.w) * 100}%`;
-        dot.style.top = `${(y / VIEW.h) * 100}%`;
+        const deg = -90 + tRef.current * 360;
+        placeDot(deg);
         const next = nearestIndex(deg);
         if (next !== activeRef.current) setActiveIndex(next);
       }
@@ -265,7 +342,7 @@ export function OrbitDiagram({
 
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [autoRotate, drawn, fallback, rotateMs, setActiveIndex]);
+  }, [autoRotate, drawn, fallback, placeDot, reduce, rotateMs, setActiveIndex]);
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
@@ -275,7 +352,8 @@ export function OrbitDiagram({
     snapTo(next);
   };
 
-  const liveText = `${nodes[active].label}. ${nodes[active].panel.tagline}`;
+  const liveText = `${nodes[active].panel.index} · ${nodes[active].label}. ${nodes[active].panel.tagline}`;
+  const start = circlePoint(ANGLES[0]);
 
   return (
     <div className={cn("orbit-diagram", className)}>
@@ -297,17 +375,21 @@ export function OrbitDiagram({
                 )}
                 <IconNode
                   as="button"
-                  size="sm"
+                  size="md"
                   label={node.label}
                   active={selected}
                   aria-pressed={selected}
                   onClick={() => setActiveIndex(i)}
-                  className="relative z-[1] flex-row gap-4 self-start text-left sm:gap-5 [&_span:last-child]:mt-0 [&_span:last-child]:text-left"
+                  className={cn(
+                    "relative z-[1] flex-row gap-4 self-start text-left sm:gap-5 [&_span:last-child]:mt-0 [&_span:last-child]:text-left",
+                    !selected &&
+                      "[&_.icon-node__ring]:border-hairline [&_.icon-node__ring]:text-muted [&_.icon-node__ring]:shadow-none"
+                  )}
                 >
                   {node.icon}
                 </IconNode>
                 {selected && (
-                  <div className="mb-8 mt-5 sm:ml-[4.5rem]">
+                  <div className="mb-8 mt-5 sm:ml-[5.5rem]">
                     <DetailPanel node={node} panelKey={`${node.id}-m`} />
                   </div>
                 )}
@@ -321,46 +403,37 @@ export function OrbitDiagram({
         <div className="grid items-center gap-10 lg:grid-cols-12 lg:gap-12">
           <div
             ref={stageRef}
-            className="relative col-span-12 lg:col-span-7"
+            className="orbit-stage relative col-span-12 mx-auto lg:col-span-7 lg:mx-0"
             role="radiogroup"
             aria-label="Delivery cycle"
             onKeyDown={onKeyDown}
             onPointerLeave={() => {
-              pausedRef.current = false;
+              if (!reduce) pausedRef.current = false;
             }}
             onBlur={(event) => {
               if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
-                pausedRef.current = false;
+                if (!reduce) pausedRef.current = false;
               }
             }}
           >
-            <svg
-              viewBox={`0 0 ${VIEW.w} ${VIEW.h}`}
-              className="h-auto w-full"
-              aria-hidden
-            >
-              <path
+            <svg viewBox="0 0 100 100" className="h-full w-full" aria-hidden>
+              <circle
                 ref={pathRef}
                 className="orbit-path"
-                d={`M ${VIEW.cx} ${VIEW.cy - VIEW.ry} A ${VIEW.rx} ${VIEW.ry} 0 1 1 ${VIEW.cx} ${VIEW.cy + VIEW.ry} A ${VIEW.rx} ${VIEW.ry} 0 1 1 ${VIEW.cx} ${VIEW.cy - VIEW.ry}`}
+                cx="50"
+                cy="50"
+                r={R}
                 fill="none"
                 stroke="var(--hairline)"
                 strokeWidth="1.5"
                 strokeLinecap="round"
+                strokeDasharray="6 10"
+                vectorEffect="non-scaling-stroke"
               />
             </svg>
 
-            <div
-              className="orbit-hub pointer-events-none absolute flex flex-col items-center justify-center rounded-full border border-hairline bg-canvas/40 text-center backdrop-blur-[2px]"
-              style={{
-                width: "7.25rem",
-                height: "7.25rem",
-                left: `${(VIEW.cx / VIEW.w) * 100}%`,
-                top: `${(VIEW.cy / VIEW.h) * 100}%`,
-                transform: "translate(-50%, -50%)",
-              }}
-            >
-              <span className="font-mono text-[11px] font-medium uppercase tracking-[0.2em] text-lime-deep">
+            <div className="orbit-hub pointer-events-none absolute flex flex-col items-center justify-center rounded-full border border-hairline bg-canvas/40 text-center">
+              <span className="font-mono text-[11px] font-medium uppercase tracking-[0.2em] text-lime">
                 {hub.label}
               </span>
               <span className="mt-1 font-mono text-[10px] uppercase tracking-[0.18em] text-muted">
@@ -371,45 +444,25 @@ export function OrbitDiagram({
             <div
               ref={dotRef}
               className="orbit-dot pointer-events-none absolute z-20 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-lime"
-              style={{
-                left: `${(ellipsePoint(0).x / VIEW.w) * 100}%`,
-                top: `${(ellipsePoint(0).y / VIEW.h) * 100}%`,
-              }}
+              style={{ left: `${start.x}%`, top: `${start.y}%` }}
               aria-hidden
             />
 
             {nodes.map((node, i) => {
-              const { x, y } = ellipsePoint(ANGLES[i]);
-              const selected = i === active;
+              const { x, y } = circlePoint(ANGLES[i]);
               return (
-                <IconNode
+                <OrbitNodeButton
                   key={node.id}
-                  as="button"
-                  size="sm"
-                  label={node.label}
-                  active={selected}
-                  role="radio"
-                  aria-checked={selected}
-                  tabIndex={selected ? 0 : -1}
-                  onFocus={() => snapTo(i)}
-                  onClick={() => snapTo(i)}
-                  className={cn(
-                    "absolute z-10",
-                    selected ? "opacity-100" : "opacity-60 hover:opacity-100"
-                  )}
-                  style={{
-                    left: `${(x / VIEW.w) * 100}%`,
-                    top: `${(y / VIEW.h) * 100}%`,
-                    transform: "translate(-50%, -32px)",
-                  }}
-                >
-                  {node.icon}
-                </IconNode>
+                  node={node}
+                  selected={i === active}
+                  onSelect={() => snapTo(i)}
+                  style={{ left: `${x}%`, top: `${y}%` }}
+                />
               );
             })}
           </div>
 
-          <div className="col-span-12 min-h-[22rem] lg:col-span-5">
+          <div className="col-span-12 lg:col-span-5">
             <DetailPanel node={nodes[active]} panelKey={nodes[active].id} />
           </div>
         </div>

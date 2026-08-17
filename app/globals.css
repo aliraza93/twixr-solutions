@@ -171,7 +171,7 @@
     --dur-fast: 0.2s;
     --dur: 0.4s;
     --dur-slow: 0.8s;
-    --orbit-rotate-ms: 12000;
+    --orbit-rotate-ms: 16000;
     --type-line-ms: 320;
 
     --eyebrow: var(--pine);
@@ -677,7 +677,7 @@
 
   .is-inview .eq-reveal {
     animation: eq-rise 0.7s var(--ease-out) both;
-    animation-delay: calc(var(--i, 0) * 80ms);
+    animation-delay: calc(var(--i, 0) * 200ms);
   }
 
   .eq-row__rail {
@@ -691,17 +691,97 @@
     transform: rotate(90deg);
   }
 
-  .is-inview .eq-op-wrap {
+  .is-inview .eq-row:not(.eq-row--play) .eq-op-wrap {
     animation-name: eq-pop;
   }
 
+  .eq-tile__face {
+    border-color: var(--hairline);
+    transition:
+      border-color var(--dur-fast) var(--ease-out),
+      transform var(--dur-fast) var(--ease-out),
+      box-shadow var(--dur) var(--ease-out),
+      color var(--dur-fast) var(--ease-out);
+  }
+
+  .eq-tile.is-active:not(.is-shine) .eq-tile__face {
+    border-color: var(--hairline-strong);
+    transform: translateY(-2px);
+  }
+
+  .eq-tile.is-shine .eq-tile__face,
   .eq-tile__face--result {
+    border-color: var(--lime);
+    color: var(--lime-ink);
     box-shadow: var(--shadow-lime);
   }
 
-  .is-inview .eq-tile[data-variant="result"] .eq-tile__face--result {
-    animation: eq-glow-pulse 0.9s var(--ease-out) calc(var(--i, 5) * 80ms + 0.7s)
-      both;
+  @media (prefers-reduced-motion: no-preference) {
+    .eq-tile.is-shine .eq-tile__face {
+      animation: eq-glow-pulse 0.9s var(--ease-out) both;
+    }
+  }
+
+  .eq-row--play .eq-op-wrap {
+    opacity: 0;
+    transform: scale(0.55);
+  }
+
+  .eq-row--play .eq-op-wrap.is-active {
+    animation: eq-pop 0.45s var(--ease-out) both;
+  }
+
+  .eq-mission {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  .eq-mission.is-visible {
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity 0.7s var(--ease-out),
+      transform 0.7s var(--ease-out);
+  }
+
+  .connector-line {
+    position: absolute;
+    background: var(--hairline);
+    pointer-events: none;
+  }
+
+  .connector-line__fill {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    height: var(--p);
+    background: var(--accent);
+  }
+
+  .connector-line__dot {
+    position: absolute;
+    z-index: 3;
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: var(--lime);
+    box-shadow:
+      0 0 0 3px rgba(190, 240, 58, 0.18),
+      0 0 16px 4px rgba(190, 240, 58, 0.65);
+    left: 50%;
+    top: var(--p);
+    transform: translate(-50%, -50%);
+  }
+
+  .eq-row--play {
+    --p: 0%;
+  }
+
+  .eq-row--play .connector-line {
+    left: calc(50% - 1px);
+    top: 8px;
+    bottom: 8px;
+    width: 2px;
   }
 
   @media (min-width: 768px) {
@@ -714,10 +794,36 @@
       height: 1px;
       background: var(--hairline);
       pointer-events: none;
+      transform: scaleX(0);
+      transform-origin: left;
+    }
+
+    .is-inview .eq-row__rail {
+      animation: eq-draw 0.8s var(--ease-out) 0.2s forwards;
     }
 
     .eq-op {
       transform: none;
+    }
+
+    .eq-row--play .connector-line {
+      left: 0;
+      right: 0;
+      top: 66px;
+      bottom: auto;
+      width: auto;
+      height: 2px;
+    }
+
+    .eq-row--play .connector-line__fill {
+      inset: 0;
+      width: var(--p);
+      height: 100%;
+    }
+
+    .eq-row--play .connector-line__dot {
+      left: var(--p);
+      top: 66px;
     }
   }
 
@@ -732,16 +838,10 @@
     background: var(--canvas);
   }
 
-    .eq-row--circle .eq-row__rail {
+  .eq-row--circle .eq-row__rail {
     top: 48px;
     background: var(--hairline);
     opacity: 1;
-    transform: scaleX(0);
-    transform-origin: center;
-  }
-
-  .is-inview .eq-row--circle .eq-row__rail {
-    animation: eq-draw 0.8s var(--ease-out) 0.16s forwards;
   }
 
   @media (prefers-reduced-motion: no-preference) {
@@ -751,7 +851,7 @@
 
     .is-inview .eq-row--circle [data-eq-result] .icon-node__ring {
       animation:
-        eq-glow-pulse 0.9s var(--ease-out) calc(3 * 80ms + 0.7s) both,
+        eq-glow-pulse 0.9s var(--ease-out) calc(3 * 200ms) both,
         eq-float 5s ease-in-out 2.2s infinite;
     }
   }
@@ -826,7 +926,7 @@
       display: none;
     }
 
-    @media (min-width: 1024px) {
+    @media (min-width: 768px) {
       .orbit-fallback {
         display: none;
       }
@@ -834,6 +934,48 @@
       .orbit-desktop {
         display: block;
       }
+    }
+
+    .orbit-stage {
+      width: clamp(360px, 34vw, 520px);
+      aspect-ratio: 1;
+      overflow: visible;
+      margin-bottom: 2.75rem;
+    }
+
+    .orbit-node {
+      width: 76px;
+      height: 76px;
+      transform: translate(-50%, -50%);
+    }
+
+    .orbit-node:focus-visible {
+      outline: none;
+    }
+
+    .orbit-node:focus-visible .orbit-node__ring {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    .orbit-node__label {
+      position: absolute;
+      top: calc(100% + 10px);
+      left: 50%;
+      width: max-content;
+      max-width: 12ch;
+      transform: translateX(-50%);
+      text-align: center;
+      line-height: 1.3;
+    }
+
+    .orbit-hub {
+      width: 6.5rem;
+      height: 6.5rem;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 40px var(--d-glow);
     }
 
     .orbit-panel {
@@ -844,42 +986,15 @@
       box-shadow: 0 0 0 3px rgba(190, 240, 58, 0.18), 0 0 18px 4px rgba(190, 240, 58, 0.7);
     }
 
-    .orbit-hub {
-      box-shadow: 0 0 40px var(--d-glow);
-    }
-
     .progress-timeline {
       --p: 0%;
     }
 
-    .progress-timeline__track {
-      position: absolute;
-      z-index: 0;
-      background: var(--hairline);
-      pointer-events: none;
-    }
-
-    .progress-timeline__fill {
-      position: absolute;
-      inset: 0 auto auto 0;
-      width: 100%;
-      height: var(--p);
-      background: var(--accent);
-    }
-
-    .progress-timeline__dot {
-      position: absolute;
-      z-index: 2;
-      width: 10px;
-      height: 10px;
-      border-radius: 999px;
-      background: var(--lime);
-      box-shadow:
-        0 0 0 3px rgba(190, 240, 58, 0.18),
-        0 0 16px 4px rgba(190, 240, 58, 0.65);
-      left: 50%;
-      top: var(--p);
-      transform: translate(-50%, -50%);
+    .progress-timeline .connector-line {
+      left: 17px;
+      top: 8px;
+      bottom: 8px;
+      width: 2px;
     }
 
     .progress-timeline__nodes {
@@ -905,15 +1020,8 @@
       box-shadow: var(--shadow-lime), 0 0 22px rgba(190, 240, 58, 0.45);
     }
 
-    .progress-timeline__track {
-      left: 17px;
-      top: 8px;
-      bottom: 8px;
-      width: 2px;
-    }
-
     @media (min-width: 1024px) {
-      .progress-timeline__track {
+      .progress-timeline .connector-line {
         left: 10%;
         right: 10%;
         top: 17px;
@@ -922,14 +1030,13 @@
         height: 2px;
       }
 
-      .progress-timeline__fill {
+      .progress-timeline .connector-line__fill {
         inset: 0;
         width: var(--p);
         height: 100%;
-        background: var(--accent);
       }
 
-      .progress-timeline__dot {
+      .progress-timeline .connector-line__dot {
         left: var(--p);
         top: 50%;
       }
@@ -1494,14 +1601,6 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .orbit-desktop {
-        display: none !important;
-      }
-
-      .orbit-fallback {
-        display: block !important;
-      }
-
       .orbit-panel {
         animation: eq-fade 0.2s var(--ease-out) both;
       }
@@ -1522,21 +1621,38 @@
     }
 
     .eq-armed .eq-reveal {
-      opacity: 0;
+      opacity: 1;
     }
 
     .is-inview .eq-reveal,
     .is-inview .eq-op-wrap {
-      animation: eq-fade 0.2s var(--ease-out) both;
-      animation-delay: calc(var(--i, 0) * 80ms);
+      animation: none;
+      opacity: 1;
     }
 
+    .eq-row--play .eq-op-wrap,
+    .eq-row--play .eq-op-wrap.is-active {
+      opacity: 1;
+      transform: none;
+      animation: none;
+    }
+
+    .eq-mission,
+    .eq-mission.is-visible {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+
+    .eq-tile.is-shine .eq-tile__face,
     .is-inview .eq-tile[data-variant="result"] .eq-tile__face--result {
       animation: none;
     }
 
+    .eq-row__rail,
+    .is-inview .eq-row__rail,
     .is-inview .eq-row--circle .eq-row__rail {
-      transform: none;
+      transform: scaleX(1);
       animation: none;
     }
 

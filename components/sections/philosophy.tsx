@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useRef, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { Bot, Sparkles, User } from "lucide-react";
 import { EquationRow } from "@/components/ui/equation-row";
 import { Eyebrow } from "@/components/ui/eyebrow";
+import { cn } from "@/lib/utils";
 
 export function Philosophy() {
   const ref = useRef<HTMLElement>(null);
+  const [finale, setFinale] = useState(false);
 
   useEffect(() => {
     const el = ref.current;
@@ -14,6 +16,7 @@ export function Philosophy() {
 
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       el.classList.add("is-inview");
+      setFinale(true);
       return;
     }
 
@@ -25,7 +28,7 @@ export function Philosophy() {
         el.classList.add("is-inview");
         observer.disconnect();
       },
-      { threshold: 0.15, rootMargin: "0px 0px -6% 0px" }
+      { threshold: 0.4 }
     );
 
     observer.observe(el);
@@ -53,14 +56,18 @@ export function Philosophy() {
 
         <EquationRow
           className="mt-14 md:mt-16"
+          durationMs={1800}
           a={{ icon: <User />, label: "Deep engineering" }}
           b={{ icon: <Bot />, label: "AI-augmented workflow" }}
           c={{ icon: <Sparkles />, label: "Shipped faster" }}
+          onFinale={() => setFinale(true)}
         />
 
         <p
-          className="eq-reveal mt-14 max-w-[22ch] font-sora text-[length:var(--fs-h2)] font-bold leading-[1.2] tracking-[-0.02em] md:mt-16"
-          style={{ "--i": 6 } as CSSProperties}
+          className={cn(
+            "eq-mission mt-14 max-w-[22ch] font-sora text-[length:var(--fs-h2)] font-bold leading-[1.2] tracking-[-0.02em] md:mt-16",
+            finale && "is-visible"
+          )}
         >
           <span className="text-muted">The goal isn&apos;t more code. It&apos;s to </span>
           <span className="text-ink">ship outcomes.</span>

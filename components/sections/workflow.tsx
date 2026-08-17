@@ -102,7 +102,7 @@ export function Workflow() {
   return (
     <section
       id="workflow"
-      className="band-dark relative overflow-hidden py-[var(--section-py)]"
+      className="band-dark relative overflow-hidden scroll-mt-24 py-[var(--section-py)]"
     >
       <div className="ds-container relative z-10">
         <header className="max-w-[36rem]">
@@ -122,7 +122,7 @@ export function Workflow() {
           hub={{ label: "Twixr", sub: "Delivery" }}
           nodes={NODES}
           autoRotate
-          rotateMs={12000}
+          rotateMs={16000}
         />
       </div>
     </section>

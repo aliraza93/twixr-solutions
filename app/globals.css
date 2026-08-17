@@ -943,6 +943,20 @@
       margin-bottom: 2.75rem;
     }
 
+    .orbit-ring {
+      position: relative;
+      z-index: 1;
+      overflow: visible;
+      pointer-events: none;
+    }
+
+    .orbit-path {
+      fill: none;
+      stroke: rgba(255, 255, 255, 0.25);
+      stroke-width: 2px;
+      vector-effect: non-scaling-stroke;
+    }
+
     .orbit-node {
       width: 76px;
       height: 76px;

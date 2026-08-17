@@ -45,6 +45,7 @@ type OrbitDiagramProps = {
 const ANGLES = [-90, -18, 54, 126, 198] as const;
 /** Radius as % of the square stage — leaves room for 76px nodes + labels. */
 const R = 40.5;
+const TRACK_DASH = "4 6";
 
 function toRad(deg: number) {
   return (deg * Math.PI) / 180;
@@ -300,12 +301,13 @@ export function OrbitDiagram({
             path.style.strokeDashoffset = "0";
             window.setTimeout(() => {
               path.style.transition = "none";
-              path.style.strokeDasharray = "6 10";
+              path.style.strokeDasharray = TRACK_DASH;
               path.style.strokeDashoffset = "0";
             }, 1100);
           });
         } else if (path) {
-          path.style.strokeDasharray = "6 10";
+          path.style.strokeDasharray = TRACK_DASH;
+          path.style.strokeDashoffset = "0";
         }
         window.setTimeout(() => setDrawn(true), reduce ? 0 : 700);
         observer.disconnect();
@@ -416,7 +418,11 @@ export function OrbitDiagram({
               }
             }}
           >
-            <svg viewBox="0 0 100 100" className="h-full w-full" aria-hidden>
+            <svg
+              viewBox="0 0 100 100"
+              className="orbit-ring h-full w-full"
+              aria-hidden
+            >
               <circle
                 ref={pathRef}
                 className="orbit-path"
@@ -424,10 +430,8 @@ export function OrbitDiagram({
                 cy="50"
                 r={R}
                 fill="none"
-                stroke="var(--hairline)"
-                strokeWidth="1.5"
                 strokeLinecap="round"
-                strokeDasharray="6 10"
+                strokeDasharray={TRACK_DASH}
                 vectorEffect="non-scaling-stroke"
               />
             </svg>

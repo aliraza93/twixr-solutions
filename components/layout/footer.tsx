@@ -1,19 +1,24 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { footer } from "@/content/footer";
-import { site } from "@/content/site";
 
 function FooterLogo() {
   return (
     <Link
       href="/"
-      className="inline-flex items-center gap-2 font-sora text-base font-semibold tracking-[-0.02em] text-ink"
+      aria-label="Twixr Solutions"
+      className="inline-flex items-center"
     >
-      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-lime font-sora text-sm font-bold text-d-bg">
-        T
-      </span>
-      {site.name}
+      <Image
+        src="/logo-wordmark-dark.svg"
+        alt="Twixr Solutions"
+        width={168}
+        height={52}
+        unoptimized
+        className="h-14 w-auto max-w-none"
+      />
     </Link>
   );
 }

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono, Sora } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
@@ -30,7 +30,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://twixrsolutions.com"),
+  metadataBase: new URL("https://www.twixrsolutions.com"),
   title: `${site.brand} | ${site.role}`,
   description: `${site.role} with ${site.yearsExperience} years of experience in Laravel, Node, Next.js, Vue, and AWS. Top Rated Plus on Upwork. Building SaaS, e-commerce, and APIs that scale.`,
   keywords: ["Twixr Solutions", "Laravel Expert", "Next.js Developer", "Full Stack Engineer", "DevOps Engineer", "PHP Developer", "SaaS Development", "AI Automation", "Senior Software Engineer"],
@@ -63,6 +63,10 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0F5132",
 };
 
 export default function RootLayout({

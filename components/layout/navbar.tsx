@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type CSSProperties } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import * as Dialog from "@radix-ui/react-dialog";
 import { Menu, X } from "lucide-react";
@@ -22,27 +23,33 @@ function Logo({ onClick, inverted = false }: { onClick?: () => void; inverted?: 
     <Link
       href="/"
       onClick={onClick}
-      className={cn(
-        "flex shrink-0 items-center gap-2 font-sora text-base font-semibold tracking-[-0.02em]",
-        inverted ? "text-d-text" : "text-ink"
-      )}
+      aria-label="Twixr Solutions"
+      className="inline-flex shrink-0 items-center overflow-visible"
     >
-      <span
-        className={cn(
-          "flex h-8 w-8 items-center justify-center rounded-full font-sora text-sm font-bold",
-          inverted ? "bg-lime text-ink" : "bg-pine text-canvas"
-        )}
-      >
-        T
-      </span>
-      {site.name}
+      <Image
+        src={inverted ? "/logo-wordmark-dark.svg" : "/logo-wordmark-light.svg"}
+        alt="Twixr Solutions"
+        width={168}
+        height={52}
+        priority
+        unoptimized
+        className="h-[52px] w-auto max-w-none"
+      />
     </Link>
   );
 }
 
-function NavLinks({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
+function NavLinks({
+  pathname,
+  onNavigate,
+  compact = false,
+}: {
+  pathname: string;
+  onNavigate?: () => void;
+  compact?: boolean;
+}) {
   return (
-    <ul className="hidden items-center gap-1 lg:flex">
+    <ul className="hidden items-center lg:flex">
       {LINKS.map((link) => {
         const active = isActive(pathname, link.href);
         return (
@@ -52,7 +59,8 @@ function NavLinks({ pathname, onNavigate }: { pathname: string; onNavigate?: () 
               onClick={onNavigate}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "relative inline-flex items-center px-3 py-2 font-inter text-sm font-medium transition-colors duration-[var(--dur-fast)] ease-[var(--ease-out)]",
+                "relative inline-flex items-center py-2 font-inter font-medium transition-colors duration-[var(--dur-fast)] ease-[var(--ease-out)]",
+                compact ? "px-2 text-[13px]" : "px-2.5 text-sm xl:px-3",
                 active ? "text-pine" : "text-ink-soft hover:text-pine"
               )}
             >
@@ -60,7 +68,8 @@ function NavLinks({ pathname, onNavigate }: { pathname: string; onNavigate?: () 
               <span
                 aria-hidden
                 className={cn(
-                  "absolute inset-x-3 -bottom-0.5 h-px origin-left bg-pine transition-transform duration-[var(--dur-fast)] ease-[var(--ease-out)]",
+                  "absolute -bottom-0.5 h-px origin-left bg-pine transition-transform duration-[var(--dur-fast)] ease-[var(--ease-out)]",
+                  compact ? "inset-x-2" : "inset-x-2.5 xl:inset-x-3",
                   active ? "scale-x-100" : "scale-x-0"
                 )}
               />
@@ -132,20 +141,16 @@ export function Navbar() {
           </div>
 
           <nav className="site-nav__links" aria-label="Primary">
-            <NavLinks pathname={pathname} />
+            <NavLinks pathname={pathname} compact={scrolled} />
           </nav>
 
           <div className="site-nav__actions">
             <Button
-              variant="ghost"
-              className="hidden h-10 px-5 py-2 text-sm xl:inline-flex"
-              asChild
-            >
-              <Link href={site.primaryCta.href}>{site.primaryCta.label}</Link>
-            </Button>
-            <Button
               variant="primary"
-              className="hidden h-10 px-5 py-2 text-sm lg:inline-flex"
+              className={cn(
+                "hidden lg:inline-flex",
+                scrolled ? "h-9 px-4 py-2 text-[13px]" : "h-10 px-5 py-2 text-sm"
+              )}
               asChild
             >
               <Link href={site.primaryCta.href}>

@@ -1,0 +1,8 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Twixr Solutions">
+  <rect width="512" height="512" fill="#0F5132"/>
+  <g stroke="#FFFFFF" stroke-width="43" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M138 196 L258 196"/><path d="M198 196 L198 366"/>
+    <path d="M312 196 L410 356"/><path d="M410 196 L312 356"/>
+  </g>
+  <circle cx="285" cy="196" r="25" fill="#BEF03A"/>
+</svg>

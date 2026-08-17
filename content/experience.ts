@@ -1,19 +1,24 @@
 import { site } from "./site";
 
+const jobs = site.proof.find((item) => item.label === "Jobs")?.value ?? "";
+const earned = site.proof.find((item) => item.label === "Earned on Upwork")?.value ?? "";
+const jobSuccess = site.proof.find((item) => item.label === "Job Success")?.value ?? "";
+const hours = site.proof.find((item) => item.label === "Hours")?.value ?? "";
+
 export const career = {
   eyebrow: "Professional Path",
   heading: "Career",
   emphasis: "Evolution",
   lead: "From engineering roles to technical leadership and full-stack expertise.",
   cvLabel: "Download CV",
-  cvHref: site.cvHref,
+  cvHref: "/ali-raza-cv.pdf",
 } as const;
 
 export const experienceStats = [
-  { value: `${site.yearsOfExperience}+`, unit: "YEARS" },
-  { value: site.proof.jobs, unit: "JOBS" },
-  { value: site.proof.earned, unit: "EARNED" },
-  { value: site.proof.jobSuccess, unit: "JOB SUCCESS" },
+  { value: site.yearsExperience, unit: "YEARS" },
+  { value: jobs, unit: "JOBS" },
+  { value: earned, unit: "EARNED" },
+  { value: jobSuccess, unit: "JOB SUCCESS" },
 ] as const;
 
 export const education = {
@@ -71,10 +76,10 @@ export const experienceRoles: ExperienceRole[] = [
     period: "2019 – Present",
     location: "Remote",
     country: null,
-    desc: `Top 3% talent with ${site.proof.jobSuccess} Job Success across ${site.proof.jobs} jobs and ${site.proof.hours} hours — Laravel, Node, Next.js & Vue with AWS DevOps.`,
+    desc: `Top 3% talent with ${jobSuccess} Job Success across ${jobs} jobs and ${hours} hours — Laravel, Node, Next.js & Vue with AWS DevOps.`,
     tech: ["Laravel", "Vue", "Node.js", "PostgreSQL"],
     highlights: ["LeadQuiz", "ManagePH", "E-commerce platforms"],
-    href: site.upworkHref,
+    href: site.contact.upwork,
     logo: "simple-icons:upwork",
     categories: ["Freelance", "SaaS"],
     projects: [],

@@ -49,7 +49,7 @@ export const faqs: FaqItem[] = [
   },
   {
     question: "What's your track record?",
-    answer: `Top Rated Plus (top 3%) on Upwork, ${site.proof.jobSuccess} Job Success, ${site.yearsOfExperience}+ years, ${site.proof.hours} hours.`,
+    answer: `Top Rated Plus (top 3%) on Upwork, ${site.proof.find((p) => p.label === "Job Success")?.value} Job Success, ${site.yearsExperience} years, ${site.proof.find((p) => p.label === "Hours")?.value} hours.`,
     icon: "lucide:award",
   },
   {

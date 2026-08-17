@@ -3,19 +3,19 @@ export const offerings = [
     audience: "For startups & founders",
     title: "Your first SaaS, shipped properly.",
     desc: "End-to-end Laravel/Node/Next.js so v1 is something you can actually run — not a demo that dies in staging.",
-    cta: { label: "Get in touch", href: "#contact" },
+    cta: { label: "Get in touch", href: "/contact" },
   },
   {
     audience: "For agencies",
     title: "Senior Laravel & Node overflow.",
     desc: "Embed as lead engineering on client work at scale: architecture, delivery, and honest velocity.",
-    cta: { label: "Get in touch", href: "#contact" },
+    cta: { label: "Get in touch", href: "/contact" },
   },
   {
     audience: "For CTOs & product teams",
     title: "Architecture, migrations & rescue.",
     desc: "Monolith ↔ microservices, refactors, and rebuilding what was architected poorly — plus AI automation where it pays off.",
-    cta: { label: "Get in touch", href: "#contact" },
+    cta: { label: "Get in touch", href: "/contact" },
   },
 ] as const;
 

@@ -132,7 +132,12 @@ function AboutIntro() {
                     aria-label={social.name}
                     className="h-10 w-10 rounded-md p-0"
                   >
-                    <a href={social.href}>
+                    <a
+                      href={social.href}
+                      {...(social.external
+                        ? { target: "_blank", rel: "noopener noreferrer" }
+                        : {})}
+                    >
                       <Icon icon={social.icon} className="h-4 w-4" />
                     </a>
                   </Button>

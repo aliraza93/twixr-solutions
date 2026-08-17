@@ -22,10 +22,10 @@ export const hero = {
     ],
     [{ text: "Engineer", kind: "emphasis" as const }],
   ],
-  subheading: `Senior full-stack engineer (${site.yearsOfExperience}+ years) specializing in Laravel, Node.js, Next.js & Vue, multi-tenant SaaS, and cloud/DevOps on AWS. I turn complex technical challenges into products that ship and scale — with AI automation when it adds real value.`,
+  subheading: `Senior full-stack engineer (${site.yearsExperience} years) specializing in Laravel, Node.js, Next.js & Vue, multi-tenant SaaS, and cloud/DevOps on AWS. I turn complex technical challenges into products that ship and scale — with AI automation when it adds real value.`,
   proofChip: "Top Rated Plus · 100% Job Success · $50K+ on Upwork",
-  primaryCta: site.ctas.start,
-  secondaryCta: site.ctas.portfolio,
+  primaryCta: site.primaryCta,
+  secondaryCta: { label: "View Portfolio", href: "/portfolio" },
   logosCaption: "Powering solutions with",
   techLogos: [
     { icon: "logos:laravel", label: "Laravel" },

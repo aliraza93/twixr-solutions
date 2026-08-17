@@ -2,12 +2,11 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { site } from "@/content/site";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ScrollReveal } from "@/components/motion/scroll-reveal";
 import { cn } from "@/lib/utils";
-
-const DEFAULT_EMAIL = "ali@twixrsolutions.com";
 
 type PageCtaProps = {
   title?: ReactNode;
@@ -16,6 +15,7 @@ type PageCtaProps = {
   email?: string;
   emailSubject?: string;
   primaryLabel?: string;
+  primaryHref?: string;
   secondaryLabel?: string;
   secondaryHref?: string;
   className?: string;
@@ -53,9 +53,8 @@ export function PageCta({
   title = "Ready to start your project?",
   emphasis = "project",
   description = "Let's discuss your requirements and build something great together.",
-  email = DEFAULT_EMAIL,
-  emailSubject = "Project inquiry",
-  primaryLabel = "Start a Project",
+  primaryLabel = site.primaryCta.label,
+  primaryHref = site.primaryCta.href,
   secondaryLabel = "View Portfolio",
   secondaryHref = "/portfolio",
   className,
@@ -81,7 +80,7 @@ export function PageCta({
                   asChild
                   className="focus-visible:ring-offset-ink"
                 >
-                  <a href={`mailto:${email}?subject=${encodeURIComponent(emailSubject)}`}>
+                  <Link href={primaryHref}>
                     {primaryLabel}
                     <span
                       aria-hidden
@@ -89,7 +88,7 @@ export function PageCta({
                     >
                       →
                     </span>
-                  </a>
+                  </Link>
                 </Button>
                 <Button
                   variant="ghost"

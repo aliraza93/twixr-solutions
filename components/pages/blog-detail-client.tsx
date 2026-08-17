@@ -1,23 +1,22 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
-import { Icon } from "@iconify/react";
-import {
-  ArrowLeft,
-  ArrowRight,
-  Calendar,
-  Clock,
-  Linkedin,
-  Mail,
-  Twitter,
-} from "lucide-react";
+import { ArrowLeft, Linkedin, Mail, Twitter } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Chip } from "@/components/ui/chip";
 import { Input } from "@/components/ui/input";
+import { SectionHeading } from "@/components/ui/section-heading";
 import { cn } from "@/lib/utils";
 import type { BlogContentBlock, BlogListing, BlogPost } from "@/lib/data/blog";
 import { getTableOfContents } from "@/lib/data/blog";
-import { GsapReveal, GsapStagger, GsapStaggerItem } from "@/components/motion/gsap-reveal";
+import {
+  ScrollReveal,
+  ScrollRevealItem,
+  ScrollStagger,
+} from "@/components/motion/scroll-reveal";
 
 const CONTACT_EMAIL = "ali@twixrsolutions.com";
 
@@ -54,96 +53,109 @@ export function BlogDetailClient({ post, related }: BlogDetailClientProps) {
   const shareUrl = `https://twixrsolutions.com/blog/${post.slug}`;
 
   return (
-    <main className="min-h-screen bg-background pt-[120px] lg:pt-[140px]">
-      <div className="container mx-auto max-w-6xl px-4 pb-16 md:pb-20">
-        <GsapReveal className="mb-6">
-          <Link
-            href="/blog"
-            className="group inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-primary"
-          >
-            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
-            Back to Blog
-          </Link>
-        </GsapReveal>
+    <main className="min-h-screen bg-canvas pt-[120px] lg:pt-[140px]">
+      <div className="ds-container pb-16 md:pb-20">
+        <ScrollReveal className="mb-6">
+          <Button variant="text" asChild>
+            <Link href="/blog">
+              <ArrowLeft
+                aria-hidden
+                className="transition-transform duration-[var(--dur-fast)] ease-[var(--ease-out)] group-hover:-translate-x-0.5"
+              />
+              Back to Blog
+            </Link>
+          </Button>
+        </ScrollReveal>
 
-        <GsapReveal>
+        <ScrollReveal>
           <header className="mx-auto mb-8 max-w-3xl text-center lg:mb-10">
-            <span className="mb-3 inline-block rounded-full border border-slate-200 bg-slate-50 px-3 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
-              {post.category}
-            </span>
-            <h1 className="text-page-title text-slate-900 dark:text-white">{post.title}</h1>
-            <div className="mt-4 flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground sm:text-sm">
-              <span className="inline-flex items-center gap-1.5">
-                <Calendar className="h-3.5 w-3.5" />
-                {post.date}
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <Clock className="h-3.5 w-3.5" />
-                {post.readingTime}
-              </span>
-              <span>By {post.author}</span>
+            <div className="mb-5 flex justify-center">
+              <Chip
+                tabIndex={-1}
+                className="pointer-events-none cursor-default hover:border-hairline hover:text-ink-soft"
+              >
+                {post.category}
+              </Chip>
             </div>
+            <h1 className="font-sora text-[length:var(--fs-h1)] font-extrabold leading-[1.06] tracking-[-0.02em] text-ink">
+              {post.title}
+            </h1>
+            <p className="mt-4 font-mono text-[length:var(--fs-eyebrow)] font-medium uppercase tracking-[0.14em] text-muted">
+              {post.date}
+              <span aria-hidden> · </span>
+              {post.readingTime}
+              <span aria-hidden> · </span>
+              {post.author}
+            </p>
           </header>
-        </GsapReveal>
+        </ScrollReveal>
 
-        <GsapReveal delay={0.05} className="mb-10 overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800">
+        <ScrollReveal delay={0.05} className="mb-10 overflow-hidden rounded-lg border border-hairline">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={post.image}
             alt={post.title}
             className="aspect-21/9 w-full object-cover"
           />
-        </GsapReveal>
+        </ScrollReveal>
 
-        {/* Article + sticky sidebar — sidebar sticks until this section ends */}
         <section ref={articleRef} className="grid gap-8 lg:grid-cols-12 lg:gap-10">
           <article className="min-w-0 lg:col-span-8">
-            <GsapReveal>
+            <ScrollReveal>
               <div className="prose-blog space-y-5">
                 <BlogContent blocks={post.content} />
               </div>
-            </GsapReveal>
+            </ScrollReveal>
 
-            <GsapReveal className="mt-10">
-              <div className="flex flex-wrap gap-2">
+            <ScrollReveal className="mt-10">
+              <ul className="flex list-none flex-wrap gap-2 p-0">
                 {post.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
-                  >
-                    #{tag}
-                  </span>
+                  <li key={tag}>
+                    <Chip
+                      tabIndex={-1}
+                      className="pointer-events-none cursor-default hover:border-hairline hover:text-ink-soft"
+                    >
+                      #{tag}
+                    </Chip>
+                  </li>
                 ))}
-              </div>
-            </GsapReveal>
+              </ul>
+            </ScrollReveal>
 
-            <GsapReveal className="mt-10 rounded-2xl border border-primary/20 bg-primary/5 p-6 dark:bg-primary/10 sm:p-8">
-              <h3 className="text-section-title text-slate-900 dark:text-white">
-                Enjoyed this <span className="font-black italic text-primary">article</span>?
-              </h3>
-              <p className="text-section-desc mt-2">
-                Get notified when I publish new posts on SaaS, Laravel, and remote engineering.
-              </p>
-              <form
-                className="mt-4 flex flex-col gap-2 sm:flex-row"
-                onSubmit={(e) => e.preventDefault()}
-              >
-                <Input
-                  type="email"
-                  placeholder="you@company.com"
-                  className="h-10 flex-1 border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-950"
-                />
-                <Button type="submit" className="h-10 cursor-pointer rounded-full px-6 font-bold">
-                  Subscribe
-                </Button>
-              </form>
-            </GsapReveal>
+            <ScrollReveal className="mt-10">
+              <Card variant="feature" className="band-dark px-6 py-8 sm:px-8">
+                <h3 className="font-sora text-[length:var(--fs-h2)] font-extrabold tracking-[-0.02em] text-d-text">
+                  Enjoyed this <span className="text-lime">article</span>?
+                </h3>
+                <p className="mt-2 max-w-[46ch] text-[length:var(--fs-lead)] text-d-muted">
+                  Get notified when I publish new posts on SaaS, Laravel, and remote engineering.
+                </p>
+                <form
+                  className="mt-4 flex flex-col gap-2 sm:flex-row"
+                  onSubmit={(e) => e.preventDefault()}
+                >
+                  <Input
+                    type="email"
+                    placeholder="you@company.com"
+                    className="h-11 flex-1 border-d-hairline bg-white/5 text-d-text placeholder:text-d-muted focus-visible:ring-lime"
+                  />
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    className="focus-visible:ring-offset-ink"
+                  >
+                    Subscribe
+                  </Button>
+                </form>
+              </Card>
+            </ScrollReveal>
           </article>
 
           <aside className="hidden lg:col-span-4 lg:block">
             <div className="sticky top-28 space-y-4">
               {toc.length > 0 && (
-                <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-950/60">
-                  <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+                <Card variant="base" className="p-5 hover:translate-y-0">
+                  <p className="mb-3 font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted">
                     On this page
                   </p>
                   <nav className="space-y-1">
@@ -152,87 +164,84 @@ export function BlogDetailClient({ post, related }: BlogDetailClientProps) {
                         key={item.id}
                         href={`#${item.id}`}
                         className={cn(
-                          "block cursor-pointer rounded-lg px-3 py-2 text-sm transition-colors",
+                          "block cursor-pointer rounded-md px-3 py-2 text-sm transition-colors duration-[var(--dur-fast)]",
                           item.level === 3 && "pl-6",
                           activeId === item.id
-                            ? "bg-primary/10 font-semibold text-primary"
-                            : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-white"
+                            ? "bg-pine-tint font-semibold text-pine"
+                            : "text-muted hover:bg-surface hover:text-ink"
                         )}
                       >
                         {item.text}
                       </a>
                     ))}
                   </nav>
-                </div>
+                </Card>
               )}
 
-              <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-950/60">
-                <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+              <Card variant="base" className="p-5 hover:translate-y-0">
+                <p className="mb-3 font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted">
                   Share
                 </p>
                 <div className="flex gap-2">
-                  <a
-                    href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(post.title)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-slate-200 text-slate-600 transition-colors hover:border-primary hover:text-primary dark:border-slate-700 dark:text-slate-400"
-                    aria-label="Share on X"
-                  >
-                    <Twitter className="h-4 w-4" />
-                  </a>
-                  <a
-                    href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-slate-200 text-slate-600 transition-colors hover:border-primary hover:text-primary dark:border-slate-700 dark:text-slate-400"
-                    aria-label="Share on LinkedIn"
-                  >
-                    <Linkedin className="h-4 w-4" />
-                  </a>
-                  <a
-                    href={`mailto:?subject=${encodeURIComponent(post.title)}&body=${encodeURIComponent(shareUrl)}`}
-                    className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-slate-200 text-slate-600 transition-colors hover:border-primary hover:text-primary dark:border-slate-700 dark:text-slate-400"
-                    aria-label="Share via email"
-                  >
-                    <Mail className="h-4 w-4" />
-                  </a>
+                  <Button variant="ghost" asChild className="h-10 w-10 rounded-md p-0" aria-label="Share on X">
+                    <a
+                      href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(post.title)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Twitter className="h-4 w-4" />
+                    </a>
+                  </Button>
+                  <Button variant="ghost" asChild className="h-10 w-10 rounded-md p-0" aria-label="Share on LinkedIn">
+                    <a
+                      href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Linkedin className="h-4 w-4" />
+                    </a>
+                  </Button>
+                  <Button variant="ghost" asChild className="h-10 w-10 rounded-md p-0" aria-label="Share via email">
+                    <a
+                      href={`mailto:?subject=${encodeURIComponent(post.title)}&body=${encodeURIComponent(shareUrl)}`}
+                    >
+                      <Mail className="h-4 w-4" />
+                    </a>
+                  </Button>
                 </div>
-              </div>
+              </Card>
 
-              <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-950/60">
+              <Card variant="base" className="p-5 hover:translate-y-0">
                 <div className="flex items-center gap-3">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={post.authorImage}
                     alt={post.author}
-                    className="h-12 w-12 rounded-full border border-slate-100 object-cover dark:border-slate-700"
+                    className="h-12 w-12 rounded-full border border-hairline object-cover"
                   />
                   <div>
-                    <p className="text-sm font-bold text-slate-900 dark:text-white">{post.author}</p>
-                    <p className="text-xs text-muted-foreground">{post.authorRole}</p>
+                    <p className="font-sora text-sm font-semibold text-ink">{post.author}</p>
+                    <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-muted">
+                      {post.authorRole}
+                    </p>
                   </div>
                 </div>
-                <p className="mt-3 text-xs leading-normal text-slate-600 dark:text-slate-400">
+                <p className="mt-3 text-xs leading-relaxed text-muted">
                   Senior Full Stack Engineer building SaaS products for global clients. Top Rated Plus
                   on Upwork.
                 </p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mt-4 h-9 w-full cursor-pointer rounded-full text-xs font-bold"
-                  asChild
-                >
+                <Button variant="ghost" className="mt-4 w-full" asChild>
                   <a href={`mailto:${CONTACT_EMAIL}`}>Get in touch</a>
                 </Button>
-              </div>
+              </Card>
             </div>
           </aside>
         </section>
 
-        {/* Mobile TOC */}
         {toc.length > 0 && (
-          <GsapReveal className="mt-8 lg:hidden">
-            <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-900/40">
-              <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+          <ScrollReveal className="mt-8 lg:hidden">
+            <Card variant="base" className="p-4 hover:translate-y-0">
+              <p className="mb-2 font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted">
                 On this page
               </p>
               <div className="flex flex-wrap gap-2">
@@ -240,34 +249,33 @@ export function BlogDetailClient({ post, related }: BlogDetailClientProps) {
                   <a
                     key={item.id}
                     href={`#${item.id}`}
-                    className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300"
+                    className="rounded-pill border border-hairline bg-canvas px-3 py-1 font-mono text-xs font-medium uppercase tracking-[0.08em] text-muted hover:border-pine hover:text-pine"
                   >
                     {item.text}
                   </a>
                 ))}
               </div>
-            </div>
-          </GsapReveal>
+            </Card>
+          </ScrollReveal>
         )}
 
         {related.length > 0 && (
-          <GsapReveal as="section" className="mt-14 md:mt-16">
-            <div className="mb-6 text-center">
-              <span className="mb-3 inline-block rounded-full bg-primary/5 px-4 py-1 text-[20px] font-bold uppercase tracking-[0.2em] text-primary dark:bg-primary/10">
-                Keep reading
-              </span>
-              <h2 className="text-section-title font-semibold text-slate-900 dark:text-white">
-                More <span className="font-black italic text-primary">posts</span>
-              </h2>
-            </div>
-            <GsapStagger className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <ScrollReveal className="mt-14 md:mt-16">
+            <SectionHeading
+              align="center"
+              eyebrow="Keep reading"
+              title="More posts"
+              emphasis="posts"
+              className="mb-8"
+            />
+            <ScrollStagger className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {related.map((p) => (
-                <GsapStaggerItem key={p.slug}>
+                <ScrollRevealItem key={p.slug} className="h-full">
                   <RelatedPostCard post={p} />
-                </GsapStaggerItem>
+                </ScrollRevealItem>
               ))}
-            </GsapStagger>
-          </GsapReveal>
+            </ScrollStagger>
+          </ScrollReveal>
         )}
       </div>
     </main>
@@ -280,7 +288,7 @@ function BlogContent({ blocks }: { blocks: BlogContentBlock[] }) {
       {blocks.map((block, i) => {
         if (block.type === "paragraph") {
           return (
-            <p key={i} className="text-sm leading-relaxed text-slate-600 sm:text-base dark:text-slate-400">
+            <p key={i} className="text-sm leading-relaxed text-muted sm:text-base">
               {block.text}
             </p>
           );
@@ -292,7 +300,7 @@ function BlogContent({ blocks }: { blocks: BlogContentBlock[] }) {
               key={block.id}
               id={block.id}
               className={cn(
-                "scroll-mt-28 font-bold tracking-tight text-slate-900 dark:text-white",
+                "scroll-mt-28 font-sora font-bold tracking-[-0.02em] text-ink",
                 block.level === 2 ? "text-xl sm:text-2xl" : "text-lg sm:text-xl"
               )}
             >
@@ -306,9 +314,9 @@ function BlogContent({ blocks }: { blocks: BlogContentBlock[] }) {
               {block.items.map((item) => (
                 <li
                   key={item}
-                  className="flex items-start gap-2 text-sm leading-relaxed text-slate-600 sm:text-base dark:text-slate-400"
+                  className="flex items-start gap-2 text-sm leading-relaxed text-muted sm:text-base"
                 >
-                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-pine" />
                   {item}
                 </li>
               ))}
@@ -323,30 +331,60 @@ function BlogContent({ blocks }: { blocks: BlogContentBlock[] }) {
 
 function RelatedPostCard({ post }: { post: BlogListing }) {
   return (
-    <Link
-      href={`/blog/${post.slug}`}
-      className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white transition-all hover:border-primary/25 hover:shadow-md dark:border-slate-700 dark:bg-slate-950/50"
-    >
-      <div className="relative aspect-16/10 overflow-hidden">
-        <img
-          src={post.image}
-          alt={post.title}
-          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-        />
+    <Card variant="base" className="insight-card group h-full overflow-hidden p-0">
+      <div className="insight-card__media relative aspect-[16/10] overflow-hidden rounded-t-lg">
+        <Link
+          href={`/blog/${post.slug}`}
+          className="absolute inset-0"
+          tabIndex={-1}
+          aria-hidden
+        >
+          <Image
+            src={post.image}
+            alt=""
+            fill
+            sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+            className="object-cover"
+          />
+        </Link>
       </div>
-      <div className="flex flex-1 flex-col p-4">
-        <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-          {post.date}
-        </p>
-        <h3 className="mt-1 text-base font-bold text-slate-900 dark:text-white">{post.title}</h3>
-        <p className="mt-2 line-clamp-2 flex-1 text-sm text-slate-600 dark:text-slate-400">
+      <div className="flex flex-col p-7 md:p-8">
+        <div className="flex flex-wrap items-center gap-2">
+          <Chip
+            tabIndex={-1}
+            className="pointer-events-none cursor-default px-2 py-0.5 text-[10px] hover:border-hairline hover:text-ink-soft"
+          >
+            {post.category}
+          </Chip>
+          <p className="font-mono text-[length:var(--fs-eyebrow)] font-medium uppercase tracking-[0.14em] text-muted">
+            {post.date}
+            <span aria-hidden> · </span>
+            {post.readingTime}
+          </p>
+        </div>
+        <h3 className="mt-3 font-sora text-[length:var(--fs-h3)] font-bold tracking-[-0.02em]">
+          <Link
+            href={`/blog/${post.slug}`}
+            className="text-ink transition-colors duration-[var(--dur-fast)] ease-[var(--ease-out)] hover:text-pine focus-visible:outline-none group-hover:text-pine"
+          >
+            {post.title}
+          </Link>
+        </h3>
+        <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-muted">
           {post.excerpt}
         </p>
-        <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-primary transition-all group-hover:gap-2.5">
-          Read article
-          <ArrowRight className="h-4 w-4" />
-        </span>
+        <Button variant="text" asChild className="mt-6 self-start">
+          <Link href={`/blog/${post.slug}`}>
+            Read
+            <span
+              aria-hidden
+              className="inline-block transition-transform duration-[var(--dur-fast)] ease-[var(--ease-out)] group-hover:translate-x-[3px]"
+            >
+              →
+            </span>
+          </Link>
+        </Button>
       </div>
-    </Link>
+    </Card>
   );
 }

@@ -1,11 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 import {
   getFeaturedProjects,
   type PortfolioProject,
 } from "@/lib/data/portfolio";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Chip } from "@/components/ui/chip";
+import { SectionHeading } from "@/components/ui/section-heading";
 import { ScrollReveal, ScrollRevealItem, ScrollStagger } from "@/components/motion/scroll-reveal";
 
 type FeaturedPortfolioProps = {
@@ -19,20 +22,20 @@ export function FeaturedPortfolio({ projects, limit }: FeaturedPortfolioProps) {
   if (items.length === 0) return null;
 
   return (
-    <section className="bg-slate-50/60 py-12 dark:bg-slate-900/30 md:py-14">
-      <div className="container mx-auto max-w-6xl px-4">
-        <ScrollReveal className="mb-6 text-center md:mb-8">
-          <span className="mb-3 inline-block rounded-full bg-primary/5 px-4 py-1 text-[20px] font-bold uppercase tracking-[0.2em] text-primary dark:bg-primary/10">
-            Featured
-          </span>
-          <h2 className="text-section-title font-semibold text-slate-900 dark:text-white">
-            Flagship <span className="font-black italic text-primary">Projects</span>
-          </h2>
+    <section className="bg-surface py-[var(--section-py)]">
+      <div className="ds-container">
+        <ScrollReveal className="mb-10 md:mb-12">
+          <SectionHeading
+            align="center"
+            eyebrow="Featured"
+            title="Flagship Projects"
+            emphasis="Projects"
+          />
         </ScrollReveal>
 
-        <ScrollStagger className="grid gap-4 lg:grid-cols-2">
+        <ScrollStagger className="grid gap-6 lg:grid-cols-2">
           {items.map((project) => (
-            <ScrollRevealItem key={project.slug}>
+            <ScrollRevealItem key={project.slug} className="h-full">
               <FeaturedProjectCard project={project} />
             </ScrollRevealItem>
           ))}
@@ -44,52 +47,77 @@ export function FeaturedPortfolio({ projects, limit }: FeaturedPortfolioProps) {
 
 function FeaturedProjectCard({ project }: { project: PortfolioProject }) {
   return (
-    <article className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm transition-all duration-300 hover:border-primary/30 hover:shadow-lg dark:border-slate-700 dark:bg-slate-950/60">
-      <Link href={`/portfolio/${project.slug}`} className="relative block aspect-16/10 overflow-hidden">
-        <img
-          src={project.image}
-          alt={project.title}
-          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-        />
-        <div className="absolute inset-x-0 bottom-0 h-[58%] bg-ink/80" />
-        <div className="absolute left-4 top-4">
-          <span className="rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-slate-800 backdrop-blur-sm">
+    <Card variant="base" className="group flex h-full flex-col overflow-hidden p-0">
+      <div className="relative aspect-16/10 overflow-hidden rounded-t-lg">
+        <Link
+          href={`/portfolio/${project.slug}`}
+          className="absolute inset-0"
+          tabIndex={-1}
+          aria-hidden
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={project.image}
+            alt={project.title}
+            className="h-full w-full object-cover"
+          />
+        </Link>
+        <div className="pointer-events-none absolute left-4 top-4 z-10">
+          <Chip
+            tabIndex={-1}
+            className="cursor-default border-hairline bg-canvas/95 text-ink hover:border-hairline hover:text-ink"
+          >
             {project.categoryLabel}
-          </span>
+          </Chip>
         </div>
-        <div className="absolute bottom-4 left-4 right-4">
-          <h3 className="text-lg font-bold text-white sm:text-xl">{project.title}</h3>
-          <p className="mt-1 line-clamp-2 text-sm text-slate-200">{project.description}</p>
-        </div>
-      </Link>
+      </div>
 
-      <div className="flex flex-1 flex-col p-4 sm:p-5">
-        <div className="mb-4 flex flex-wrap gap-3">
+      <div className="flex flex-1 flex-col p-7 md:p-8">
+        <h3 className="font-sora text-[length:var(--fs-h3)] font-bold tracking-[-0.02em]">
+          <Link
+            href={`/portfolio/${project.slug}`}
+            className="text-ink transition-colors duration-[var(--dur-fast)] ease-[var(--ease-out)] hover:text-pine focus-visible:outline-none"
+          >
+            {project.title}
+          </Link>
+        </h3>
+        <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-muted">
+          {project.description}
+        </p>
+        <div className="mt-6 flex flex-wrap gap-3">
           {project.metrics.map((m) => (
-            <div key={m.label} className="rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-900/80">
-              <p className="text-sm font-bold text-slate-900 dark:text-white">{m.value}</p>
-              <p className="text-[10px] text-muted-foreground">{m.label}</p>
+            <div key={m.label} className="rounded-lg border border-hairline bg-surface px-3 py-2">
+              <p className="font-sora text-sm font-bold text-ink">{m.value}</p>
+              <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted">
+                {m.label}
+              </p>
             </div>
           ))}
         </div>
-        <div className="mt-auto flex flex-wrap gap-1.5">
+        <ul className="mt-4 flex list-none flex-wrap gap-2 p-0">
           {project.tags.map((tag) => (
-            <span
-              key={tag}
-              className="rounded-md border border-slate-200/90 bg-white px-2 py-0.5 text-[11px] font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
-            >
-              {tag}
-            </span>
+            <li key={tag}>
+              <Chip
+                tabIndex={-1}
+                className="pointer-events-none cursor-default hover:border-hairline hover:text-ink-soft"
+              >
+                {tag}
+              </Chip>
+            </li>
           ))}
-        </div>
-        <Link
-          href={`/portfolio/${project.slug}`}
-          className="mt-4 inline-flex cursor-pointer items-center gap-2 text-sm font-bold text-primary transition-all hover:gap-3"
-        >
-          View case study
-          <ArrowRight className="h-4 w-4" />
-        </Link>
+        </ul>
+        <Button variant="text" asChild className="mt-6 self-start">
+          <Link href={`/portfolio/${project.slug}`}>
+            View case study
+            <span
+              aria-hidden
+              className="inline-block transition-transform duration-[var(--dur-fast)] ease-[var(--ease-out)] group-hover:translate-x-[3px]"
+            >
+              →
+            </span>
+          </Link>
+        </Button>
       </div>
-    </article>
+    </Card>
   );
 }

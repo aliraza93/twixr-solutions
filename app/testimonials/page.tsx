@@ -3,103 +3,114 @@
 import Link from "next/link";
 import { testimonials } from "@/content/testimonials";
 import { Icon } from "@iconify/react";
+import { ArrowLeft, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { PageHero } from "@/components/sections/page-hero";
 import {
   ScrollReveal,
   ScrollRevealItem,
   ScrollStagger,
 } from "@/components/motion/scroll-reveal";
 
+function platformTone(icon: string) {
+  if (icon.includes("upwork")) return "text-[#14a800]";
+  if (icon.includes("fiverr")) return "text-[#1dbf73]";
+  if (icon.includes("linkedin")) return "text-[#0a66c2]";
+  if (icon.includes("facebook")) return "text-[#1877f2]";
+  return "text-pine";
+}
+
+function byline(role: string, company: string) {
+  if (role && company && role !== company) return `${role} · ${company}`;
+  return role || company;
+}
+
 export default function TestimonialsPage() {
   return (
-    <main className="min-h-screen bg-slate-50 pt-32 pb-24 dark:bg-slate-950">
-      <div className="container mx-auto px-4">
-        <ScrollReveal className="mb-12">
-          <Link
-            href="/"
-            className="group inline-flex items-center gap-2 text-sm font-bold text-slate-400 transition-colors hover:text-teal-600"
-          >
-            <Icon
-              icon="lucide:arrow-left"
-              className="transition-transform group-hover:-translate-x-1"
-            />
-            Back to Home
-          </Link>
+    <main className="min-h-screen bg-canvas pt-[120px] lg:pt-[140px]">
+      <div className="ds-container">
+        <ScrollReveal className="mb-8">
+          <Button variant="text" asChild>
+            <Link href="/">
+              <ArrowLeft
+                aria-hidden
+                className="transition-transform duration-[var(--dur-fast)] ease-[var(--ease-out)] group-hover:-translate-x-0.5"
+              />
+              Back to Home
+            </Link>
+          </Button>
         </ScrollReveal>
+      </div>
 
-        <div className="mb-20">
-          <ScrollReveal>
-            <div className="mb-4 inline-block rounded-full bg-teal-500/10 px-4 py-1 text-[20px] font-bold uppercase tracking-[0.2em] text-teal-600 dark:bg-teal-500/20">
-              Full Archive
-            </div>
-          </ScrollReveal>
-          <ScrollReveal delay={0.05}>
-            <h1 className="text-display text-slate-900 dark:text-white">
-              All Client <span className="text-teal-600">Reviews</span>
-            </h1>
-          </ScrollReveal>
-          <ScrollReveal delay={0.1}>
-            <p className="text-section-desc mt-4">
-              Explore the complete history of feedback from professional collaborations and
-              successful project deliveries.
-            </p>
-          </ScrollReveal>
-        </div>
+      <PageHero
+        className="pt-0"
+        eyebrow="RESULTS"
+        title="All Client Reviews"
+        emphasis="Reviews"
+        description="Explore the complete history of feedback from professional collaborations and successful project deliveries."
+      />
 
-        <ScrollStagger className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {testimonials.map((testimonial, idx) => (
-            <ScrollRevealItem key={`${testimonial.name}-${idx}`}>
-              <article className="relative flex h-full flex-col justify-between rounded-[2.5rem] border border-white bg-white/60 p-8 shadow-sm backdrop-blur-xl transition-all hover:border-teal-500/30 hover:shadow-2xl dark:border-slate-800 dark:bg-slate-900/40">
-                <div className="absolute right-8 top-8">
+      <section className="bg-canvas pb-24">
+        <div className="ds-container">
+          <ScrollStagger className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {testimonials.map((testimonial, idx) => (
+              <ScrollRevealItem key={`${testimonial.name}-${idx}`} className="h-full">
+                <Card
+                  variant="base"
+                  className="relative flex h-full min-h-[280px] flex-col"
+                >
                   <Icon
                     icon={testimonial.platform}
+                    aria-hidden
                     className={cn(
-                      "h-8 w-8 origin-right transition-transform",
-                      testimonial.platform.includes("upwork") && "scale-[1.2] text-[#14a800]",
-                      testimonial.platform.includes("fiverr") && "scale-[1.5] text-[#1dbf73]",
-                      testimonial.platform.includes("linkedin") && "text-[#0a66c2]",
-                      testimonial.platform.includes("facebook") && "text-[#1877f2]"
+                      "absolute right-8 top-8 h-6 w-6",
+                      platformTone(testimonial.platform)
                     )}
                   />
-                </div>
 
-                <div>
-                  <div className="mb-4 flex gap-0.5">
-                    {[...Array(testimonial.rating)].map((_, i) => (
-                      <Icon
+                  <div
+                    className="mb-5 flex gap-0.5"
+                    aria-label={`${testimonial.rating} out of 5 stars`}
+                  >
+                    {Array.from({ length: testimonial.rating }, (_, i) => (
+                      <Star
                         key={i}
-                        icon="material-symbols:star"
-                        className="h-4 w-4 text-amber-400"
+                        className="h-4 w-4 fill-pine text-pine"
+                        strokeWidth={0}
                       />
                     ))}
                   </div>
-                  <p className="mb-8 text-base leading-relaxed text-slate-600 dark:text-slate-400">
-                    &ldquo;{testimonial.content}&rdquo;
-                  </p>
-                </div>
 
-                <div className="mt-auto flex items-center gap-4 border-t border-slate-100 pt-6 dark:border-slate-800/50">
-                  <div className="h-12 w-12 overflow-hidden rounded-full border border-slate-100 shadow-sm dark:border-slate-800">
+                  <blockquote className="flex-1 pr-10 text-[length:var(--fs-body)] leading-relaxed italic text-ink-soft">
+                    &ldquo;{testimonial.content}&rdquo;
+                  </blockquote>
+
+                  <footer className="mt-8 flex items-center gap-3.5 border-t border-hairline pt-5">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={testimonial.image}
-                      alt={testimonial.name}
-                      className="h-full w-full object-cover"
+                      alt=""
+                      width={44}
+                      height={44}
+                      className="h-11 w-11 rounded-full border border-hairline object-cover"
                     />
-                  </div>
-                  <div>
-                    <h4 className="text-base font-bold text-slate-900 dark:text-white">
-                      {testimonial.name}
-                    </h4>
-                    <p className="text-xs font-medium text-slate-400">
-                      {testimonial.role} @ {testimonial.company}
-                    </p>
-                  </div>
-                </div>
-              </article>
-            </ScrollRevealItem>
-          ))}
-        </ScrollStagger>
-      </div>
+                    <div className="min-w-0">
+                      <p className="truncate font-sora text-sm font-semibold tracking-[-0.02em] text-ink">
+                        {testimonial.name}
+                      </p>
+                      <p className="truncate font-mono text-[11px] uppercase tracking-[0.08em] text-muted">
+                        {byline(testimonial.role, testimonial.company)}
+                      </p>
+                    </div>
+                  </footer>
+                </Card>
+              </ScrollRevealItem>
+            ))}
+          </ScrollStagger>
+        </div>
+      </section>
     </main>
   );
 }

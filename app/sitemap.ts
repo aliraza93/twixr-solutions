@@ -1,0 +1,39 @@
+import type { MetadataRoute } from "next";
+import { SITE_URL } from "@/lib/seo";
+import { getBlogListings } from "@/content/blog";
+import { getPortfolioSlugs } from "@/lib/data/portfolio";
+import { getServiceSlugs } from "@/lib/data/services";
+
+export default function sitemap(): MetadataRoute.Sitemap {
+  const staticRoutes: MetadataRoute.Sitemap = [
+    { url: `${SITE_URL}`, changeFrequency: "weekly", priority: 1.0 },
+    { url: `${SITE_URL}/about`, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${SITE_URL}/services`, changeFrequency: "monthly", priority: 0.9 },
+    { url: `${SITE_URL}/portfolio`, changeFrequency: "weekly", priority: 0.9 },
+    { url: `${SITE_URL}/blog`, changeFrequency: "weekly", priority: 0.7 },
+    { url: `${SITE_URL}/testimonials`, changeFrequency: "monthly", priority: 0.6 },
+    { url: `${SITE_URL}/contact`, changeFrequency: "yearly", priority: 0.6 },
+    { url: `${SITE_URL}/schedule`, changeFrequency: "yearly", priority: 0.6 },
+  ];
+
+  const services: MetadataRoute.Sitemap = getServiceSlugs().map((slug) => ({
+    url: `${SITE_URL}/services/${slug}`,
+    changeFrequency: "monthly",
+    priority: 0.7,
+  }));
+
+  const portfolio: MetadataRoute.Sitemap = getPortfolioSlugs().map((slug) => ({
+    url: `${SITE_URL}/portfolio/${slug}`,
+    changeFrequency: "monthly",
+    priority: 0.7,
+  }));
+
+  const blog: MetadataRoute.Sitemap = getBlogListings().map((post) => ({
+    url: `${SITE_URL}/blog/${post.slug}`,
+    lastModified: post.date ? new Date(post.date) : undefined,
+    changeFrequency: "yearly",
+    priority: 0.6,
+  }));
+
+  return [...staticRoutes, ...services, ...portfolio, ...blog];
+}

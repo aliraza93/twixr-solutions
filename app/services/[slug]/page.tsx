@@ -2,6 +2,13 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ServiceDetailClient } from "@/components/pages/service-detail-client";
 import { getServiceBySlug, getServiceSlugs } from "@/lib/data/services";
+import { JsonLd } from "@/components/seo/json-ld";
+import {
+  pageMetadata,
+  jsonLdGraph,
+  serviceNode,
+  breadcrumbNode,
+} from "@/lib/seo";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -16,40 +23,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const service = getServiceBySlug(slug);
 
   if (!service) {
-    return { title: "Service Not Found | Twixr Solutions" };
+    return { title: "Service Not Found" };
   }
 
-  const title = `${service.title} | Twixr Solutions — Full Stack Developer`;
-  const description = service.longDescription;
-
-  return {
-    metadataBase: new URL("https://twixrsolutions.com"),
-    title,
-    description,
-    openGraph: {
-      type: "website",
-      locale: "en_US",
-      url: `https://twixrsolutions.com/services/${service.slug}`,
-      siteName: "Twixr Solutions Portfolio",
-      title,
-      description,
-      images: [
-        {
-          url: "/og-image.png",
-          width: 1200,
-          height: 630,
-          alt: service.title,
-        },
-      ],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-      images: ["/og-image.png"],
-      creator: "@aliraza",
-    },
-  };
+  return pageMetadata({
+    title: service.title,
+    description: service.longDescription,
+    path: `/services/${service.slug}`,
+  });
 }
 
 export default async function ServiceDetailPage({ params }: PageProps) {
@@ -60,5 +41,23 @@ export default async function ServiceDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  return <ServiceDetailClient service={service} />;
+  return (
+    <>
+      <JsonLd
+        data={jsonLdGraph([
+          serviceNode({
+            slug: service.slug,
+            title: service.title,
+            description: service.longDescription,
+          }),
+          breadcrumbNode([
+            { name: "Home", path: "/" },
+            { name: "Services", path: "/services" },
+            { name: service.title, path: `/services/${service.slug}` },
+          ]),
+        ])}
+      />
+      <ServiceDetailClient service={service} />
+    </>
+  );
 }

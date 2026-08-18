@@ -7,6 +7,15 @@ import { Footer } from "@/components/layout/footer";
 import { SmoothScroll } from "@/components/motion/smooth-scroll";
 import { SiteEffects } from "@/components/motion/site-effects";
 import { site } from "@/content/site";
+import {
+  SITE_URL,
+  SITE_NAME,
+  DEFAULT_OG,
+  TWITTER_HANDLE,
+  absoluteUrl,
+  siteJsonLd,
+} from "@/lib/seo";
+import { JsonLd } from "@/components/seo/json-ld";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -29,39 +38,65 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
+const SITE_DESCRIPTION = `${site.role} with ${site.yearsExperience} years of experience in Laravel, Node, Next.js, Vue, and AWS. Top Rated Plus on Upwork — building SaaS, e-commerce, and APIs that scale.`;
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://www.twixrsolutions.com"),
-  title: `${site.brand} | ${site.role}`,
-  description: `${site.role} with ${site.yearsExperience} years of experience in Laravel, Node, Next.js, Vue, and AWS. Top Rated Plus on Upwork. Building SaaS, e-commerce, and APIs that scale.`,
-  keywords: ["Twixr Solutions", "Laravel Expert", "Next.js Developer", "Full Stack Engineer", "DevOps Engineer", "PHP Developer", "SaaS Development", "AI Automation", "Senior Software Engineer"],
-  authors: [{ name: site.brand }],
-  creator: site.brand,
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: `${SITE_NAME} | ${site.role}`,
+    template: `%s | ${SITE_NAME}`,
+  },
+  description: SITE_DESCRIPTION,
+  keywords: [
+    "Twixr Solutions",
+    "Laravel developer",
+    "Next.js developer",
+    "full-stack engineer",
+    "Node.js developer",
+    "Vue developer",
+    "DevOps engineer",
+    "SaaS development",
+    "AWS cloud",
+    "e-commerce development",
+    "senior software engineer",
+  ],
+  applicationName: SITE_NAME,
+  authors: [{ name: site.name, url: absoluteUrl("/about") }],
+  creator: site.name,
+  publisher: SITE_NAME,
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://twixrsolutions.com",
-    siteName: site.brand,
-    title: `${site.brand} | ${site.role}`,
-    description: "Expert web development and scalable infrastructure solutions by Twixr Solutions.",
+    url: SITE_URL,
+    siteName: SITE_NAME,
+    title: `${SITE_NAME} | ${site.role}`,
+    description: SITE_DESCRIPTION,
     images: [
       {
-        url: "/og-image.png",
+        url: DEFAULT_OG,
         width: 1200,
         height: 630,
-        alt: `${site.brand} | Senior Full Stack Engineer`,
+        alt: `${SITE_NAME} — ${site.role}`,
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: `${site.brand} | ${site.role}`,
-    description: `Building high-performance SaaS & Web Apps with ${site.yearsExperience} years of expertise.`,
-    images: ["/og-image.png"],
-    creator: "@aliraza",
+    title: `${SITE_NAME} | ${site.role}`,
+    description: SITE_DESCRIPTION,
+    images: [DEFAULT_OG],
+    creator: TWITTER_HANDLE,
   },
   robots: {
     index: true,
     follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
   },
 };
 
@@ -93,25 +128,7 @@ export default function RootLayout({
             <SiteEffects />
           </div>
         </SmoothScroll>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@graph": [
-                {
-                  "@type": "Organization",
-                  name: site.brand,
-                  url: "https://twixrsolutions.com",
-                  email: site.contact.email,
-                  sameAs: [site.contact.upwork, site.contact.fiverr, site.contact.linkedin].filter(
-                    (href) => href.startsWith("http")
-                  ),
-                },
-              ],
-            }),
-          }}
-        />
+        <JsonLd data={siteJsonLd()} />
       </body>
     </html>
   );

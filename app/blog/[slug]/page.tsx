@@ -2,6 +2,13 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { BlogDetailClient } from "@/components/pages/blog-detail-client";
 import { getBlogBySlug, getBlogSlugs, getRelatedPosts } from "@/content/blog";
+import { JsonLd } from "@/components/seo/json-ld";
+import {
+  pageMetadata,
+  jsonLdGraph,
+  articleNode,
+  breadcrumbNode,
+} from "@/lib/seo";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -16,35 +23,18 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const post = getBlogBySlug(slug);
 
   if (!post) {
-    return { title: "Post Not Found | Twixr Solutions" };
+    return { title: "Post Not Found" };
   }
 
-  const title = `${post.title} | Twixr Solutions`;
-  const description = post.excerpt;
-
-  return {
-    metadataBase: new URL("https://twixrsolutions.com"),
-    title,
-    description,
-    openGraph: {
-      type: "article",
-      locale: "en_US",
-      url: `https://twixrsolutions.com/blog/${post.slug}`,
-      siteName: "Twixr Solutions Portfolio",
-      title,
-      description,
-      publishedTime: post.date,
-      authors: [post.author],
-      images: [{ url: post.image, width: 1200, height: 630, alt: post.title }],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-      images: [post.image],
-      creator: "@aliraza",
-    },
-  };
+  return pageMetadata({
+    title: post.title,
+    description: post.excerpt,
+    path: `/blog/${post.slug}`,
+    type: "article",
+    image: post.image,
+    publishedTime: post.date,
+    authors: [post.author],
+  });
 }
 
 export default async function BlogDetailPage({ params }: PageProps) {
@@ -55,5 +45,19 @@ export default async function BlogDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  return <BlogDetailClient post={post} related={getRelatedPosts(slug, 3)} />;
+  return (
+    <>
+      <JsonLd
+        data={jsonLdGraph([
+          articleNode(post),
+          breadcrumbNode([
+            { name: "Home", path: "/" },
+            { name: "Blog", path: "/blog" },
+            { name: post.title, path: `/blog/${post.slug}` },
+          ]),
+        ])}
+      />
+      <BlogDetailClient post={post} related={getRelatedPosts(slug, 3)} />
+    </>
+  );
 }

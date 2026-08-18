@@ -1,30 +1,28 @@
 import type { Metadata } from "next";
 import { AboutPageClient } from "@/components/pages/about-page-client";
+import { JsonLd } from "@/components/seo/json-ld";
+import { pageMetadata, jsonLdGraph, breadcrumbNode } from "@/lib/seo";
+import { site } from "@/content/site";
 
-export const metadata: Metadata = {
-  metadataBase: new URL("https://twixrsolutions.com"),
-  title: "About | Twixr Solutions — Full Stack Developer",
-  description:
-    "Learn about Twixr Solutions — Senior Full Stack Engineer, Founder of Twixr Solutions, Top Rated Plus on Upwork. 10+ years building SaaS, APIs, and AI automation.",
-  openGraph: {
-    type: "profile",
-    locale: "en_US",
-    url: "https://twixrsolutions.com/about",
-    siteName: "Twixr Solutions Portfolio",
-    title: "About | Twixr Solutions — Full Stack Developer",
-    description:
-      "Senior Full Stack Engineer with 10+ years of experience in Laravel, Next.js, and cloud infrastructure.",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Twixr Solutions | About" }],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "About | Twixr Solutions — Full Stack Developer",
-    description: "Senior Full Stack Engineer, Founder of Twixr Solutions.",
-    images: ["/og-image.png"],
-    creator: "@aliraza",
-  },
-};
+export const metadata: Metadata = pageMetadata({
+  title: "About",
+  description: `${site.name} — ${site.role} and founder of Twixr Solutions. Top Rated Plus on Upwork with ${site.yearsExperience} years building SaaS, e-commerce, APIs, and cloud infrastructure with Laravel, Node, Next.js & Vue.`,
+  path: "/about",
+  type: "profile",
+});
 
 export default function AboutPage() {
-  return <AboutPageClient />;
+  return (
+    <>
+      <JsonLd
+        data={jsonLdGraph([
+          breadcrumbNode([
+            { name: "Home", path: "/" },
+            { name: "About", path: "/about" },
+          ]),
+        ])}
+      />
+      <AboutPageClient />
+    </>
+  );
 }

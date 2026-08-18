@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Hero } from "@/components/sections/hero";
 import { Philosophy } from "@/components/sections/philosophy";
 import { Workflow } from "@/components/sections/workflow";
@@ -12,12 +13,20 @@ import { DeliveryModel } from "@/components/sections/delivery-model";
 import { SupportHub } from "@/components/sections/support-hub";
 import { ScrollReveal } from "@/components/motion/scroll-reveal";
 import { getBlogListings } from "@/content/blog";
+import { JsonLd } from "@/components/seo/json-ld";
+import { jsonLdGraph, faqPageNode, absoluteUrl } from "@/lib/seo";
+import { faqs } from "@/content/faq";
+
+export const metadata: Metadata = {
+  alternates: { canonical: absoluteUrl("/") },
+};
 
 export default function Home() {
   const posts = getBlogListings();
 
   return (
     <div className="bg-canvas">
+      <JsonLd data={jsonLdGraph([faqPageNode(faqs)])} />
       <Hero />
       <Philosophy />
       <Workflow />

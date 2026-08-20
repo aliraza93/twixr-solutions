@@ -1,6 +1,6 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { put } from "@vercel/blob";
+import { put, type PutBlobResult } from "@vercel/blob";
 
 function blobToken() {
   return process.env.BLOB_READ_WRITE_TOKEN?.trim() ?? "";
@@ -15,7 +15,7 @@ function oidcToken() {
 }
 
 export function canUseVercelBlob() {
-  return Boolean(blobToken() || (oidcToken() && blobStoreId()));
+  return Boolean(blobToken() || (oidcToken() && blobStoreId()) || blobStoreId());
 }
 
 /** Vercel’s filesystem is ephemeral/read-only except /tmp. */
@@ -23,15 +23,52 @@ export function canUseLocalUploads() {
   return process.env.VERCEL !== "1";
 }
 
-async function storeOnBlob(file: File, pathname: string) {
+type PutAccess = "public" | "private";
+
+async function putWithAccess(
+  pathname: string,
+  body: Buffer,
+  access: PutAccess,
+  contentType: string
+) {
+  const base = {
+    access,
+    addRandomSuffix: true as const,
+    contentType,
+  };
+
+  // On Vercel, OIDC + store id is the supported path. Never pass the
+  // read-write token at the same time — a stale token wins and returns 403.
+  if (blobStoreId() && (oidcToken() || process.env.VERCEL === "1")) {
+    return put(pathname, body, {
+      ...base,
+      storeId: blobStoreId(),
+      ...(oidcToken() ? { oidcToken: oidcToken() } : {}),
+    });
+  }
+
+  if (blobToken()) {
+    return put(pathname, body, {
+      ...base,
+      token: blobToken(),
+    });
+  }
+
+  throw new Error(
+    "Vercel Blob is not configured. Connect the store, save, and redeploy."
+  );
+}
+
+async function storeOnBlob(file: File, pathname: string): Promise<PutBlobResult> {
   const body = Buffer.from(await file.arrayBuffer());
-  return put(pathname, body, {
-    access: "public",
-    addRandomSuffix: true,
-    contentType: file.type || "application/octet-stream",
-    ...(blobToken() ? { token: blobToken() } : {}),
-    ...(blobStoreId() ? { storeId: blobStoreId() } : {}),
-  });
+  const contentType = file.type || "application/octet-stream";
+  try {
+    return await putWithAccess(pathname, body, "public", contentType);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    if (!/access|public|private|forbidden/i.test(message)) throw error;
+    return putWithAccess(pathname, body, "private", contentType);
+  }
 }
 
 async function storeLocally(file: File, pathname: string) {
@@ -57,7 +94,7 @@ export async function storeAdminFile(file: File, pathname: string) {
 
   if (!canUseLocalUploads()) {
     throw new Error(
-      "Connect a Vercel Blob store to this project (include Development), then pull env vars."
+      "Connect a Vercel Blob store to this project, click Save Changes, then redeploy."
     );
   }
 

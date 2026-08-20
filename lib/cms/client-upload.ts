@@ -1,23 +1,37 @@
+import { upload } from "@vercel/blob/client";
+import { safeUploadName } from "@/lib/cms/upload";
+
+function uploadError(error: unknown) {
+  if (error instanceof Error && error.message.trim()) return error.message;
+  return "Upload failed. You can still paste an image URL below.";
+}
+
+/**
+ * Browser → Vercel Blob. The server only issues a token; the file
+ * never goes through the Next.js function (avoids 4.5 MB body + OIDC).
+ */
 export async function uploadAdminFile(file: File): Promise<{ url: string }> {
-  const data = new FormData();
-  data.set("file", file);
+  const pathname = `studio/${safeUploadName(file)}`;
+  const options = {
+    handleUploadUrl: "/api/admin/upload",
+    contentType: file.type || undefined,
+  } as const;
 
-  const response = await fetch("/api/admin/upload", {
-    method: "POST",
-    body: data,
-    credentials: "same-origin",
-  });
-
-  let payload: { url?: string; error?: string } = {};
   try {
-    payload = (await response.json()) as { url?: string; error?: string };
-  } catch {
-    throw new Error("Upload failed. Try a smaller image, or paste a URL.");
+    const blob = await upload(pathname, file, {
+      ...options,
+      access: "public",
+    });
+    return { url: blob.url };
+  } catch (publicError) {
+    try {
+      const blob = await upload(pathname, file, {
+        ...options,
+        access: "private",
+      });
+      return { url: blob.downloadUrl || blob.url };
+    } catch {
+      throw new Error(uploadError(publicError));
+    }
   }
-
-  if (!response.ok || !payload.url) {
-    throw new Error(payload.error || "Upload failed.");
-  }
-
-  return { url: payload.url };
 }

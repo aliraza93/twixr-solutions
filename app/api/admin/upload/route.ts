@@ -1,48 +1,59 @@
+import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { NextResponse } from "next/server";
 import { getAuthUser } from "@/lib/cms/auth";
-import { storeAdminFile } from "@/lib/cms/storage";
-import {
-  asUploadFile,
-  assertUploadFile,
-  blobErrorMessage,
-  safeUploadName,
-} from "@/lib/cms/upload";
 
 export const runtime = "nodejs";
-export const maxDuration = 30;
 
+/**
+ * Mints a short-lived Blob client token. The browser then uploads
+ * straight to Vercel Blob — no file bytes pass through this function.
+ * Uses BLOB_READ_WRITE_TOKEN only (no OIDC).
+ */
 export async function POST(request: Request) {
   const user = await getAuthUser();
   if (!user) {
     return NextResponse.json({ error: "Sign in to upload files." }, { status: 401 });
   }
 
-  let formData: FormData;
+  const token = process.env.BLOB_READ_WRITE_TOKEN?.trim();
+  if (!token || token.length < 20) {
+    return NextResponse.json(
+      {
+        error:
+          "BLOB_READ_WRITE_TOKEN is missing on this deployment. In the Blob store → Connect to Project, enable “Add a read-write token”, Save Changes, then Redeploy.",
+      },
+      { status: 500 }
+    );
+  }
+
+  let body: HandleUploadBody;
   try {
-    formData = await request.formData();
+    body = (await request.json()) as HandleUploadBody;
   } catch {
-    return NextResponse.json(
-      { error: "Could not read the file. Try a smaller image." },
-      { status: 400 }
-    );
-  }
-
-  const file = asUploadFile(formData.get("file"));
-  if (!file) {
-    return NextResponse.json({ error: "Choose a file to upload." }, { status: 400 });
+    return NextResponse.json({ error: "Invalid upload request." }, { status: 400 });
   }
 
   try {
-    assertUploadFile(file);
-    const result = await storeAdminFile(
-      file,
-      `studio/${Date.now()}-${safeUploadName(file)}`
-    );
-    return NextResponse.json(result);
+    const json = await handleUpload({
+      body,
+      request,
+      token,
+      onBeforeGenerateToken: async () => ({
+        allowedContentTypes: [
+          "image/jpeg",
+          "image/png",
+          "image/webp",
+          "image/gif",
+          "image/svg+xml",
+          "application/pdf",
+        ],
+        maximumSizeInBytes: 4.5 * 1024 * 1024,
+        addRandomSuffix: true,
+      }),
+    });
+    return NextResponse.json(json);
   } catch (error) {
-    return NextResponse.json(
-      { error: blobErrorMessage(error) },
-      { status: 400 }
-    );
+    const message = error instanceof Error ? error.message : "Upload failed";
+    return NextResponse.json({ error: message.slice(0, 220) }, { status: 400 });
   }
 }

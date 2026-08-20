@@ -4,7 +4,6 @@ import { Icon } from "@iconify/react";
 import { Check, Mail, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Chip } from "@/components/ui/chip";
 import { Approach } from "@/components/sections/approach";
 import { FeaturedPortfolio } from "@/components/sections/featured-portfolio";
 import { PageCta } from "@/components/sections/page-cta";
@@ -56,16 +55,8 @@ function AboutIntro() {
                 <img
                   src={aboutBio.image}
                   alt={aboutBio.name}
-                  className="aspect-4/5 w-full object-cover"
+                  className="h-auto w-full"
                 />
-              </div>
-              <div className="absolute -bottom-4 -right-4">
-                <Chip
-                  tabIndex={-1}
-                  className="pointer-events-none cursor-default border-pine text-pine hover:border-pine hover:text-pine"
-                >
-                  Top Rated Plus
-                </Chip>
               </div>
             </div>
           </ScrollReveal>

@@ -1,7 +1,6 @@
 export type PortfolioCategoryId =
   | "saas"
   | "ai"
-  | "mobile"
   | "ecommerce"
   | "devops";
 
@@ -40,7 +39,6 @@ export const portfolioCategories: {
   { id: "saas", label: "SaaS" },
   { id: "ai", label: "AI & Automation" },
   { id: "ecommerce", label: "E-commerce" },
-  { id: "mobile", label: "Mobile" },
   { id: "devops", label: "Cloud & DevOps" },
 ];
 
@@ -98,144 +96,129 @@ function buildCaseStudy(
   };
 }
 
+// Real projects from Ali's actual work history (LinkedIn + Upwork). Metrics are
+// factual/qualitative — no invented percentages. Images are representative stock
+// visuals; swap in real product screenshots under /public/projects when available.
 const baseProjects: PortfolioProject[] = [
   {
-    slug: "ai-proposal-engine",
-    title: "AI Proposal Engine",
+    slug: "leadquiz-saas-funnel-platform",
+    title: "LeadQuiz — SaaS Lead-Funnel Platform",
     description:
-      "GPT-powered proposal generator that drafts client-ready scopes from brief inputs, cutting sales prep time by 70%.",
-    categoryId: "ai",
-    categoryLabel: "AI & Automation",
-    image:
-      "https://images.unsplash.com/photo-1677442136019-21780ecad995?q=80&w=1200&auto=format&fit=crop",
-    tags: ["OpenAI", "Next.js", "Laravel", "RAG"],
-    year: "2025",
-    client: "Twixr Solutions",
-    link: "https://twixrsolutions.com",
-    featured: true,
-    metrics: [
-      { label: "Faster proposals", value: "70%" },
-      { label: "Active users", value: "120+" },
-    ],
-  },
-  {
-    slug: "custom-saas-platform",
-    title: "Custom SaaS Platform",
-    description:
-      "Multi-tenant B2B platform with role-based access, Stripe billing, and real-time analytics for a global client.",
+      "Full-stack SaaS that lets agencies build high-converting lead funnels — drag-and-drop builder with 30+ templates, custom domains, conditional lead scoring, and multi-client management, on AWS microservices.",
     categoryId: "saas",
     categoryLabel: "SaaS",
     image:
       "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=1200&auto=format&fit=crop",
-    tags: ["Next.js", "Laravel", "Stripe", "PostgreSQL"],
-    year: "2024",
-    client: "Confidential — B2B",
+    tags: ["NestJS", "React", "PostgreSQL", "AWS"],
+    year: "2026",
+    client: "LeadQuiz (US)",
     featured: true,
     metrics: [
-      { label: "Monthly users", value: "15K+" },
-      { label: "Uptime", value: "99.9%" },
+      { label: "Funnel templates", value: "30+" },
+      { label: "Architecture", value: "Microservices" },
     ],
   },
   {
-    slug: "enterprise-analytics-dashboard",
-    title: "Enterprise Analytics Dashboard",
+    slug: "manageph-contractor-payments-platform",
+    title: "ManagePH — Contractor Payments & Team Platform",
     description:
-      "Executive dashboard aggregating ops, revenue, and support KPIs with drill-down views and exportable reports.",
+      "Global contractor payment and team-management platform — onboarding, role-based workspaces, and payment workflows built on Laravel and React with automated CI/CD on AWS.",
     categoryId: "saas",
     categoryLabel: "SaaS",
     image:
       "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1200&auto=format&fit=crop",
-    tags: ["React", "Node.js", "Chart.js", "AWS"],
-    year: "2024",
-    client: "Enterprise client",
+    tags: ["Laravel", "React", "AWS", "CI/CD"],
+    year: "2025",
+    client: "ManagePH",
+    featured: true,
     metrics: [
-      { label: "Data sources", value: "12" },
-      { label: "Load time", value: "<2s" },
+      { label: "Scope", value: "Payments + Teams" },
+      { label: "Reach", value: "Global contractors" },
     ],
   },
   {
-    slug: "upwork-automation-suite",
-    title: "Upwork Automation Suite",
+    slug: "propdaddy-real-estate-platform",
+    title: "PropDaddy — Real-Estate Web Platform",
     description:
-      "Workflow automation for job alerts, proposal templates, and client follow-ups integrated with CRM pipelines.",
-    categoryId: "ai",
-    categoryLabel: "AI & Automation",
-    image:
-      "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?q=80&w=1200&auto=format&fit=crop",
-    tags: ["n8n", "OpenAI", "Zapier", "API"],
-    year: "2023",
-    client: "Freelance ops",
-    metrics: [
-      { label: "Hours saved / wk", value: "12+" },
-      { label: "Automations", value: "24" },
-    ],
-  },
-  {
-    slug: "laravel-multitenant-api",
-    title: "Laravel Multi-tenant API",
-    description:
-      "Scalable REST API with tenant isolation, OAuth2, queue workers, and comprehensive test coverage for a SaaS startup.",
+      "Real-estate platform with an in-app Twilio softphone, cron-driven automation, and multi-channel outreach (SendGrid, IMAP, Slybroadcast, Twilio) backed by VPS queue workers and skip tracing.",
     categoryId: "saas",
     categoryLabel: "SaaS",
     image:
-      "https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=1200&auto=format&fit=crop",
-    tags: ["Laravel", "PostgreSQL", "Redis", "PHPUnit"],
-    year: "2023",
-    client: "SaaS startup",
+      "https://images.unsplash.com/photo-1560518883-ce09059eeffa?q=80&w=1200&auto=format&fit=crop",
+    tags: ["Laravel", "Twilio", "MySQL", "AWS"],
+    year: "2024",
+    client: "PropDaddy.com (US)",
     metrics: [
-      { label: "API endpoints", value: "80+" },
-      { label: "Test coverage", value: "92%" },
+      { label: "In-app calling", value: "Twilio" },
+      { label: "Outreach channels", value: "4+" },
     ],
   },
   {
-    slug: "ecommerce-growth-platform",
-    title: "E-commerce Growth Platform",
+    slug: "forage-b2b-saas",
+    title: "Forage — B2B SaaS for D2C Brands",
     description:
-      "Headless storefront with custom checkout, inventory sync, and conversion-focused product pages for a DTC brand.",
+      "B2B SaaS product enabling direct-to-consumer brands to offer consumers new experiences — built with Laravel and Inertia. A repeat, multi-project engagement.",
+    categoryId: "saas",
+    categoryLabel: "SaaS",
+    image:
+      "https://images.unsplash.com/photo-1556740738-b6a63e27c4df?q=80&w=1200&auto=format&fit=crop",
+    tags: ["Laravel", "Inertia", "Vue", "MySQL"],
+    year: "2025",
+    client: "Forage (D2C SaaS)",
+    metrics: [
+      { label: "Model", value: "B2B SaaS" },
+      { label: "Relationship", value: "Repeat client" },
+    ],
+  },
+  {
+    slug: "gaming-ecommerce-store",
+    title: "Full-Stack E-commerce for Gaming Services",
+    description:
+      "Full-stack e-commerce platform for a gaming-services business — custom storefront, checkout, and order flows in PHP/Laravel. The engagement earned a 5.0★ review and repeat work.",
     categoryId: "ecommerce",
     categoryLabel: "E-commerce",
     image:
-      "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?q=80&w=1200&auto=format&fit=crop",
-    tags: ["Next.js", "Stripe", "Shopify API", "Tailwind"],
-    year: "2022",
-    client: "DTC brand",
+      "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1200&auto=format&fit=crop",
+    tags: ["Laravel", "PHP", "Stripe", "MySQL"],
+    year: "2025",
+    client: "Gaming e-commerce (US)",
     metrics: [
-      { label: "Conversion lift", value: "34%" },
-      { label: "Page speed", value: "95+" },
+      { label: "Client rating", value: "5.0★" },
+      { label: "Type", value: "Full-stack store" },
     ],
   },
   {
-    slug: "flutter-field-service-app",
-    title: "Flutter Field Service App",
+    slug: "ai-content-automation",
+    title: "AI Content Automation (Gemini)",
     description:
-      "Offline-first mobile app for technicians with job scheduling, photo uploads, and signature capture synced to Laravel backend.",
-    categoryId: "mobile",
-    categoryLabel: "Mobile",
+      "Laravel application with the Google Gemini API wired into content generation — tuned prompts and parameters for high-quality output, plus Tailwind UIs with real-time validation.",
+    categoryId: "ai",
+    categoryLabel: "AI & Automation",
     image:
-      "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?q=80&w=1200&auto=format&fit=crop",
-    tags: ["Flutter", "Laravel", "Firebase", "Maps"],
-    year: "2022",
-    client: "Field services co.",
+      "https://images.unsplash.com/photo-1677442136019-21780ecad995?q=80&w=1200&auto=format&fit=crop",
+    tags: ["Laravel", "Gemini API", "Tailwind", "PHP"],
+    year: "2024",
+    client: "Local Spark Solutions (US)",
     metrics: [
-      { label: "Active techs", value: "200+" },
-      { label: "Offline sync", value: "100%" },
+      { label: "AI model", value: "Gemini API" },
+      { label: "UX", value: "Real-time validation" },
     ],
   },
   {
-    slug: "cloud-cicd-pipeline",
-    title: "Cloud CI/CD Pipeline",
+    slug: "aws-cicd-vue-laravel-dashboards",
+    title: "AWS CI/CD & Vue + Laravel Dashboards",
     description:
-      "Zero-downtime deployment pipeline on AWS with Docker, GitHub Actions, staging previews, and Sentry monitoring.",
+      "Vue.js and Laravel dashboards deployed on AWS with CodePipeline CI/CD, Elastic Beanstalk, RDS, CloudFront, and S3 — secure, scalable hosting with streamlined releases.",
     categoryId: "devops",
     categoryLabel: "Cloud & DevOps",
     image:
       "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1200&auto=format&fit=crop",
-    tags: ["AWS", "Docker", "GitHub Actions", "Sentry"],
-    year: "2024",
-    client: "Multiple clients",
+    tags: ["AWS", "CodePipeline", "Laravel", "Vue"],
+    year: "2023",
+    client: "Applis Technologies (US)",
     metrics: [
-      { label: "Deploy time", value: "4 min" },
-      { label: "Incidents", value: "−60%" },
+      { label: "Deploys", value: "CodePipeline" },
+      { label: "Hosting", value: "Elastic Beanstalk" },
     ],
   },
 ];
@@ -243,140 +226,130 @@ const baseProjects: PortfolioProject[] = [
 export const portfolioCaseStudies: PortfolioCaseStudy[] = [
   buildCaseStudy(baseProjects[0], {
     longDescription:
-      "An internal Twixr tool that turns rough client briefs into structured proposals using GPT-4 and a custom RAG pipeline over past project scopes. Sales prep dropped from hours to minutes while keeping tone and pricing consistent.",
+      "LeadQuiz is a full-stack SaaS that lets agencies build and run high-converting lead funnels for their clients. It pairs a drag-and-drop funnel builder (30+ templates) with custom domains, conditional lead scoring, auto-disqualification, role-based team access, and CRM-style workflows — all on an AWS microservices backend.",
     gallery: [
       baseProjects[0].image,
-      "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=80&w=1200&auto=format&fit=crop",
-    ],
-    challenge:
-      "Proposal writing was a bottleneck — each scope took 2–4 hours of manual drafting, and quality varied between team members.",
-    solution:
-      "Built a Next.js frontend with Laravel API, vector store over historical proposals, and prompt templates tuned for scope sections (timeline, stack, deliverables).",
-    outcomes: [
-      "70% reduction in proposal drafting time",
-      "120+ active internal users within first quarter",
-      "Consistent scope structure across all outbound proposals",
-      "RAG retrieval improved relevance of past-project references",
-    ],
-    timeline: "2025 · 6 weeks",
-    role: "Founder & Lead Engineer",
-    techStack: ["Next.js", "Laravel", "OpenAI", "Pinecone", "PostgreSQL", "Tailwind CSS"],
-  }),
-  buildCaseStudy(baseProjects[1], {
-    longDescription:
-      "End-to-end B2B SaaS with multi-tenant architecture, Stripe subscriptions, admin analytics, and role-based dashboards. Designed for a global client scaling from pilot to thousands of monthly active users.",
-    gallery: [
-      baseProjects[1].image,
       "https://images.unsplash.com/photo-1551434678-e076c223a692?q=80&w=1200&auto=format&fit=crop",
     ],
     challenge:
-      "The client needed a secure multi-tenant platform with billing, onboarding, and analytics — all within a tight launch window.",
+      "Agencies needed one workspace to manage funnels for many clients — with isolation between accounts, flexible funnel logic, and reliable delivery of leads into whatever CRM each client already used.",
     solution:
-      "Delivered tenant-isolated Laravel API, Next.js App Router frontend, Stripe Billing integration, and real-time admin dashboards with WebSocket updates.",
+      "Built a NestJS + React application on an AWS microservices architecture (ECS, RDS/PostgreSQL, S3). Delivered the drag-and-drop builder, conditional scoring, custom domains, Zapier and webhook integrations to sync leads to any CRM, and scheduled weekly per-client summary reports.",
     outcomes: [
-      "15K+ monthly active users post-launch",
-      "99.9% uptime on AWS with auto-scaling",
-      "Subscription billing live in 3 pricing tiers",
-      "Onboarding flow reduced time-to-value by 40%",
+      "Drag-and-drop funnel builder with 30+ templates",
+      "Custom domains and conditional lead scoring per funnel",
+      "Zapier + webhook sync into any client CRM",
+      "Automated weekly per-client reporting on schedule",
     ],
-    timeline: "2024 · 12 weeks",
-    techStack: ["Next.js", "Laravel", "Stripe", "PostgreSQL", "Redis", "AWS", "Docker"],
+    timeline: "2026 · Ongoing",
+    role: "Full-Stack Developer & DevOps Engineer",
+    techStack: ["NestJS", "React", "PostgreSQL", "Docker", "AWS (ECS, RDS, S3)"],
+  }),
+  buildCaseStudy(baseProjects[1], {
+    longDescription:
+      "ManagePH is a global contractor payment and team-management platform. It handles contractor onboarding, role-based team workspaces, and payment workflows so distributed teams can manage people and payouts in one place.",
+    gallery: [
+      baseProjects[1].image,
+      "https://images.unsplash.com/photo-1554224155-6726b3ff858f?q=80&w=1200&auto=format&fit=crop",
+    ],
+    challenge:
+      "Managing global contractors meant juggling onboarding, team structure, and payments across tools — the client wanted a single platform with clean workflows and dependable deployments.",
+    solution:
+      "Delivered a Laravel + React platform with team and role management, payment workflows, and automated CI/CD to AWS for repeatable, low-risk releases.",
+    outcomes: [
+      "Unified contractor onboarding and team management",
+      "Payment workflows for global contractors",
+      "Role-based access across workspaces",
+      "Automated CI/CD delivery on AWS",
+    ],
+    timeline: "2025",
+    role: "Full-Stack Engineer",
+    techStack: ["Laravel", "React", "MySQL", "AWS", "CI/CD"],
   }),
   buildCaseStudy(baseProjects[2], {
     longDescription:
-      "Unified executive dashboard pulling from 12 data sources — revenue, ops, support, and product metrics — with drill-down views, date filters, and PDF export for board reporting.",
+      "A real-estate web platform where agents work leads end to end. The build added an in-app calling experience, automated outreach across several channels, and the background infrastructure to keep it all running reliably.",
     challenge:
-      "Leadership relied on fragmented spreadsheets; no single source of truth for weekly business reviews.",
+      "The team needed to call and follow up with prospects without leaving the app, run multi-channel campaigns, and keep large volumes of contact data clean and current.",
     solution:
-      "Built React dashboard with Node.js aggregation layer, cached queries, and Chart.js visualizations with role-based access control.",
+      "Optimized database queries, orchestrated complex cron automation, integrated a Twilio softphone for in-app calling, and wired SendGrid, IMAP, Slybroadcast, and Twilio for campaign management — supervised by VPS queue workers with skip tracing to consolidate records.",
     outcomes: [
-      "12 integrated data sources in one view",
-      "Sub-2s load time on primary dashboard",
-      "Weekly reporting time cut from 4 hours to 20 minutes",
-      "Exportable PDF packs for board meetings",
+      "In-app calling via an integrated Twilio softphone",
+      "Multi-channel outreach (SendGrid, IMAP, Slybroadcast, Twilio)",
+      "Cron-driven automation with supervised queue workers",
+      "Skip tracing to consolidate and clean contact records",
     ],
-    timeline: "2024 · 10 weeks",
-    techStack: ["React", "Node.js", "Chart.js", "PostgreSQL", "AWS Lambda", "Redis"],
+    timeline: "2023 – 2024",
+    role: "Full-Stack Developer",
+    techStack: ["Laravel", "Twilio", "MySQL", "SendGrid", "VPS / Queues"],
   }),
   buildCaseStudy(baseProjects[3], {
     longDescription:
-      "Automation hub connecting Upwork job feeds, CRM, and AI-assisted proposal drafts — 24 active workflows saving 12+ hours per week on repetitive freelance ops.",
+      "Forage provides a B2B SaaS product for direct-to-consumer (D2C) brands. Ali contributed as a Laravel + Inertia full-stack developer on the SaaS product across a repeat, multi-project relationship.",
     challenge:
-      "Manual job monitoring and follow-ups consumed most of the work week, with missed opportunities on time-sensitive postings.",
+      "The product needed reliable full-stack delivery and clear communication to keep shipping features as the SaaS matured.",
     solution:
-      "Orchestrated n8n workflows with OpenAI nodes, Zapier bridges, and custom webhooks into a lightweight admin UI for template management.",
+      "Worked as a Laravel + Inertia full-stack developer, delivering features with clear communication — the kind of partnership that led the client to continue working together on further projects.",
     outcomes: [
-      "12+ hours saved per week on ops tasks",
-      "24 automations running with 99% reliability",
-      "Faster response time on high-fit job postings",
-      "CRM sync eliminated duplicate data entry",
+      "Full-stack feature delivery on a live B2B SaaS",
+      "Laravel + Inertia application work",
+      "Repeat, multi-project client relationship",
+      "“Clear communication and a subject-matter expert” — client review",
     ],
-    timeline: "2023 · 5 weeks",
-    techStack: ["n8n", "OpenAI", "Zapier", "Node.js", "PostgreSQL", "REST APIs"],
+    timeline: "2024 – 2025",
+    role: "Full-Stack Developer",
+    techStack: ["Laravel", "Inertia", "Vue", "MySQL"],
   }),
   buildCaseStudy(baseProjects[4], {
     longDescription:
-      "Production Laravel API serving a SaaS startup with strict tenant isolation, OAuth2, queued jobs, and 92% test coverage — 80+ documented endpoints.",
+      "A full-stack e-commerce platform for a gaming-services business — a custom storefront with checkout and order management built in PHP/Laravel. The engagement earned a 5.0★ review and became one of Ali's standout client relationships.",
     challenge:
-      "Early MVP needed to support multiple tenants securely while the team planned rapid feature expansion.",
+      "The client needed a reliable, custom storefront for selling gaming services, with the flexibility a templated store couldn't offer.",
     solution:
-      "Implemented database-per-tenant pattern, Passport OAuth2, Horizon queues, and comprehensive PHPUnit + Pest test suites with CI gates.",
+      "Built the storefront, checkout, and order flows in PHP/Laravel, focusing on quality and value — the work the client described as coming from “the best developer I've ever worked with.”",
     outcomes: [
-      "80+ REST endpoints with OpenAPI docs",
-      "92% automated test coverage",
-      "Zero cross-tenant data leaks in security audit",
-      "Queue throughput handled 10x traffic spike",
+      "Custom full-stack e-commerce storefront",
+      "Checkout and order-management flows",
+      "5.0★ client review",
+      "Competitive value that earned repeat trust",
     ],
-    timeline: "2023 · 8 weeks",
-    techStack: ["Laravel", "PostgreSQL", "Redis", "PHPUnit", "Pest", "Docker"],
+    timeline: "2024 – 2025",
+    role: "Full-Stack Developer",
+    techStack: ["Laravel", "PHP", "Stripe", "MySQL"],
   }),
   buildCaseStudy(baseProjects[5], {
     longDescription:
-      "Headless commerce rebuild for a DTC brand — custom Next.js storefront, Shopify inventory sync, Stripe checkout, and conversion-optimized product pages.",
+      "A Laravel application with the Google Gemini API integrated into content generation. Beyond the AI work, the engagement improved performance across key parts of the app and added polished, real-time-validated UIs.",
     challenge:
-      "Legacy Shopify theme limited customization; checkout abandonment was high and page speed scores were below 70.",
+      "The client wanted high-quality, unique generated content plus faster, more reliable pages and a better user experience.",
     solution:
-      "Headless architecture with Next.js ISR, Shopify Storefront API, custom Stripe Elements checkout, and A/B-tested product page layouts.",
+      "Integrated the Gemini API with tuned prompts and parameters for quality output, optimized key parts of the application, hardened backend code, and built Tailwind UIs with real-time validation. Managed everything through GitHub with secure SSH server access.",
     outcomes: [
-      "34% lift in conversion rate post-launch",
-      "Lighthouse performance score 95+",
-      "Real-time inventory sync across channels",
-      "Checkout completion improved by 22%",
+      "Gemini API integrated for content generation",
+      "Real-time-validated UIs in Tailwind CSS",
+      "Performance and backend improvements",
+      "Delivered on deadline with clear team communication",
     ],
-    timeline: "2022 · 10 weeks",
-    techStack: ["Next.js", "Stripe", "Shopify API", "Tailwind CSS", "Vercel", "Sanity CMS"],
+    timeline: "2024",
+    role: "Full-Stack PHP / Laravel Developer",
+    techStack: ["Laravel", "Google Gemini API", "Tailwind CSS", "PHP", "GitHub"],
   }),
   buildCaseStudy(baseProjects[6], {
     longDescription:
-      "Offline-first Flutter app for 200+ field technicians — job scheduling, photo capture, digital signatures, and background sync to a Laravel API.",
+      "As a senior backend Laravel developer, Ali built and maintained Vue.js + Laravel dashboards and owned their deployment on AWS — streamlining releases and keeping hosting secure and scalable.",
     challenge:
-      "Technicians worked in low-connectivity areas; paper workflows caused delays and data loss.",
+      "Dashboards needed dependable, repeatable deployments and scalable, secure hosting without manual, error-prone release steps.",
     solution:
-      "Built Flutter app with local SQLite cache, background sync queue, Firebase push notifications, and Laravel API with conflict resolution.",
+      "Developed Vue.js + Laravel dashboards and leveraged AWS CodePipeline with GitHub for streamlined deployments, using Elastic Beanstalk, RDS, CloudFront, and S3 for secure, scalable hosting.",
     outcomes: [
-      "200+ active technicians on platform",
-      "100% offline job completion capability",
-      "Paper workflows eliminated within 60 days",
-      "Average job close-out time reduced by 45%",
+      "Vue.js + Laravel dashboards, built and maintained",
+      "Streamlined deploys via AWS CodePipeline + GitHub",
+      "Elastic Beanstalk, RDS, CloudFront, and S3 hosting",
+      "Secure, scalable production infrastructure",
     ],
-    timeline: "2022 · 14 weeks",
-    techStack: ["Flutter", "Dart", "Laravel", "Firebase", "SQLite", "Google Maps API"],
-  }),
-  buildCaseStudy(baseProjects[7], {
-    longDescription:
-      "Standardized CI/CD for multiple client projects — Dockerized builds, GitHub Actions pipelines, staging previews, blue-green deploys on AWS, and Sentry error tracking.",
-    challenge:
-      "Deployments were manual, error-prone, and caused downtime during releases across several production apps.",
-    solution:
-      "Designed reusable GitHub Actions workflows, ECS/Fargate deployment targets, preview environments per PR, and Sentry + CloudWatch alerting.",
-    outcomes: [
-      "Deploy time reduced to under 4 minutes",
-      "60% fewer production incidents post-migration",
-      "Staging previews on every pull request",
-      "Rollback capability under 2 minutes",
-    ],
-    timeline: "2024 · 4 weeks",
-    techStack: ["AWS", "Docker", "GitHub Actions", "ECS", "Sentry", "Terraform"],
+    timeline: "2021 – 2023",
+    role: "Senior Backend Laravel Developer",
+    techStack: ["AWS", "CodePipeline", "Elastic Beanstalk", "Laravel", "Vue"],
   }),
 ];
 

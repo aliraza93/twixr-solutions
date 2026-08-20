@@ -19,7 +19,7 @@ const buttonVariants = cva(
           "rounded-md bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
         link: "text-primary underline-offset-4 hover:underline",
         primary:
-          "group rounded-md bg-lime px-[22px] py-[14px] font-semibold text-ink hover:-translate-y-px hover:shadow-lime",
+          "group rounded-md bg-lime px-[22px] py-[14px] font-semibold text-d-bg hover:-translate-y-px hover:text-d-bg hover:shadow-lime",
         ghost:
           "rounded-md border border-hairline-strong bg-transparent px-[22px] py-[14px] font-semibold text-ink hover:border-ink hover:bg-surface",
         text:

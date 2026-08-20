@@ -6,7 +6,7 @@ import { pageMetadata, jsonLdGraph, breadcrumbNode } from "@/lib/seo";
 export const metadata: Metadata = pageMetadata({
   title: "Results",
   description:
-    "Real client reviews from Upwork, Fiverr, and direct engagements — Top Rated Plus with a 100% Job Success score.",
+    "Real, verified client reviews from Upwork — Top Rated Plus with a 100% Job Success score and a 4.7-star rating across 40 reviews.",
   path: "/testimonials",
 });
 

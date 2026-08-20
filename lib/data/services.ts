@@ -2,16 +2,14 @@ export type ServiceCatalogCategoryId =
   | "product"
   | "backend"
   | "ai"
-  | "cloud"
-  | "mobile";
+  | "cloud";
 
 export type ServiceIconName =
   | "Layers"
   | "Server"
   | "Monitor"
   | "Bot"
-  | "Cloud"
-  | "Smartphone";
+  | "Cloud";
 
 export type ServiceListingItem = {
   slug: string;
@@ -371,7 +369,7 @@ export const services: ServiceDetail[] = [
     categoryLabel: "Cloud & DevOps",
     title: "Cloud Infrastructure & DevOps",
     description:
-      "AWS/GCP setup, CI/CD pipelines, Docker, Kubernetes, and 99.99% uptime deployments.",
+      "AWS setup, CI/CD pipelines, Docker, and zero-downtime deployments with monitoring built in.",
     longDescription:
       "Reliable cloud infrastructure and DevOps practices — IaC, CI/CD, container orchestration, and observability so your team ships fast without sacrificing uptime or security.",
     tags: ["AWS", "Docker", "GitHub Actions", "Terraform"],
@@ -434,77 +432,6 @@ export const services: ServiceDetail[] = [
       },
     ],
   },
-  {
-    slug: "mobile-app-development",
-    icon: "Smartphone",
-    illustration: "/services/mobile-app-development.svg",
-    categoryId: "mobile",
-    categoryLabel: "Mobile",
-    title: "Mobile App Development",
-    description:
-      "Cross-platform iOS and Android apps with smooth UX, push notifications, and app store deployment.",
-    longDescription:
-      "Cross-platform mobile apps with Flutter or React Native — polished UX, offline support, push notifications, and full App Store and Play Store submission support.",
-    tags: ["Flutter", "Dart", "Expo", "React Native"],
-    gallery: [
-      "/services/mobile-app-development.svg",
-      "/services/mobile-app-development.svg",
-    ],
-    included: [
-      "UX flows & wireframe alignment",
-      "Cross-platform UI implementation",
-      "API integration & auth",
-      "Push notifications",
-      "Offline-first patterns",
-      "App Store & Play Store assets",
-      "Beta testing (TestFlight/Internal)",
-      "Store submission support",
-    ],
-    sidebarHighlights: [
-      "iOS & Android from one codebase",
-      "Performance profiling",
-      "Analytics integration",
-      "Post-launch bug-fix window",
-    ],
-    packages: [
-      sharedPackages.starter([
-        "Core screens & navigation",
-        "API-connected MVP",
-        "Basic push notifications",
-        "TestFlight / internal testing",
-      ]),
-      sharedPackages.growth([
-        "Full feature app",
-        "Offline sync",
-        "In-app purchases setup",
-        "Deep linking",
-        "Store listing & submission",
-      ]),
-      sharedPackages.enterprise([
-        "Native module bridges",
-        "Enterprise MDM support",
-        "Long-term feature roadmap",
-        "Dedicated release cadence",
-      ]),
-    ],
-    faqs: [
-      {
-        question: "Flutter or React Native?",
-        answer:
-          "Flutter for pixel-perfect custom UI and performance. React Native when your team is already React-heavy. I advise based on your roadmap and team skills.",
-      },
-      {
-        question: "Do you handle app store submission?",
-        answer:
-          "Yes — metadata, screenshots guidance, privacy manifests, and submission through App Store Connect and Google Play Console.",
-      },
-      {
-        question: "Can the app share code with our web app?",
-        answer:
-          "Often yes — shared API clients, auth flows, and business logic. I align mobile and web architecture when you have both.",
-      },
-    ],
-  },
 ];
 
 export function getServiceSlugs(): string[] {
@@ -515,7 +442,7 @@ export function getServiceBySlug(slug: string): ServiceDetail | undefined {
   return services.find((s) => s.slug === slug);
 }
 
-/** Listing-only projection for the services index page. */
+/** Listing projection for the services index page. */
 export function getServiceListings(): ServiceListingItem[] {
-  return services.filter((s) => s.slug !== "mobile-app-development");
+  return services.map((s) => s);
 }

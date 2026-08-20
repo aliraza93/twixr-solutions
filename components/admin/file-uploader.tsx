@@ -69,7 +69,7 @@ export function FileUploader({
     <Field
       label={label}
       htmlFor={name}
-      hint={hint ?? "Drop files here, browse, or paste an existing URL."}
+      hint={hint ?? "Drop a file, or paste an image URL. Files go to Vercel Blob."}
     >
       <input type="hidden" name={name} value={serialized} />
       <div

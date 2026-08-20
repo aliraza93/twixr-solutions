@@ -2,15 +2,17 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { faqs } from "@/content/faq";
+import { faqs as fallbackFaqs } from "@/content/faq";
 import { Icon } from "@iconify/react";
 import { cn } from "@/lib/utils";
 import { getIconAccent } from "@/lib/icon-accents";
 import { SectionHeader } from "@/components/ui/section-header";
 import { ScrollReveal } from "@/components/motion/scroll-reveal";
+import type { FaqItem } from "@/lib/cms/types";
 
-export function FAQ() {
+export function FAQ({ items }: { items?: FaqItem[] }) {
   const [activeId, setActiveId] = useState<number | null>(0);
+  const faqs = items?.length ? items : fallbackFaqs;
 
   return (
     <section className="relative overflow-hidden bg-white py-16 dark:bg-slate-950 md:py-20">

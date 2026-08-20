@@ -10,7 +10,6 @@ import { Chip } from "@/components/ui/chip";
 import { FilterChip } from "@/components/ui/filter-chip";
 import { SectionHeading } from "@/components/ui/section-heading";
 import {
-  getPortfolioProjects,
   portfolioCategories,
   type PortfolioCategoryId,
   type PortfolioProject,
@@ -25,8 +24,13 @@ import {
   ScrollStagger,
 } from "@/components/motion/scroll-reveal";
 
-export function PortfolioPageClient() {
-  const projects = getPortfolioProjects();
+export function PortfolioPageClient({
+  projects,
+  featured,
+}: {
+  projects: PortfolioProject[];
+  featured?: PortfolioProject[];
+}) {
 
   return (
     <main className="min-h-screen bg-canvas pt-[120px] lg:pt-[140px]">
@@ -36,7 +40,7 @@ export function PortfolioPageClient() {
         emphasis="Portfolio"
         description="SaaS platforms, APIs, and cloud-native products built for startups and global teams — from MVP to scale."
       />
-      <FeaturedPortfolio />
+      <FeaturedPortfolio projects={featured} />
       <ProjectCatalog projects={projects} />
       <StatsStrip />
       <PageCta

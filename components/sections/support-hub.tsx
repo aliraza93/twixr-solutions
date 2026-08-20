@@ -2,17 +2,19 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { faqs } from "@/content/faq";
+import { faqs as fallbackFaqs } from "@/content/faq";
 import { support } from "@/content/support";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { ScrollReveal, ScrollRevealItem, ScrollStagger } from "@/components/motion/scroll-reveal";
 import { cn } from "@/lib/utils";
+import type { FaqItem } from "@/lib/cms/types";
 
 const AUDIENCES = support.audiences;
 
-export function SupportHub() {
+export function SupportHub({ faqs: faqItems }: { faqs?: FaqItem[] }) {
+  const faqs = faqItems?.length ? faqItems : fallbackFaqs;
   return (
     <section
       id="services"
@@ -120,7 +122,7 @@ function FaqRow({
   faq,
   defaultOpen,
 }: {
-  faq: (typeof faqs)[number];
+  faq: FaqItem;
   defaultOpen: boolean;
 }) {
   const [open, setOpen] = useState(defaultOpen);

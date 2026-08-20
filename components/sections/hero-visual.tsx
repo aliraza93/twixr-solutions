@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import Image from "next/image";
 import { hero } from "@/content/hero";
 import { Activity, Globe, Zap } from "lucide-react";
+import type { HeroContent } from "@/lib/cms/types";
 
 const MAX_TILT = 6;
 
@@ -35,8 +36,8 @@ function BrowserChrome({ title }: { title: string }) {
   );
 }
 
-function DashboardMock() {
-  const dash = hero.dashboard;
+function DashboardMock({ dashboard }: { dashboard?: HeroContent["dashboard"] }) {
+  const dash = dashboard ?? hero.dashboard;
   const statIcons = [Activity, Zap, Globe] as const;
 
   return (
@@ -146,7 +147,13 @@ function CodeCard() {
   );
 }
 
-export function HeroVisual({ image }: { image?: HeroVisualImage }) {
+export function HeroVisual({
+  image,
+  dashboard,
+}: {
+  image?: HeroVisualImage;
+  dashboard?: HeroContent["dashboard"];
+}) {
   const stageRef = useRef<HTMLDivElement>(null);
   const tiltRef = useRef<HTMLDivElement>(null);
   const dashRef = useRef<HTMLDivElement>(null);
@@ -238,7 +245,7 @@ export function HeroVisual({ image }: { image?: HeroVisualImage }) {
               />
             </>
           ) : (
-            <DashboardMock />
+            <DashboardMock dashboard={dashboard} />
           )}
         </div>
 

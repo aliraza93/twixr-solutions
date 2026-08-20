@@ -16,7 +16,7 @@ import { Chip } from "@/components/ui/chip";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { cn } from "@/lib/utils";
 import type { ServiceDetail } from "@/lib/data/services";
-import { testimonials } from "@/content/testimonials";
+import { testimonials as fallbackTestimonials } from "@/content/testimonials";
 import {
   ScrollReveal,
   ScrollRevealItem,
@@ -25,13 +25,17 @@ import {
 import { TestimonialMarquee } from "@/components/sections/testimonial-marquee";
 import { PageCta } from "@/components/sections/page-cta";
 
+import type { Testimonial } from "@/lib/cms/types";
+
 const CONTACT_EMAIL = "ali@twixrsolutions.com";
 
 type ServiceDetailClientProps = {
   service: ServiceDetail;
+  testimonials?: Testimonial[];
 };
 
-export function ServiceDetailClient({ service }: ServiceDetailClientProps) {
+export function ServiceDetailClient({ service, testimonials }: ServiceDetailClientProps) {
+  const quotes = testimonials?.length ? testimonials : fallbackTestimonials;
   const defaultPackage = service.packages.find((p) => p.popular) ?? service.packages[0];
 
   return (
@@ -298,7 +302,7 @@ export function ServiceDetailClient({ service }: ServiceDetailClientProps) {
             description="Feedback from professionals I've worked with on similar projects."
             className="mb-8"
           />
-          <TestimonialMarquee items={testimonials} rows={2} />
+          <TestimonialMarquee items={quotes} rows={2} />
         </ScrollReveal>
       </div>
       <PageCta

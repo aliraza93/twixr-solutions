@@ -2,10 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono, Sora } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
-import { Navbar } from "@/components/layout/navbar";
-import { Footer } from "@/components/layout/footer";
-import { SmoothScroll } from "@/components/motion/smooth-scroll";
-import { SiteEffects } from "@/components/motion/site-effects";
 import { site } from "@/content/site";
 import {
   SITE_URL,
@@ -13,9 +9,7 @@ import {
   DEFAULT_OG,
   TWITTER_HANDLE,
   absoluteUrl,
-  siteJsonLd,
 } from "@/lib/seo";
-import { JsonLd } from "@/components/seo/json-ld";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -129,15 +123,7 @@ export default function RootLayout({
           jetbrainsMono.variable
         )}
       >
-        <SmoothScroll>
-          <div className="relative flex min-h-screen flex-col">
-            <Navbar />
-            <main className="flex-1">{children}</main>
-            <Footer />
-            <SiteEffects />
-          </div>
-        </SmoothScroll>
-        <JsonLd data={siteJsonLd()} />
+        {children}
       </body>
     </html>
   );

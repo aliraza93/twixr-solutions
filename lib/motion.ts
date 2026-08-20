@@ -2,6 +2,7 @@
 
 export const EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
 export const EASE_INOUT = "cubic-bezier(0.65, 0.05, 0.36, 1)";
+export const MOTION_EASE = [0.22, 1, 0.36, 1] as const;
 
 /** Primary scroll-reveal duration (seconds) */
 export const DURATION = 0.8;

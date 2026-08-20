@@ -9,9 +9,12 @@ import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { site } from "@/content/site";
 import { cn } from "@/lib/utils";
+import type { NavLink, SiteCta } from "@/lib/cms/types";
 
-const LINKS = site.nav;
-const OVERLAY_LINKS = [{ href: "/", label: "Home" }, ...LINKS] as const;
+type NavbarProps = {
+  nav?: readonly NavLink[];
+  primaryCta?: SiteCta;
+};
 
 function isActive(pathname: string, href: string) {
   if (href === "/") return pathname === "/";
@@ -41,16 +44,18 @@ function Logo({ onClick, inverted = false }: { onClick?: () => void; inverted?: 
 
 function NavLinks({
   pathname,
+  links,
   onNavigate,
   compact = false,
 }: {
   pathname: string;
+  links: readonly NavLink[];
   onNavigate?: () => void;
   compact?: boolean;
 }) {
   return (
     <ul className="hidden items-center lg:flex">
-      {LINKS.map((link) => {
+      {links.map((link) => {
         const active = isActive(pathname, link.href);
         return (
           <li key={link.href}>
@@ -87,10 +92,13 @@ function NavLinks({
   );
 }
 
-export function Navbar() {
+export function Navbar({ nav, primaryCta }: NavbarProps) {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const links = nav ?? site.nav;
+  const cta = primaryCta ?? site.primaryCta;
+  const overlayLinks = [{ href: "/", label: "Home" }, ...links];
 
   useEffect(() => {
     setOpen(false);
@@ -141,7 +149,7 @@ export function Navbar() {
           </div>
 
           <nav className="site-nav__links" aria-label="Primary">
-            <NavLinks pathname={pathname} compact={scrolled} />
+            <NavLinks pathname={pathname} links={links} compact={scrolled} />
           </nav>
 
           <div className="site-nav__actions">
@@ -153,8 +161,8 @@ export function Navbar() {
               )}
               asChild
             >
-              <Link href={site.primaryCta.href}>
-                {site.primaryCta.label}
+              <Link href={cta.href}>
+                {cta.label}
                 <span
                   aria-hidden
                   className="inline-block transition-transform duration-[var(--dur-fast)] ease-[var(--ease-out)] group-hover:translate-x-[3px]"
@@ -203,7 +211,7 @@ export function Navbar() {
                     className="flex flex-1 flex-col justify-center px-[clamp(20px,5vw,40px)]"
                   >
                     <ul className="flex flex-col gap-1">
-                      {OVERLAY_LINKS.map((link, i) => {
+                      {overlayLinks.map((link, i) => {
                         const active = isActive(pathname, link.href);
                         return (
                           <li key={link.href}>
@@ -234,8 +242,8 @@ export function Navbar() {
 
                   <div className="px-[clamp(20px,5vw,40px)] pb-[max(2rem,env(safe-area-inset-bottom))] pt-4">
                     <Button variant="primary" className="h-12 w-full text-base" asChild>
-                      <Link href={site.primaryCta.href} onClick={() => setOpen(false)}>
-                        {site.primaryCta.label}
+                      <Link href={cta.href} onClick={() => setOpen(false)}>
+                        {cta.label}
                         <span
                           aria-hidden
                           className="inline-block transition-transform duration-[var(--dur-fast)] ease-[var(--ease-out)] group-hover:translate-x-[3px]"

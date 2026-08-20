@@ -7,24 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { HeroRotatingWord } from "@/components/sections/hero-rotating-word";
 import { HeroVisual, type HeroVisualImage } from "@/components/sections/hero-visual";
-import { hero } from "@/content/hero";
+import { hero as fallbackHero } from "@/content/hero";
 import { cn } from "@/lib/utils";
+import type { HeroContent } from "@/lib/cms/types";
 
-const STABLE_HEADING = hero.stableHeading;
-
-const HEADING_LINES: {
-  text?: string;
-  kind: "plain" | "emphasis" | "cycle";
-  i: number;
-}[][] = (() => {
+function headingLinesOf(content: HeroContent) {
   let i = 0;
-  return hero.headingLines.map((line) =>
+  return content.headingLines.map((line) =>
     line.map((word) => ({ ...word, i: i++ }))
   );
-})();
-
-const LOGOS = hero.techLogos;
-const MORE = hero.moreLogos;
+}
 
 function wordClass(kind: "plain" | "emphasis") {
   if (kind === "emphasis") {
@@ -33,7 +25,17 @@ function wordClass(kind: "plain" | "emphasis") {
   return "text-ink";
 }
 
-export function Hero({ screenshot }: { screenshot?: HeroVisualImage }) {
+export function Hero({
+  screenshot,
+  content,
+}: {
+  screenshot?: HeroVisualImage;
+  content?: HeroContent;
+}) {
+  const hero = content ?? (fallbackHero as unknown as HeroContent);
+  const headingLines = headingLinesOf(hero);
+  const logos = hero.techLogos;
+  const more = hero.moreLogos;
   const [moreOpen, setMoreOpen] = useState(false);
   const [Particles, setParticles] = useState<ComponentType | null>(null);
 
@@ -69,12 +71,12 @@ export function Hero({ screenshot }: { screenshot?: HeroVisualImage }) {
           <div className="@container relative z-10 flex min-w-0 flex-col items-start">
             <Eyebrow>{hero.eyebrow}</Eyebrow>
 
-            <h1 className="sr-only">{STABLE_HEADING}</h1>
+            <h1 className="sr-only">{hero.stableHeading}</h1>
             <div
               className="mt-5 w-full font-sora text-[length:clamp(2.25rem,7.8cqi,3.65rem)] font-extrabold leading-[1.05] tracking-[-0.02em]"
               aria-hidden="true"
             >
-              {HEADING_LINES.map((line, lineIdx) => (
+              {headingLines.map((line, lineIdx) => (
                 <span key={lineIdx} className="hero-line lg:whitespace-nowrap">
                   {line.map((word) =>
                     word.kind === "cycle" ? (
@@ -83,7 +85,7 @@ export function Hero({ screenshot }: { screenshot?: HeroVisualImage }) {
                         className="hero-word"
                         style={{ "--i": word.i } as CSSProperties}
                       >
-                        <HeroRotatingWord />
+                        <HeroRotatingWord words={hero.rotatingWords} />
                       </span>
                     ) : (
                       <span
@@ -131,7 +133,7 @@ export function Hero({ screenshot }: { screenshot?: HeroVisualImage }) {
                 {hero.logosCaption}
               </p>
               <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-                {LOGOS.map((logo) => (
+                {logos.map((logo) => (
                   <div
                     key={logo.label}
                     className="flex items-center gap-2 opacity-70 grayscale transition-[opacity,filter] duration-[var(--dur-fast)] ease-[var(--ease-out)] hover:opacity-100 hover:grayscale-0"
@@ -154,7 +156,7 @@ export function Hero({ screenshot }: { screenshot?: HeroVisualImage }) {
                     onClick={() => setMoreOpen((open) => !open)}
                     className="rounded-pill border border-hairline px-3 py-1.5 font-mono text-[11px] font-medium uppercase tracking-[0.12em] text-muted transition-colors duration-[var(--dur-fast)] hover:border-pine hover:text-pine"
                   >
-                    +{MORE.length} More
+                    +{more.length} More
                   </button>
                   <div
                     id="hero-more-stack"
@@ -164,7 +166,7 @@ export function Hero({ screenshot }: { screenshot?: HeroVisualImage }) {
                     )}
                   >
                     <div className="flex gap-6">
-                      {MORE.map((item) => (
+                      {more.map((item) => (
                         <div key={item.label} className="flex flex-col items-center gap-2">
                           <Icon icon={item.icon} className="h-6 w-6" />
                           <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted">
@@ -180,7 +182,7 @@ export function Hero({ screenshot }: { screenshot?: HeroVisualImage }) {
           </div>
 
           <div className="relative z-0 min-w-0 pb-12 lg:pb-10">
-            <HeroVisual image={screenshot} />
+            <HeroVisual image={screenshot} dashboard={hero.dashboard} />
           </div>
         </div>
 

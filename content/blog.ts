@@ -1,18 +1,12 @@
 import fs from "node:fs";
 import path from "node:path";
-import type { BlogContentBlock, BlogListing, BlogPost } from "./blog-schema";
+import type { BlogListing, BlogPost } from "./blog-schema";
+import { parseBody } from "./blog-schema";
 
 export type { BlogContentBlock, BlogListing, BlogPost } from "./blog-schema";
-export { getTableOfContents } from "./blog-schema";
+export { getTableOfContents, parseBody } from "./blog-schema";
 
 type Frontmatter = Record<string, string>;
-
-function slugify(text: string) {
-  return text
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
-}
 
 function parseFrontmatter(raw: string): { data: Frontmatter; body: string } {
   const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
@@ -33,53 +27,6 @@ function parseFrontmatter(raw: string): { data: Frontmatter; body: string } {
     data[key] = value;
   }
   return { data, body: match[2].trim() };
-}
-
-function parseBody(md: string): BlogContentBlock[] {
-  const blocks: BlogContentBlock[] = [];
-  const lines = md.split(/\r?\n/);
-  let i = 0;
-
-  while (i < lines.length) {
-    const line = lines[i];
-    if (!line.trim()) {
-      i += 1;
-      continue;
-    }
-
-    const heading = line.match(/^(#{2,3})\s+(.+)$/);
-    if (heading) {
-      const level = heading[1].length as 2 | 3;
-      const text = heading[2].trim();
-      blocks.push({ type: "heading", id: slugify(text), level, text });
-      i += 1;
-      continue;
-    }
-
-    if (line.trim().startsWith("- ")) {
-      const items: string[] = [];
-      while (i < lines.length && lines[i].trim().startsWith("- ")) {
-        items.push(lines[i].trim().slice(2).trim());
-        i += 1;
-      }
-      blocks.push({ type: "list", items });
-      continue;
-    }
-
-    const para: string[] = [];
-    while (
-      i < lines.length &&
-      lines[i].trim() &&
-      !lines[i].trim().startsWith("- ") &&
-      !lines[i].match(/^#{2,3}\s+/)
-    ) {
-      para.push(lines[i].trim());
-      i += 1;
-    }
-    blocks.push({ type: "paragraph", text: para.join(" ") });
-  }
-
-  return blocks;
 }
 
 function parsePost(raw: string): BlogPost {

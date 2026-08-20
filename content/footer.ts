@@ -40,7 +40,7 @@ export const footer = {
         { label: "Contact form",    href: "/contact" },
         { label: "Email",           href: `mailto:${site.contact.email}`, external: false },
         { label: "Upwork",          href: site.contact.upwork, external: true },
-        { label: "Fiverr",          href: site.contact.fiverr, external: true },
+        { label: "LinkedIn",        href: site.contact.linkedin, external: true },
         { label: "Schedule a Call", href: "/schedule" },
       ],
     },

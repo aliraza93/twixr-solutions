@@ -84,7 +84,7 @@ function ContactSidebar() {
       <p className="mt-3 text-sm leading-relaxed text-muted sm:text-base">
         I take on a small number of product builds at a time — SaaS, APIs, and
         cloud work with {site.yearsExperience} years behind them. Email,
-        Upwork, or Fiverr, or send the form and I&apos;ll reply from my inbox.
+        Upwork, or LinkedIn, or send the form and I&apos;ll reply from my inbox.
       </p>
 
       <ul className="mt-6 divide-y divide-hairline border-y border-hairline">

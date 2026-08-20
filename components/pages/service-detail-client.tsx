@@ -197,7 +197,7 @@ export function ServiceDetailClient({ service }: ServiceDetailClientProps) {
                   )}
                 >
                   {pkg.popular && (
-                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-pill bg-lime px-3 py-0.5 font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-ink">
+                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-pill bg-lime px-3 py-0.5 font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-d-bg">
                       Most popular
                     </span>
                   )}

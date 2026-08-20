@@ -10,7 +10,6 @@ import {
   Monitor,
   Search,
   Server,
-  Smartphone,
   Star,
   X,
   type LucideIcon,
@@ -44,7 +43,6 @@ const SERVICE_ICONS: Record<ServiceIconName, LucideIcon> = {
   Monitor,
   Bot,
   Cloud,
-  Smartphone,
 };
 
 export function ServicesPageClient({ services }: { services: ServiceListingItem[] }) {

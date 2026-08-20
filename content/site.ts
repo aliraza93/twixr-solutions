@@ -10,18 +10,19 @@ export const site = {
     { label: "Job Success", value: "100%" },
     { label: "Upwork", value: "Top Rated Plus" }, // Top 3% of talent
     { label: "Earned on Upwork", value: "$50K+" },
-    { label: "Jobs", value: "48" },
-    { label: "Hours", value: "2600+" },
+    { label: "Jobs", value: "49" },
+    { label: "Hours", value: "2,600+" },
+    { label: "Rating", value: "4.7★ (40)" },
     { label: "Experience", value: "8+ yrs" },
   ],
 
-  // Raw values — single source of truth. REPLACE the placeholders.
+  // Raw values — single source of truth.
   contact: {
-    email: "REPLACE_ME@twixrsolutions.com",
+    email: "aliraza.2369196@gmail.com",
     upwork: "https://www.upwork.com/freelancers/~01e1dd4667ee1975e6",
-    fiverr: "https://www.fiverr.com/REPLACE_ME",
-    linkedin: "https://www.linkedin.com/in/REPLACE_ME",
-    booking: "https://cal.com/REPLACE_ME",
+    fiverr: "", // no public Fiverr profile — left blank so SEO/sameAs skips it
+    linkedin: "https://www.linkedin.com/in/aliraza6332",
+    booking: "https://cal.com/ali-raza-2haylj/30min",
   },
 
   responseTime: "Replies within ~30 min",
@@ -29,10 +30,10 @@ export const site = {
   // Ready-to-map list for the Contact page left column + footer contact links.
   // `external: true` → open in a new tab with rel="noopener noreferrer".
   contactMethods: [
-    { key: "email",   label: "Email",    value: "REPLACE_ME@twixrsolutions.com", href: "mailto:REPLACE_ME@twixrsolutions.com", external: false },
-    { key: "upwork",  label: "Upwork",   value: "Top Rated Plus",                 href: "https://www.upwork.com/freelancers/~01e1dd4667ee1975e6", external: true },
-    { key: "fiverr",  label: "Fiverr",   value: "@REPLACE_ME",                    href: "https://www.fiverr.com/REPLACE_ME", external: true },
-    { key: "booking", label: "Book a call", value: "Cal.com",                     href: "https://cal.com/REPLACE_ME", external: true },
+    { key: "email",    label: "Email",       value: "aliraza.2369196@gmail.com", href: "mailto:aliraza.2369196@gmail.com", external: false },
+    { key: "upwork",   label: "Upwork",      value: "Top Rated Plus",            href: "https://www.upwork.com/freelancers/~01e1dd4667ee1975e6", external: true },
+    { key: "linkedin", label: "LinkedIn",    value: "in/aliraza6332",            href: "https://www.linkedin.com/in/aliraza6332", external: true },
+    { key: "booking",  label: "Book a call", value: "Cal.com",                   href: "https://cal.com/ali-raza-2haylj/30min", external: true },
   ],
 
   // Primary nav button (was pointing at #contact).

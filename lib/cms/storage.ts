@@ -24,10 +24,11 @@ export function canUseLocalUploads() {
 }
 
 async function storeOnBlob(file: File, pathname: string) {
-  return put(pathname, file, {
+  const body = Buffer.from(await file.arrayBuffer());
+  return put(pathname, body, {
     access: "public",
     addRandomSuffix: true,
-    contentType: file.type || undefined,
+    contentType: file.type || "application/octet-stream",
     ...(blobToken() ? { token: blobToken() } : {}),
     ...(blobStoreId() ? { storeId: blobStoreId() } : {}),
   });

@@ -5,7 +5,7 @@ import { ImagePlus, LoaderCircle, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { Field } from "@/components/admin/fields";
 import { Input } from "@/components/ui/input";
-import { uploadAdminFile } from "@/app/admin/upload";
+import { uploadAdminFile } from "@/lib/cms/client-upload";
 import { cn } from "@/lib/utils";
 
 function toList(value?: string | string[]) {
@@ -54,9 +54,7 @@ export function FileUploader({
       try {
         const uploaded: string[] = [];
         for (const file of multiple ? list : list.slice(0, 1)) {
-          const data = new FormData();
-          data.set("file", file);
-          const result = await uploadAdminFile(data);
+          const result = await uploadAdminFile(file);
           uploaded.push(result.url);
         }
         addUrls(uploaded);

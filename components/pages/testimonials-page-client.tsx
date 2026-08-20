@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { testimonials } from "@/content/testimonials";
+import { testimonials as fallbackTestimonials } from "@/content/testimonials";
 import { Icon } from "@iconify/react";
 import { cn } from "@/lib/utils";
 import {
@@ -9,8 +9,14 @@ import {
   ScrollRevealItem,
   ScrollStagger,
 } from "@/components/motion/scroll-reveal";
+import type { Testimonial } from "@/lib/cms/types";
 
-export function TestimonialsPageClient() {
+export function TestimonialsPageClient({
+  testimonials,
+}: {
+  testimonials?: Testimonial[];
+}) {
+  const items = testimonials?.length ? testimonials : fallbackTestimonials;
   return (
     <main className="min-h-screen bg-slate-50 pt-32 pb-24 dark:bg-slate-950">
       <div className="container mx-auto px-4">
@@ -47,7 +53,7 @@ export function TestimonialsPageClient() {
         </div>
 
         <ScrollStagger className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {testimonials.map((testimonial, idx) => (
+          {items.map((testimonial, idx) => (
             <ScrollRevealItem key={`${testimonial.name}-${idx}`}>
               <article className="relative flex h-full flex-col justify-between rounded-[2.5rem] border border-white bg-white/60 p-8 shadow-sm backdrop-blur-xl transition-all hover:border-teal-500/30 hover:shadow-2xl dark:border-slate-800 dark:bg-slate-900/40">
                 <div className="absolute right-8 top-8">

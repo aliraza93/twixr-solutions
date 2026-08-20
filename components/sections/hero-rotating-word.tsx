@@ -11,8 +11,6 @@ import {
 
 import { hero } from "@/content/hero";
 
-const WORDS = hero.rotatingWords;
-
 const DWELL_MS = 2000;
 const TRANSITION_MS = 400;
 
@@ -45,7 +43,8 @@ function Chars({ word }: { word: string }) {
   );
 }
 
-export function HeroRotatingWord() {
+export function HeroRotatingWord({ words }: { words?: readonly string[] }) {
+  const WORDS = words?.length ? words : hero.rotatingWords;
   const slotRef = useRef<HTMLSpanElement>(null);
   const measureRef = useRef<HTMLSpanElement>(null);
   const readyRef = useRef(false);

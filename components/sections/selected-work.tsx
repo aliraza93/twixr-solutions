@@ -2,8 +2,17 @@ import { work } from "@/content/work";
 import { Card } from "@/components/ui/card";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { ScrollReveal, ScrollRevealItem, ScrollStagger } from "@/components/motion/scroll-reveal";
+import Link from "next/link";
 
-export function SelectedWork() {
+type WorkItem = {
+  title: string;
+  outcome: string;
+  tech: readonly string[];
+  href: string;
+};
+
+export function SelectedWork({ items }: { items?: readonly WorkItem[] }) {
+  const list = items ?? work.items;
   return (
     <section
       id="work"
@@ -20,12 +29,18 @@ export function SelectedWork() {
         </ScrollReveal>
 
         <ScrollStagger className="mt-12 grid grid-cols-1 gap-6 md:mt-16 md:grid-cols-3">
-          {work.items.map((item) => (
+          {list.map((item) => (
             <ScrollRevealItem key={item.title} className="h-full">
               <Card variant="base" className="flex h-full flex-col">
-                <h3 className="font-sora text-[length:var(--fs-h3)] font-bold tracking-[-0.02em] text-ink">
-                  {item.title}
-                </h3>
+                {item.href ? (
+                  <Link href={item.href} className="font-sora text-[length:var(--fs-h3)] font-bold tracking-[-0.02em] text-ink hover:text-pine">
+                    {item.title}
+                  </Link>
+                ) : (
+                  <h3 className="font-sora text-[length:var(--fs-h3)] font-bold tracking-[-0.02em] text-ink">
+                    {item.title}
+                  </h3>
+                )}
                 <p className="mt-3 flex-1 text-sm leading-relaxed text-muted">
                   {item.outcome}
                 </p>

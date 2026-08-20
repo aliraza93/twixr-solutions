@@ -1,13 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { testimonials, testimonialsCopy } from "@/content/testimonials";
+import { testimonials as fallbackTestimonials, testimonialsCopy } from "@/content/testimonials";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Button } from "@/components/ui/button";
 import { TestimonialCarousel } from "@/components/ui/testimonial-carousel";
 import { ScrollReveal } from "@/components/motion/scroll-reveal";
+import type { Testimonial } from "@/lib/cms/types";
 
-export function Testimonials() {
+export function Testimonials({ items }: { items?: Testimonial[] }) {
+  const testimonials = items?.length ? items : fallbackTestimonials;
   return (
     <section
       id="testimonials"

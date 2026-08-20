@@ -7,55 +7,100 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Project {
+model Inquiry {
   id          String   @id @default(cuid())
-  title       String
-  description String
-  imageUrl    String?
-  tags        String[]
-  demoLink    String?
-  repoLink    String?
-  featured    Boolean  @default(false)
+  name        String
+  email       String
+  company     String   @default("")
+  projectType String   @default("")
+  message     String
+  status      String   @default("unread")
   createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("inquiries")
 }
 
-model Skill {
+model BlogPost {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  excerpt     String   @default("")
+  date        String
+  image       String   @default("")
+  category    String   @default("")
+  tags        String[]
+  readingTime String   @default("")
+  author      String   @default("Twixr Solutions")
+  authorRole  String   @default("")
+  authorImage String   @default("")
+  body        String   @default("")
+  published   Boolean  @default(false)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([published, sortOrder])
+  @@map("blog_posts")
+}
+
+model Service {
   id        String   @id @default(cuid())
-  name      String
-  category  String   // e.g., "Frontend", "Backend", "DevOps"
-  icon      String?  // lucide icon name or svg url
+  slug      String   @unique
+  title     String
+  data      Json
+  sortOrder Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@map("services")
+}
+
+model PortfolioProject {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  title     String
+  featured  Boolean  @default(false)
+  data      Json
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("portfolio_projects")
 }
 
 model Testimonial {
   id        String   @id @default(cuid())
+  quote     String
   name      String
-  role      String
-  company   String?
-  content   String
+  title     String   @default("")
+  company   String   @default("")
+  platform  String   @default("")
+  avatar    String   @default("")
   rating    Int      @default(5)
-  avatarUrl String?
+  sortOrder Int      @default(0)
   createdAt DateTime @default(now())
+
+  @@map("testimonials")
 }
 
-model Inquiry {
+model Faq {
   id        String   @id @default(cuid())
-  name      String
-  email     String
-  message   String
-  status    String   @default("UNREAD") // UNREAD, READ, ARCHIVED
+  question  String
+  answer    String
+  icon      String   @default("lucide:help-circle")
+  sortOrder Int      @default(0)
   createdAt DateTime @default(now())
+
+  @@map("faqs")
 }
 
-model Profile {
-  id        String   @id @default(cuid())
-  headline  String
-  bio       String
-  email     String
-  github    String?
-  linkedin  String?
-  upwork    String?
-  resumeUrl String?
+model SiteSettings {
+  id        String   @id @default("default")
+  site      Json
+  hero      Json
+  updatedAt DateTime @updatedAt
+
+  @@map("site_settings")
 }

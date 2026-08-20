@@ -6,6 +6,7 @@ import {
   contactSchema,
   type ContactActionResult,
 } from "@/lib/contact-schema";
+import { insertInquiry } from "@/lib/cms/inquiries";
 
 /**
  * Best-effort in-memory rate limit (~5 submits / IP / minute).
@@ -131,9 +132,9 @@ export async function submitContact(
   }
 
   const apiKey = process.env.RESEND_API_KEY;
-  const to = process.env.CONTACT_TO_EMAIL;
+  const to = process.env.CONTACT_TO_EMAIL?.trim() || process.env.ADMIN_EMAIL?.trim();
   if (!apiKey || !to) {
-    console.error("Contact action missing RESEND_API_KEY or CONTACT_TO_EMAIL");
+    console.error("Contact action missing RESEND_API_KEY or CONTACT_TO_EMAIL / ADMIN_EMAIL");
     return { ok: false, error: "unavailable" };
   }
 
@@ -169,6 +170,14 @@ export async function submitContact(
       console.error("Resend send failed:", error);
       return { ok: false, error: "send_failed" };
     }
+
+    await insertInquiry({
+      name,
+      email,
+      company,
+      projectType,
+      message,
+    });
 
     return { ok: true };
   } catch (error) {

@@ -94,7 +94,12 @@ export function organizationNode(): Node {
     "@id": ORG_ID,
     name: SITE_NAME,
     url: SITE_URL,
-    logo: absoluteUrl("/icon-512-maskable.png"),
+    logo: {
+      "@type": "ImageObject",
+      url: absoluteUrl("/icon-512.png"),
+      width: 512,
+      height: 512,
+    },
     image: absoluteUrl(DEFAULT_OG),
     description: site.tagline,
     founder: { "@id": PERSON_ID },

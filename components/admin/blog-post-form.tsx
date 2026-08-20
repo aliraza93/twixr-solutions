@@ -5,14 +5,23 @@ import { useTransition } from "react";
 import { toast } from "sonner";
 import type { BlogPostRecord } from "@/lib/cms/types";
 import { saveBlogPostAction } from "@/app/admin/actions";
-import { TextField, AreaField } from "@/components/admin/fields";
-import { MarkdownEditor } from "@/components/admin/markdown-editor";
+import { TextField } from "@/components/admin/fields";
+import { RichEditor } from "@/components/admin/markdown-editor";
+import { FileUploader } from "@/components/admin/file-uploader";
+import { DatePickerField } from "@/components/admin/date-picker-field";
+import { SelectField, SwitchField } from "@/components/admin/select-field";
+import { FormActions } from "@/components/admin/resource-form-layout";
 import { Button } from "@/components/ui/button";
 import { slugify } from "@/lib/cms/utils";
+
+const CATEGORIES = ["SaaS", "Design", "Architecture", "Engineering", "Dubai", "Product"];
 
 export function BlogPostForm({ post }: { post?: BlogPostRecord }) {
   const router = useRouter();
   const [pending, start] = useTransition();
+  const categories = Array.from(
+    new Set([post?.category, ...CATEGORIES].filter(Boolean) as string[])
+  ).map((value) => ({ value, label: value }));
 
   return (
     <form
@@ -56,35 +65,46 @@ export function BlogPostForm({ post }: { post?: BlogPostRecord }) {
       <div className="grid gap-5 md:grid-cols-2">
         <TextField label="Title" name="title" defaultValue={post?.title} required />
         <TextField label="Slug" name="slug" defaultValue={post?.slug} hint="Leave blank to generate from title" />
-        <TextField label="Category" name="category" defaultValue={post?.category} />
-        <TextField label="Date" name="date" defaultValue={post?.date} hint="Shown as written, e.g. September 10, 2025" />
+        <SelectField
+          label="Category"
+          name="category"
+          defaultValue={post?.category}
+          options={categories}
+        />
+        <DatePickerField label="Publish date" name="date" defaultValue={post?.date} />
         <TextField label="Reading time" name="readingTime" defaultValue={post?.readingTime} />
         <TextField label="Order" name="order" type="number" defaultValue={post?.order ?? 0} />
         <TextField label="Author" name="author" defaultValue={post?.author} />
         <TextField label="Author role" name="authorRole" defaultValue={post?.authorRole} />
       </div>
-      <TextField label="Cover image URL" name="image" defaultValue={post?.image} />
-      <TextField label="Author image URL" name="authorImage" defaultValue={post?.authorImage} />
+      <FileUploader label="Cover image" name="image" defaultValue={post?.image} />
+      <FileUploader label="Author image" name="authorImage" defaultValue={post?.authorImage} />
       <TextField
         label="Tags"
         name="tags"
         defaultValue={post?.tags?.join(", ")}
         hint="Comma-separated"
       />
-      <AreaField label="Excerpt" name="excerpt" defaultValue={post?.excerpt} />
-      <MarkdownEditor id="body" name="body" label="Body" defaultValue={post?.body} />
-      <label className="flex cursor-pointer items-center gap-2 text-sm text-ink">
-        <input
-          type="checkbox"
-          name="published"
-          defaultChecked={post?.published}
-          className="h-4 w-4 accent-pine"
-        />
-        Published
-      </label>
-      <Button type="submit" variant="primary" disabled={pending}>
-        {pending ? "Saving…" : "Save post"}
-      </Button>
+      <RichEditor
+        id="excerpt"
+        name="excerpt"
+        label="Excerpt"
+        defaultValue={post?.excerpt}
+        minHeight="min-h-[120px]"
+        placeholder="Short summary for listings"
+      />
+      <RichEditor id="body" name="body" label="Body" defaultValue={post?.body} />
+      <SwitchField
+        name="published"
+        label="Published"
+        description="Live on the public blog when on."
+        defaultChecked={post?.published}
+      />
+      <FormActions>
+        <Button type="submit" disabled={pending}>
+          {pending ? "Saving…" : "Save post"}
+        </Button>
+      </FormActions>
     </form>
   );
 }

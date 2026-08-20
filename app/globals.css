@@ -57,9 +57,19 @@
   --color-d-mint: var(--d-mint);
   --color-d-glow: var(--d-glow);
   --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground, #ffffff);
   --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft, #fef3c7);
   --color-danger: var(--danger);
   --color-info: var(--info);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
 
   --radius-sm: var(--r-sm);
   --radius-md: var(--r-md);
@@ -190,6 +200,15 @@
 
     --primary: 222.2 47.4% 11.2%;
     --primary-foreground: 210 40% 98%;
+
+    --sidebar: #ffffff;
+    --sidebar-foreground: #0f172a;
+    --sidebar-primary: #0f5132;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #e7f1ec;
+    --sidebar-accent-foreground: #0a3a26;
+    --sidebar-border: #e2e8e5;
+    --sidebar-ring: #0f5132;
 
     --secondary: 0 0% 100%;
     --secondary-foreground: 222.2 47.4% 11.2%;
@@ -1853,4 +1872,253 @@
   html.has-site-cursor *:focus-visible {
     cursor: auto !important;
   }
+}
+
+.prose-admin h2 {
+  margin: 1rem 0 0.4rem;
+  font-family: var(--font-sora), sans-serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.prose-admin h3 {
+  margin: 0.85rem 0 0.35rem;
+  font-family: var(--font-sora), sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+.prose-admin p {
+  margin: 0.45rem 0;
+  line-height: 1.6;
+}
+.prose-admin ul {
+  margin: 0.45rem 0;
+  padding-left: 1.25rem;
+  list-style: disc;
+}
+.prose-admin img {
+  margin: 0.75rem 0;
+  max-width: 100%;
+  border-radius: 8px;
+}
+.prose-admin a {
+  color: var(--pine);
+  text-decoration: underline;
+}
+.prose-admin p.is-editor-empty:first-child::before,
+.prose-admin p.is-empty:first-child::before {
+  color: var(--muted-2);
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+.rdp-twixr {
+  --rdp-accent-color: var(--pine);
+  --rdp-accent-background-color: var(--pine-tint);
+}
+
+/*
+ * Studio / dashboard-shell — same layout language as IMEI Checker
+ * (dashboard-design.md): cool slate surfaces, full-width pages, pine as
+ * the brand primary instead of IMEI blue. Scoped so marketing tokens stay put.
+ */
+.dashboard-shell,
+.admin-app {
+  --page-x: 1.5rem;
+  font-size: 14px;
+
+  --background: 210 40% 98%;
+  --foreground: 222 47% 11%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 11%;
+  --primary: 152 69% 19%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 210 40% 96%;
+  --secondary-foreground: 222 47% 11%;
+  --muted-foreground: 215 16% 37%;
+  --ui-muted: 210 40% 96%;
+  --ui-accent: 152 32% 94%;
+  --accent-foreground: 152 69% 19%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+  --ring: 152 69% 19%;
+
+  --sidebar: #ffffff;
+  --sidebar-foreground: #0f172a;
+  --sidebar-primary: #0f5132;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e7f1ec;
+  --sidebar-accent-foreground: #0a3a26;
+  --sidebar-border: #e2e8f0;
+  --sidebar-ring: #0f5132;
+
+  --focus-border: #0f5132;
+  --focus-ring: 0 0 0 3px rgba(15, 81, 50, 0.15);
+  --primary-hover: #0a3a26;
+  --success-foreground: #ffffff;
+  --warning-foreground: #0f172a;
+  --warning-soft: #fef3c7;
+
+  --canvas: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #f1f5f9;
+  --ink: #0f172a;
+  --ink-soft: #475569;
+  --muted: #f1f5f9;
+  --muted-2: #94a3b8;
+  --hairline: #e2e8f0;
+  --hairline-strong: #cbd5e1;
+  --pine-tint: #e7f1ec;
+
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+@media (max-width: 767px) {
+  .dashboard-shell,
+  .admin-app {
+    --page-x: 1rem;
+  }
+}
+
+.dashboard-shell .focus-ring:focus-visible,
+.admin-app .focus-ring:focus-visible {
+  border-color: var(--focus-border);
+  box-shadow: var(--focus-ring);
+  outline: none;
+}
+
+.dashboard-shell input::placeholder,
+.dashboard-shell textarea::placeholder,
+.admin-app input::placeholder,
+.admin-app textarea::placeholder {
+  color: #64748b;
+  opacity: 1;
+}
+
+/*
+ * Solid, state-colored toasts (IMEI dashboard-design.md §3).
+ * Hardcoded fills so white text stays readable and Sonner's light-theme
+ * pastels cannot win. Info uses Twixr pine instead of IMEI blue.
+ */
+.toaster[data-sonner-toaster],
+.toaster[data-sonner-toaster][data-sonner-theme="light"],
+.toaster[data-sonner-toaster][data-sonner-theme="dark"] {
+  --toast-success: #16a34a;
+  --toast-error: #dc2626;
+  --toast-warning: #d97706;
+  --toast-info: #0f5132;
+  --toast-neutral: #0f172a;
+  --normal-bg: var(--toast-neutral);
+  --normal-text: #ffffff;
+  --normal-border: var(--toast-neutral);
+  --success-bg: var(--toast-success);
+  --success-border: var(--toast-success);
+  --success-text: #ffffff;
+  --error-bg: var(--toast-error);
+  --error-border: var(--toast-error);
+  --error-text: #ffffff;
+  --warning-bg: var(--toast-warning);
+  --warning-border: var(--toast-warning);
+  --warning-text: #ffffff;
+  --info-bg: var(--toast-info);
+  --info-border: var(--toast-info);
+  --info-text: #ffffff;
+}
+
+.toaster[data-sonner-toaster] [data-sonner-toast][data-styled="true"] {
+  width: min(26rem, calc(100vw - 1.5rem));
+  padding: 0.95rem 2.6rem 0.95rem 1.1rem;
+  border: none !important;
+  border-radius: 10px;
+  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.45;
+  box-shadow:
+    0 18px 40px -16px rgba(15, 23, 42, 0.45),
+    0 0 0 1px rgba(15, 23, 42, 0.08);
+}
+
+.toaster[data-sonner-toaster] [data-sonner-toast][data-type="success"],
+.toaster .toast-item--success {
+  background: var(--toast-success, #16a34a) !important;
+  color: #ffffff !important;
+}
+
+.toaster[data-sonner-toaster] [data-sonner-toast][data-type="error"],
+.toaster .toast-item--error {
+  background: var(--toast-error, #dc2626) !important;
+  color: #ffffff !important;
+}
+
+.toaster[data-sonner-toaster] [data-sonner-toast][data-type="warning"],
+.toaster .toast-item--warning {
+  background: var(--toast-warning, #d97706) !important;
+  color: #ffffff !important;
+}
+
+.toaster[data-sonner-toaster] [data-sonner-toast][data-type="info"],
+.toaster .toast-item--info {
+  background: var(--toast-info, #0f5132) !important;
+  color: #ffffff !important;
+}
+
+.toaster[data-sonner-toaster] [data-sonner-toast]:not([data-type]),
+.toaster[data-sonner-toaster] [data-sonner-toast][data-type="default"],
+.toaster[data-sonner-toaster] [data-sonner-toast][data-type="normal"],
+.toaster[data-sonner-toaster] [data-sonner-toast][data-type="loading"],
+.toaster .toast-item--loading {
+  background: var(--toast-neutral, #0f172a) !important;
+  color: #ffffff !important;
+}
+
+.toaster[data-sonner-toaster] [data-sonner-toast] [data-title],
+.toaster .toast-item__title {
+  color: #ffffff !important;
+  font-weight: 600;
+}
+
+.toaster[data-sonner-toaster] [data-sonner-toast][data-styled="true"] [data-description],
+.toaster .toast-item__description {
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-weight: 400;
+}
+
+.toaster[data-sonner-toaster] [data-sonner-toast][data-styled="true"] [data-icon] {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-right: 0.15rem;
+  color: #ffffff !important;
+}
+
+.toaster[data-sonner-toaster] [data-sonner-toast] [data-icon] svg {
+  color: #ffffff !important;
+  fill: none;
+  stroke: currentColor;
+}
+
+.toaster[data-sonner-toaster] [data-sonner-toast][data-styled="true"] [data-close-button],
+.toaster .toast-item__close {
+  left: auto !important;
+  right: 0.55rem !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 1.35rem;
+  height: 1.35rem;
+  background: rgba(255, 255, 255, 0.2) !important;
+  border: none !important;
+  color: #ffffff !important;
+}
+
+.toaster[data-sonner-toaster] [data-sonner-toast][data-styled="true"]:hover [data-close-button]:hover,
+.toaster .toast-item__close:hover {
+  background: rgba(255, 255, 255, 0.34) !important;
+  border-color: transparent !important;
 }

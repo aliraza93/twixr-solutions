@@ -6,8 +6,9 @@ export function Table({
   ...props
 }: HTMLAttributes<HTMLTableElement>) {
   return (
-    <div className="relative w-full overflow-auto rounded-lg border border-hairline bg-canvas">
+    <div data-slot="table-container" className="relative w-full overflow-x-auto">
       <table
+        data-slot="table"
         className={cn("w-full caption-bottom text-sm", className)}
         {...props}
       />
@@ -21,7 +22,8 @@ export function TableHeader({
 }: HTMLAttributes<HTMLTableSectionElement>) {
   return (
     <thead
-      className={cn("border-b border-hairline bg-surface [&_tr]:border-b", className)}
+      data-slot="table-header"
+      className={cn("[&_tr]:border-b", className)}
       {...props}
     />
   );
@@ -33,6 +35,7 @@ export function TableBody({
 }: HTMLAttributes<HTMLTableSectionElement>) {
   return (
     <tbody
+      data-slot="table-body"
       className={cn("[&_tr:last-child]:border-0", className)}
       {...props}
     />
@@ -45,8 +48,9 @@ export function TableRow({
 }: HTMLAttributes<HTMLTableRowElement>) {
   return (
     <tr
+      data-slot="table-row"
       className={cn(
-        "border-b border-hairline transition-colors hover:bg-surface/80",
+        "border-b border-border transition-colors hover:bg-secondary/80",
         className
       )}
       {...props}
@@ -60,8 +64,9 @@ export function TableHead({
 }: ThHTMLAttributes<HTMLTableCellElement>) {
   return (
     <th
+      data-slot="table-head"
       className={cn(
-        "h-11 px-4 text-left align-middle font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted",
+        "h-10 px-2 text-left align-middle text-xs font-medium whitespace-nowrap text-muted-foreground",
         className
       )}
       {...props}
@@ -74,6 +79,10 @@ export function TableCell({
   ...props
 }: TdHTMLAttributes<HTMLTableCellElement>) {
   return (
-    <td className={cn("px-4 py-3.5 align-middle text-ink", className)} {...props} />
+    <td
+      data-slot="table-cell"
+      className={cn("p-2 align-middle text-sm", className)}
+      {...props}
+    />
   );
 }

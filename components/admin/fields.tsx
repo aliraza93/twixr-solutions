@@ -3,6 +3,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
+const controlClass =
+  "border-input bg-background shadow-none placeholder:text-muted-foreground";
+
 export function Field({
   label,
   htmlFor,
@@ -20,7 +23,7 @@ export function Field({
     <div className={cn("space-y-2", className)}>
       <Label htmlFor={htmlFor}>{label}</Label>
       {children}
-      {hint ? <p className="text-xs text-muted">{hint}</p> : null}
+      {hint ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
     </div>
   );
 }
@@ -48,6 +51,7 @@ export function TextField({
         type={type}
         defaultValue={defaultValue}
         required={required}
+        className={controlClass}
       />
     </Field>
   );
@@ -76,6 +80,7 @@ export function AreaField({
         defaultValue={defaultValue}
         rows={rows}
         required={required}
+        className={controlClass}
       />
     </Field>
   );

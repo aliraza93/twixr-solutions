@@ -87,6 +87,25 @@ const config = {
                     DEFAULT: "hsl(var(--ui-accent))",
                     foreground: "hsl(var(--accent-foreground))",
                 },
+                sidebar: {
+                    DEFAULT: "var(--sidebar)",
+                    foreground: "var(--sidebar-foreground)",
+                    primary: "var(--sidebar-primary)",
+                    "primary-foreground": "var(--sidebar-primary-foreground)",
+                    accent: "var(--sidebar-accent)",
+                    "accent-foreground": "var(--sidebar-accent-foreground)",
+                    border: "var(--sidebar-border)",
+                    ring: "var(--sidebar-ring)",
+                },
+                success: {
+                    DEFAULT: "var(--success)",
+                    foreground: "var(--success-foreground, #ffffff)",
+                },
+                warning: {
+                    DEFAULT: "var(--warning)",
+                    foreground: "var(--warning-foreground, #0f172a)",
+                    soft: "var(--warning-soft, #fef3c7)",
+                },
             },
             borderRadius: {
                 sm: "var(--r-sm)",

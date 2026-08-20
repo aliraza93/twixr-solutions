@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Toaster } from "sonner";
+import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
   title: "Admin",
@@ -14,12 +14,7 @@ export default function AdminRootLayout({
   return (
     <>
       {children}
-      <Toaster
-        position="top-right"
-        toastOptions={{
-          className: "font-sans",
-        }}
-      />
+      <Toaster />
     </>
   );
 }

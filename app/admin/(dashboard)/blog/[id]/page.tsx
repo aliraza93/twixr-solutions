@@ -1,6 +1,10 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
+import { PageContainer } from "@/components/admin/page-container";
 import { PageHeader } from "@/components/admin/page-header";
+import { FormCard } from "@/components/admin/resource-form-layout";
 import { BlogPostForm } from "@/components/admin/blog-post-form";
+import { Button } from "@/components/ui/button";
 import { getBlogPostAdmin } from "@/lib/cms/blog";
 
 export default async function EditBlogPostPage({
@@ -13,9 +17,19 @@ export default async function EditBlogPostPage({
   if (!post) notFound();
 
   return (
-    <div className="space-y-8">
-      <PageHeader eyebrow="Publishing" title="Edit post" />
-      <BlogPostForm post={post} />
-    </div>
+    <PageContainer>
+      <PageHeader
+        title="Edit post"
+        subtitle={post.title}
+        actions={
+          <Button variant="outline" asChild>
+            <Link href="/admin/blog">Cancel</Link>
+          </Button>
+        }
+      />
+      <FormCard>
+        <BlogPostForm post={post} />
+      </FormCard>
+    </PageContainer>
   );
 }

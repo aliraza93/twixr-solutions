@@ -1,8 +1,8 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
 import { BookOpen, Briefcase, Inbox, PanelsTopLeft } from "lucide-react";
-import { MOTION_EASE, STAGGER } from "@/lib/motion";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useCountUp } from "@/hooks/use-count-up";
 import { cn } from "@/lib/utils";
 
 const ICONS = {
@@ -19,43 +19,50 @@ export function KpiCard({
   value,
   hint,
   icon,
-  index = 0,
-  tone = "pine",
+  prefix = "",
+  suffix = "",
 }: {
   label: string;
   value: string | number;
   hint?: string;
-  icon: KpiIcon;
+  icon?: KpiIcon;
   index?: number;
   tone?: "pine" | "lime";
+  prefix?: string;
+  suffix?: string;
 }) {
-  const reduce = useReducedMotion();
-  const Icon = ICONS[icon];
+  const numeric = typeof value === "number";
+  const animated = useCountUp(numeric ? value : 0);
+  const Icon = icon ? ICONS[icon] : null;
 
   return (
-    <motion.article
-      initial={reduce ? false : { opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: index * STAGGER, ease: MOTION_EASE }}
-      className="rounded-lg border border-hairline bg-canvas p-5 shadow-sm"
-    >
-      <div className="flex items-start justify-between gap-3">
-        <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted">
+    <Card className="gap-0 py-5 shadow-none">
+      <CardHeader className="flex-row items-center justify-between space-y-0 pb-0">
+        <CardTitle className="text-sm font-medium text-muted-foreground">
           {label}
-        </p>
-        <span
-          className={cn(
-            "inline-flex h-9 w-9 items-center justify-center rounded-md",
-            tone === "lime" ? "bg-lime/30 text-lime-ink" : "bg-pine-tint text-pine"
+        </CardTitle>
+        {Icon ? (
+          <span className="inline-flex size-8 items-center justify-center rounded-md bg-accent text-accent-foreground">
+            <Icon className="size-4" aria-hidden />
+          </span>
+        ) : null}
+      </CardHeader>
+      <CardContent className="space-y-1">
+        <p className="text-2xl font-semibold tracking-tight tabular-nums">
+          {numeric ? (
+            <>
+              {prefix}
+              {Math.round(animated)}
+              {suffix}
+            </>
+          ) : (
+            value
           )}
-        >
-          <Icon className="h-4 w-4" aria-hidden />
-        </span>
-      </div>
-      <p className="mt-3 font-sora text-3xl font-extrabold tracking-[-0.03em] text-ink">
-        {value}
-      </p>
-      {hint ? <p className="mt-1 text-xs text-muted">{hint}</p> : null}
-    </motion.article>
+        </p>
+        {hint ? (
+          <p className={cn("text-xs text-muted-foreground")}>{hint}</p>
+        ) : null}
+      </CardContent>
+    </Card>
   );
 }

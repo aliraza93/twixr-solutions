@@ -1,6 +1,10 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
+import { PageContainer } from "@/components/admin/page-container";
 import { PageHeader } from "@/components/admin/page-header";
+import { FormCard } from "@/components/admin/resource-form-layout";
 import { ServiceForm } from "@/components/admin/service-form";
+import { Button } from "@/components/ui/button";
 import { listServicesAdmin } from "@/lib/cms/services";
 
 export default async function EditServicePage({
@@ -14,9 +18,19 @@ export default async function EditServicePage({
   if (!service) notFound();
 
   return (
-    <div className="space-y-8">
-      <PageHeader eyebrow="Catalog" title="Edit service" />
-      <ServiceForm service={service} />
-    </div>
+    <PageContainer>
+      <PageHeader
+        title="Edit service"
+        subtitle={service.title}
+        actions={
+          <Button variant="outline" asChild>
+            <Link href="/admin/services">Cancel</Link>
+          </Button>
+        }
+      />
+      <FormCard>
+        <ServiceForm service={service} />
+      </FormCard>
+    </PageContainer>
   );
 }

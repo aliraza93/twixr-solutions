@@ -5,11 +5,30 @@ import { useTransition } from "react";
 import { toast } from "sonner";
 import type { ServiceDetail } from "@/lib/data/services";
 import { saveServiceAction } from "@/app/admin/actions";
-import { TextField, AreaField } from "@/components/admin/fields";
+import { AreaField, TextField } from "@/components/admin/fields";
+import { RichEditor } from "@/components/admin/markdown-editor";
+import { FileUploader } from "@/components/admin/file-uploader";
+import { SelectField } from "@/components/admin/select-field";
+import { FormActions } from "@/components/admin/resource-form-layout";
 import { Button } from "@/components/ui/button";
 import { splitComma, splitLines, slugify } from "@/lib/cms/utils";
 
 type ServiceRecord = ServiceDetail & { id?: string; sort_order?: number };
+
+const CATEGORIES = [
+  { value: "product", label: "Product" },
+  { value: "backend", label: "Backend" },
+  { value: "ai", label: "AI" },
+  { value: "cloud", label: "Cloud" },
+];
+
+const ICONS = [
+  { value: "Layers", label: "Layers" },
+  { value: "Server", label: "Server" },
+  { value: "Monitor", label: "Monitor" },
+  { value: "Bot", label: "Bot" },
+  { value: "Cloud", label: "Cloud" },
+];
 
 export function ServiceForm({ service }: { service?: ServiceRecord }) {
   const router = useRouter();
@@ -55,16 +74,46 @@ export function ServiceForm({ service }: { service?: ServiceRecord }) {
       <div className="grid gap-5 md:grid-cols-2">
         <TextField label="Title" name="title" defaultValue={service?.title} required />
         <TextField label="Slug" name="slug" defaultValue={service?.slug} />
-        <TextField label="Category ID" name="categoryId" defaultValue={service?.categoryId ?? "product"} hint="product, backend, ai, or cloud" />
+        <SelectField
+          label="Category"
+          name="categoryId"
+          defaultValue={service?.categoryId ?? "product"}
+          options={CATEGORIES}
+        />
         <TextField label="Category label" name="categoryLabel" defaultValue={service?.categoryLabel} />
-        <TextField label="Icon" name="icon" defaultValue={service?.icon ?? "Layers"} hint="Layers, Server, Monitor, Bot, Cloud" />
+        <SelectField
+          label="Icon"
+          name="icon"
+          defaultValue={service?.icon ?? "Layers"}
+          options={ICONS}
+        />
         <TextField label="Order" name="sort_order" type="number" defaultValue={service?.sort_order ?? 0} />
       </div>
-      <TextField label="Illustration path" name="illustration" defaultValue={service?.illustration} />
+      <FileUploader
+        label="Illustration"
+        name="illustration"
+        defaultValue={service?.illustration}
+      />
       <TextField label="Tags" name="tags" defaultValue={service?.tags.join(", ")} />
-      <AreaField label="Short description" name="description" defaultValue={service?.description} />
-      <AreaField label="Long description" name="longDescription" defaultValue={service?.longDescription} rows={6} />
-      <AreaField label="Gallery URLs" name="gallery" defaultValue={service?.gallery.join("\n")} hint="One per line" />
+      <RichEditor
+        id="description"
+        name="description"
+        label="Short description"
+        defaultValue={service?.description}
+        minHeight="min-h-[120px]"
+      />
+      <RichEditor
+        id="longDescription"
+        name="longDescription"
+        label="Long description"
+        defaultValue={service?.longDescription}
+      />
+      <FileUploader
+        label="Gallery"
+        name="gallery"
+        multiple
+        defaultValue={service?.gallery}
+      />
       <AreaField label="Included" name="included" defaultValue={service?.included.join("\n")} hint="One per line" />
       <AreaField label="Sidebar highlights" name="sidebarHighlights" defaultValue={service?.sidebarHighlights.join("\n")} />
       <AreaField
@@ -79,9 +128,11 @@ export function ServiceForm({ service }: { service?: ServiceRecord }) {
         defaultValue={JSON.stringify(service?.faqs ?? [], null, 2)}
         rows={8}
       />
-      <Button type="submit" variant="primary" disabled={pending}>
-        {pending ? "Saving…" : "Save service"}
-      </Button>
+      <FormActions>
+        <Button type="submit" disabled={pending}>
+          {pending ? "Saving…" : "Save service"}
+        </Button>
+      </FormActions>
     </form>
   );
 }

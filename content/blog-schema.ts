@@ -1,7 +1,8 @@
 export type BlogContentBlock =
   | { type: "paragraph"; text: string }
   | { type: "heading"; id: string; level: 2 | 3; text: string }
-  | { type: "list"; items: string[] };
+  | { type: "list"; items: string[] }
+  | { type: "image"; src: string; alt: string };
 
 export type BlogListing = {
   slug: string;
@@ -57,6 +58,13 @@ export function parseBody(md: string): BlogContentBlock[] {
       continue;
     }
 
+    const image = line.trim().match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
+    if (image) {
+      blocks.push({ type: "image", alt: image[1], src: image[2] });
+      i += 1;
+      continue;
+    }
+
     if (line.trim().startsWith("- ")) {
       const items: string[] = [];
       while (i < lines.length && lines[i].trim().startsWith("- ")) {
@@ -72,7 +80,8 @@ export function parseBody(md: string): BlogContentBlock[] {
       i < lines.length &&
       lines[i].trim() &&
       !lines[i].trim().startsWith("- ") &&
-      !lines[i].match(/^#{2,3}\s+/)
+      !lines[i].match(/^#{2,3}\s+/) &&
+      !lines[i].trim().match(/^!\[([^\]]*)\]\(([^)]+)\)$/)
     ) {
       para.push(lines[i].trim());
       i += 1;

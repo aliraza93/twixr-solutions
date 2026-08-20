@@ -5,15 +5,34 @@ import { useTransition } from "react";
 import { toast } from "sonner";
 import type { PortfolioCaseStudy } from "@/lib/data/portfolio";
 import { savePortfolioAction } from "@/app/admin/actions";
-import { TextField, AreaField } from "@/components/admin/fields";
+import { AreaField, TextField } from "@/components/admin/fields";
+import { RichEditor } from "@/components/admin/markdown-editor";
+import { FileUploader } from "@/components/admin/file-uploader";
+import { SelectField, SwitchField } from "@/components/admin/select-field";
+import { FormActions } from "@/components/admin/resource-form-layout";
 import { Button } from "@/components/ui/button";
 import { splitComma, splitLines, slugify } from "@/lib/cms/utils";
 
 type Record = PortfolioCaseStudy & { id?: string; sort_order?: number };
 
+const CATEGORIES = [
+  { value: "saas", label: "SaaS" },
+  { value: "ai", label: "AI" },
+  { value: "ecommerce", label: "E-commerce" },
+  { value: "devops", label: "DevOps" },
+];
+
+const YEARS = Array.from({ length: 12 }, (_, index) => {
+  const year = String(new Date().getFullYear() - index);
+  return { value: year, label: year };
+});
+
 export function PortfolioForm({ project }: { project?: Record }) {
   const router = useRouter();
   const [pending, start] = useTransition();
+  const years = project?.year && !YEARS.some((item) => item.value === project.year)
+    ? [{ value: project.year, label: project.year }, ...YEARS]
+    : YEARS;
 
   return (
     <form
@@ -66,38 +85,70 @@ export function PortfolioForm({ project }: { project?: Record }) {
       <div className="grid gap-5 md:grid-cols-2">
         <TextField label="Title" name="title" defaultValue={project?.title} required />
         <TextField label="Slug" name="slug" defaultValue={project?.slug} />
-        <TextField label="Category ID" name="categoryId" defaultValue={project?.categoryId ?? "saas"} />
+        <SelectField
+          label="Category"
+          name="categoryId"
+          defaultValue={project?.categoryId ?? "saas"}
+          options={CATEGORIES}
+        />
         <TextField label="Category label" name="categoryLabel" defaultValue={project?.categoryLabel} />
-        <TextField label="Year" name="year" defaultValue={project?.year} />
+        <SelectField label="Year" name="year" defaultValue={project?.year} options={years} />
         <TextField label="Client" name="client" defaultValue={project?.client} />
         <TextField label="Role" name="role" defaultValue={project?.role} />
         <TextField label="Timeline" name="timeline" defaultValue={project?.timeline} />
         <TextField label="Order" name="sort_order" type="number" defaultValue={project?.sort_order ?? 0} />
         <TextField label="External link" name="link" defaultValue={project?.link} />
       </div>
-      <TextField label="Cover image URL" name="image" defaultValue={project?.image} />
+      <FileUploader label="Cover image" name="image" defaultValue={project?.image} />
       <TextField label="Tags" name="tags" defaultValue={project?.tags.join(", ")} />
       <TextField label="Tech stack" name="techStack" defaultValue={project?.techStack.join(", ")} />
-      <AreaField label="Short description" name="description" defaultValue={project?.description} />
-      <AreaField label="Long description" name="longDescription" defaultValue={project?.longDescription} rows={6} />
-      <AreaField label="Challenge" name="challenge" defaultValue={project?.challenge} />
-      <AreaField label="Solution" name="solution" defaultValue={project?.solution} />
+      <RichEditor
+        id="description"
+        name="description"
+        label="Short description"
+        defaultValue={project?.description}
+        minHeight="min-h-[120px]"
+      />
+      <RichEditor
+        id="longDescription"
+        name="longDescription"
+        label="Long description"
+        defaultValue={project?.longDescription}
+      />
+      <RichEditor
+        id="challenge"
+        name="challenge"
+        label="Challenge"
+        defaultValue={project?.challenge}
+        minHeight="min-h-[140px]"
+      />
+      <RichEditor
+        id="solution"
+        name="solution"
+        label="Solution"
+        defaultValue={project?.solution}
+        minHeight="min-h-[140px]"
+      />
       <AreaField label="Outcomes" name="outcomes" defaultValue={project?.outcomes.join("\n")} hint="One per line" />
       <AreaField label="Deliverables" name="deliverables" defaultValue={project?.deliverables.join("\n")} />
-      <AreaField label="Gallery URLs" name="gallery" defaultValue={project?.gallery.join("\n")} />
+      <FileUploader label="Gallery" name="gallery" multiple defaultValue={project?.gallery} />
       <AreaField
         label="Metrics"
         name="metrics"
         defaultValue={project?.metrics.map((m) => `${m.label}: ${m.value}`).join("\n")}
         hint="One per line as Label: Value"
       />
-      <label className="flex cursor-pointer items-center gap-2 text-sm">
-        <input type="checkbox" name="featured" defaultChecked={project?.featured} className="h-4 w-4 accent-pine" />
-        Featured on homepage
-      </label>
-      <Button type="submit" variant="primary" disabled={pending}>
-        {pending ? "Saving…" : "Save project"}
-      </Button>
+      <SwitchField
+        name="featured"
+        label="Featured on homepage"
+        description="Shows in Selected work when on."
+        defaultChecked={project?.featured}
+      />
+      <FormActions>
+        <Button type="submit" disabled={pending}>
+          {pending ? "Saving…" : "Save project"}
+        </Button>
+      </FormActions>
     </form>
   );
 }

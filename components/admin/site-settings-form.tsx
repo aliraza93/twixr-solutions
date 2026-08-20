@@ -5,7 +5,9 @@ import { useTransition } from "react";
 import { toast } from "sonner";
 import type { HeroContent, SiteContent } from "@/lib/cms/types";
 import { saveSiteContentAction } from "@/app/admin/actions";
-import { TextField, AreaField } from "@/components/admin/fields";
+import { TextField } from "@/components/admin/fields";
+import { RichEditor } from "@/components/admin/markdown-editor";
+import { FormActions } from "@/components/admin/resource-form-layout";
 import { Button } from "@/components/ui/button";
 
 export function SiteSettingsForm({
@@ -70,10 +72,18 @@ export function SiteSettingsForm({
         <TextField label="Primary CTA label" name="ctaLabel" defaultValue={site.primaryCta.label} />
         <TextField label="Primary CTA href" name="ctaHref" defaultValue={site.primaryCta.href} />
       </div>
-      <AreaField label="Tagline" name="tagline" defaultValue={site.tagline} />
-      <Button type="submit" variant="primary" disabled={pending}>
-        {pending ? "Saving…" : "Save settings"}
-      </Button>
+      <RichEditor
+        id="tagline"
+        name="tagline"
+        label="Tagline"
+        defaultValue={site.tagline}
+        minHeight="min-h-[120px]"
+      />
+      <FormActions>
+        <Button type="submit" disabled={pending}>
+          {pending ? "Saving…" : "Save settings"}
+        </Button>
+      </FormActions>
     </form>
   );
 }

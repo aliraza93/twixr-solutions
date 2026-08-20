@@ -5,11 +5,27 @@ import { useTransition } from "react";
 import { toast } from "sonner";
 import type { Testimonial } from "@/content/testimonials";
 import { deleteTestimonialAction, saveTestimonialAction } from "@/app/admin/actions";
-import { TextField, AreaField } from "@/components/admin/fields";
+import { TextField } from "@/components/admin/fields";
+import { RichEditor } from "@/components/admin/markdown-editor";
+import { FileUploader } from "@/components/admin/file-uploader";
+import { SelectField } from "@/components/admin/select-field";
 import { Button } from "@/components/ui/button";
 import { ConfirmButton } from "@/components/admin/confirm-dialog";
 
 type Row = Testimonial & { id: string; sort_order: number };
+
+const PLATFORMS = [
+  { value: "simple-icons:upwork", label: "Upwork" },
+  { value: "simple-icons:fiverr", label: "Fiverr" },
+  { value: "simple-icons:linkedin", label: "LinkedIn" },
+  { value: "simple-icons:google", label: "Google" },
+  { value: "lucide:quote", label: "Other" },
+];
+
+const RATINGS = [5, 4, 3, 2, 1].map((value) => ({
+  value: String(value),
+  label: `${value} star${value === 1 ? "" : "s"}`,
+}));
 
 export function TestimonialsAdmin({ testimonials }: { testimonials: Row[] }) {
   return (
@@ -25,10 +41,13 @@ export function TestimonialsAdmin({ testimonials }: { testimonials: Row[] }) {
 function TestimonialEditor({ item }: { item?: Row }) {
   const router = useRouter();
   const [pending, start] = useTransition();
+  const platforms = item?.platform && !PLATFORMS.some((p) => p.value === item.platform)
+    ? [{ value: item.platform, label: item.platform }, ...PLATFORMS]
+    : PLATFORMS;
 
   return (
     <form
-      className="space-y-4 rounded-lg border border-hairline bg-canvas p-5"
+      className="space-y-4 rounded-xl border border-border bg-card p-6 shadow-sm"
       onSubmit={(event) => {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
@@ -57,21 +76,37 @@ function TestimonialEditor({ item }: { item?: Row }) {
         });
       }}
     >
-      <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-pine">
+      <p className="text-sm font-semibold text-foreground">
         {item ? "Edit quote" : "Add quote"}
       </p>
-      <AreaField label="Quote" name="quote" defaultValue={item?.quote} required />
+      <RichEditor
+        id={`quote-${item?.id ?? "new"}`}
+        name="quote"
+        label="Quote"
+        defaultValue={item?.quote}
+        minHeight="min-h-[120px]"
+      />
       <div className="grid gap-4 md:grid-cols-2">
         <TextField label="Name" name="name" defaultValue={item?.name} required />
         <TextField label="Title / context" name="title" defaultValue={item?.title} />
         <TextField label="Company / platform label" name="company" defaultValue={item?.company} />
-        <TextField label="Platform icon" name="platform" defaultValue={item?.platform} />
-        <TextField label="Avatar URL" name="avatar" defaultValue={item?.avatar} />
-        <TextField label="Rating" name="rating" type="number" defaultValue={item?.rating ?? 5} />
+        <SelectField
+          label="Platform"
+          name="platform"
+          defaultValue={item?.platform ?? "simple-icons:upwork"}
+          options={platforms}
+        />
+        <SelectField
+          label="Rating"
+          name="rating"
+          defaultValue={String(item?.rating ?? 5)}
+          options={RATINGS}
+        />
         <TextField label="Order" name="sort_order" type="number" defaultValue={item?.sort_order ?? 0} />
       </div>
+      <FileUploader label="Avatar" name="avatar" defaultValue={item?.avatar} />
       <div className="flex items-center gap-4">
-        <Button type="submit" variant="primary" disabled={pending}>
+        <Button type="submit" disabled={pending}>
           {pending ? "Saving…" : "Save"}
         </Button>
         {item ? (

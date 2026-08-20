@@ -1,6 +1,10 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
+import { PageContainer } from "@/components/admin/page-container";
 import { PageHeader } from "@/components/admin/page-header";
+import { FormCard } from "@/components/admin/resource-form-layout";
 import { PortfolioForm } from "@/components/admin/portfolio-form";
+import { Button } from "@/components/ui/button";
 import { listPortfolioAdmin } from "@/lib/cms/portfolio";
 
 export default async function EditPortfolioPage({
@@ -14,9 +18,19 @@ export default async function EditPortfolioPage({
   if (!project) notFound();
 
   return (
-    <div className="space-y-8">
-      <PageHeader eyebrow="Catalog" title="Edit project" />
-      <PortfolioForm project={project} />
-    </div>
+    <PageContainer>
+      <PageHeader
+        title="Edit project"
+        subtitle={project.title}
+        actions={
+          <Button variant="outline" asChild>
+            <Link href="/admin/portfolio">Cancel</Link>
+          </Button>
+        }
+      />
+      <FormCard>
+        <PortfolioForm project={project} />
+      </FormCard>
+    </PageContainer>
   );
 }

@@ -26,7 +26,7 @@ export function ConfirmButton({
     <button
       type="button"
       disabled={pending}
-      className={className ?? "cursor-pointer text-sm font-medium text-danger hover:underline"}
+      className={className ?? "cursor-pointer text-sm font-medium text-destructive hover:underline"}
       onClick={() => {
         if (!window.confirm(confirmMessage)) return;
         start(async () => {

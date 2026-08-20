@@ -8,7 +8,7 @@ export default async function AdminLoginPage() {
   if (user) redirect("/admin");
 
   return (
-    <Suspense fallback={<div className="min-h-screen bg-ink" />}>
+    <Suspense fallback={<div className="min-h-screen bg-background" />}>
       <AdminLoginForm />
     </Suspense>
   );

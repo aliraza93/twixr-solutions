@@ -5,7 +5,9 @@ import { useTransition } from "react";
 import { toast } from "sonner";
 import type { HeroContent, SiteContent } from "@/lib/cms/types";
 import { saveSiteContentAction } from "@/app/admin/actions";
-import { TextField, AreaField } from "@/components/admin/fields";
+import { TextField } from "@/components/admin/fields";
+import { RichEditor } from "@/components/admin/markdown-editor";
+import { FormActions } from "@/components/admin/resource-form-layout";
 import { Button } from "@/components/ui/button";
 
 export function HeroSettingsForm({
@@ -62,7 +64,13 @@ export function HeroSettingsForm({
         defaultValue={hero.rotatingWords.join(", ")}
         hint="Comma-separated"
       />
-      <AreaField label="Subheading" name="subheading" defaultValue={hero.subheading} rows={4} />
+      <RichEditor
+        id="subheading"
+        name="subheading"
+        label="Subheading"
+        defaultValue={hero.subheading}
+        minHeight="min-h-[120px]"
+      />
       <TextField label="Proof chip" name="proofChip" defaultValue={hero.proofChip} />
       <div className="grid gap-5 md:grid-cols-2">
         <TextField label="Primary CTA label" name="primaryLabel" defaultValue={hero.primaryCta.label} />
@@ -70,9 +78,11 @@ export function HeroSettingsForm({
         <TextField label="Secondary CTA label" name="secondaryLabel" defaultValue={hero.secondaryCta.label} />
         <TextField label="Secondary CTA href" name="secondaryHref" defaultValue={hero.secondaryCta.href} />
       </div>
-      <Button type="submit" variant="primary" disabled={pending}>
-        {pending ? "Saving…" : "Save hero"}
-      </Button>
+      <FormActions>
+        <Button type="submit" disabled={pending}>
+          {pending ? "Saving…" : "Save hero"}
+        </Button>
+      </FormActions>
     </form>
   );
 }

@@ -33,11 +33,5 @@ export function safeUploadName(file: File) {
 
 export function blobErrorMessage(error: unknown) {
   const raw = error instanceof Error ? error.message : "Upload failed";
-  if (/valid token|access denied|forbidden/i.test(raw)) {
-    return "Vercel Blob denied the upload. In the store, click Save Changes (Production + Preview), then redeploy so OIDC and BLOB_STORE_ID reach the server.";
-  }
-  if (/oidc.*environment/i.test(raw)) {
-    return "Blob OIDC is not enabled for this environment. Include Production (and Development if you upload locally) on the store connection.";
-  }
   return raw.slice(0, 220);
 }

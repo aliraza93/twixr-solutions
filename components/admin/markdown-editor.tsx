@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Field } from "@/components/admin/fields";
-import { uploadAdminFile } from "@/app/admin/upload";
+import { uploadAdminFile } from "@/lib/cms/client-upload";
 import { parseBody } from "@/content/blog-schema";
 import { cn } from "@/lib/utils";
 
@@ -114,9 +114,7 @@ export function RichEditor({
       if (!editor) return;
       setUploading(true);
       try {
-        const data = new FormData();
-        data.set("file", file);
-        const result = await uploadAdminFile(data);
+        const result = await uploadAdminFile(file);
         editor.chain().focus().setImage({ src: result.url }).run();
         toast.success("Image inserted");
       } catch (error) {

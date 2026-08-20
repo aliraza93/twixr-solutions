@@ -1,8 +1,3 @@
-"use server";
-
-import { requireUser } from "@/lib/cms/auth";
-import { storeAdminFile } from "@/lib/cms/storage";
-
 const MAX_BYTES = 4.5 * 1024 * 1024;
 const ALLOWED = new Set([
   "image/jpeg",
@@ -13,7 +8,7 @@ const ALLOWED = new Set([
   "application/pdf",
 ]);
 
-function asFile(value: FormDataEntryValue | null): File | null {
+export function asUploadFile(value: FormDataEntryValue | null): File | null {
   if (!value || typeof value !== "object") return null;
   if (!("arrayBuffer" in value) || !("size" in value) || !("name" in value)) {
     return null;
@@ -23,20 +18,23 @@ function asFile(value: FormDataEntryValue | null): File | null {
   return file;
 }
 
-export async function uploadAdminFile(formData: FormData) {
-  await requireUser();
-
-  const file = asFile(formData.get("file"));
-  if (!file) {
-    throw new Error("Choose a file to upload.");
-  }
+export function assertUploadFile(file: File) {
   if (file.size > MAX_BYTES) {
     throw new Error("Files must be under 4.5 MB for this uploader.");
   }
   if (file.type && !ALLOWED.has(file.type)) {
     throw new Error("Use JPG, PNG, WebP, GIF, SVG, or PDF.");
   }
+}
 
-  const safeName = file.name.replace(/[^\w.\-]+/g, "-").slice(0, 80) || "upload";
-  return storeAdminFile(file, `studio/${Date.now()}-${safeName}`);
+export function safeUploadName(file: File) {
+  return file.name.replace(/[^\w.\-]+/g, "-").slice(0, 80) || "upload";
+}
+
+export function blobErrorMessage(error: unknown) {
+  const raw = error instanceof Error ? error.message : "Upload failed";
+  if (/token|unauthorized|forbidden|oidc|store/i.test(raw)) {
+    return "Vercel Blob auth failed. Check BLOB_READ_WRITE_TOKEN and BLOB_STORE_ID on Production.";
+  }
+  return raw.slice(0, 220);
 }

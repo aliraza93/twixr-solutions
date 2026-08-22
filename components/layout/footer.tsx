@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { ManageCookiesButton } from "@/components/consent/cookie-banner";
 import { footer } from "@/content/footer";
 
 function FooterLogo() {
@@ -89,11 +90,23 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-14 flex flex-col items-start justify-between gap-3 border-t border-hairline pt-6 sm:flex-row sm:items-center">
+        <div className="mt-14 flex flex-col items-start justify-between gap-4 border-t border-hairline pt-6 sm:flex-row sm:items-center">
           <p className="text-sm text-muted">{footer.legal}</p>
-          <p className="font-mono text-[11px] font-medium uppercase tracking-[0.16em] text-muted-2">
-            {footer.note}
-          </p>
+          <nav aria-label="Legal" className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            {footer.legalLinks.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="text-sm text-muted transition-colors duration-[var(--dur-fast)] ease-[var(--ease-out)] hover:text-ink"
+              >
+                {item.label}
+              </Link>
+            ))}
+            <ManageCookiesButton />
+            <span className="hidden font-mono text-[11px] font-medium uppercase tracking-[0.16em] text-muted-2 sm:inline">
+              {footer.note}
+            </span>
+          </nav>
         </div>
       </div>
     </footer>

@@ -30,8 +30,9 @@ export const footer = {
       links: [
         { label: "Blog",         href: "/blog" },
         { label: "All services", href: "/services" },
-        // Wire to a real page or hide until it exists (A5).
-        { label: "Newsletter",   href: "/#newsletter" },
+        { label: "Privacy",      href: "/privacy" },
+        { label: "Terms",        href: "/terms" },
+        { label: "Cookies",      href: "/cookies" },
       ],
     },
     {
@@ -47,4 +48,9 @@ export const footer = {
   ],
   legal: "© 2026 Ali Raza · Twixr Solutions. All rights reserved.",
   note: "Shipped with care · Top Rated Plus",
+  legalLinks: [
+    { label: "Privacy", href: "/privacy" },
+    { label: "Terms", href: "/terms" },
+    { label: "Cookies", href: "/cookies" },
+  ],
 } as const;

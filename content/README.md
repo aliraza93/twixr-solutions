@@ -17,7 +17,9 @@ All homepage (and shared) copy lives here. Edit these files and redeploy — you
 | `testimonials.ts` | Client quotes — real reviews only |
 | `services.ts` | Service cards, audience offerings, extended-team copy |
 | `faq.ts` | FAQ questions/answers |
-| `footer.ts` | Footer columns, tagline, socials |
+| `footer.ts` | Footer columns, tagline, socials, legal links |
+| `legal.ts` | Privacy Policy, Terms of Service, Cookie Policy |
+| `consent.ts` | Cookie banner + booking-consent copy |
 | `tech-stack.ts` | Marquee logos + stack groups |
 | `delivery.ts` | “How we work together” equation + pills |
 | `support.ts` | Support Hub CTA + “Three ways in” cards |

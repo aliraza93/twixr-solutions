@@ -1,0 +1,37 @@
+export const consentCopy = {
+  eyebrow: "Cookies",
+  title: "Cookies stay on this machine.",
+  emphasis: "this machine",
+  body: "Essential cookies run the site. The booking calendar needs an extra yes — nothing here is used to advertise.",
+  accept: "Accept",
+  reject: "Essential only",
+  preferences: "Preferences",
+  save: "Save preferences",
+  policy: "Cookie Policy",
+  policyHref: "/cookies",
+  closePrefs: "Back",
+  manage: "Manage cookies",
+  categories: [
+    {
+      id: "essential" as const,
+      index: "01",
+      label: "Essential",
+      detail: "Always on. Host security, the consent choice itself, and Studio login if you use it.",
+      locked: true,
+    },
+    {
+      id: "functional" as const,
+      index: "02",
+      label: "Booking",
+      detail: "Cal.com on /schedule so you can pick a time. Their widget may set its own cookies.",
+      locked: false,
+    },
+  ],
+  bookingGate: {
+    eyebrow: "Cookies",
+    title: "The calendar needs booking cookies.",
+    body: "Cal.com only loads after you allow the booking category. Essential browsing still works without it.",
+    allow: "Allow booking cookies",
+    policy: "Read the policy",
+  },
+} as const;

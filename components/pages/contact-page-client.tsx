@@ -456,6 +456,16 @@ function ContactForm() {
           "Send message"
         )}
       </Button>
+      <p className="text-xs leading-relaxed text-muted-2">
+        I use your details only to reply. See the{" "}
+        <Link
+          href="/privacy"
+          className="font-medium text-muted underline decoration-hairline-strong underline-offset-2 hover:text-pine"
+        >
+          Privacy Policy
+        </Link>
+        .
+      </p>
     </form>
   );
 }

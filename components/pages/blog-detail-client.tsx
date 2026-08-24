@@ -116,58 +116,53 @@ export function BlogDetailClient({ post, related }: BlogDetailClientProps) {
 
         <section ref={articleRef} className="grid gap-8 lg:grid-cols-12 lg:gap-10">
           <article className="min-w-0 lg:col-span-8">
-            <ScrollReveal>
-              <MarkdownContent source={body} />
-            </ScrollReveal>
+            {/* No ScrollReveal on body/FAQ — tall opacity:0 wrappers caused blank articles until deep scroll. */}
+            <MarkdownContent source={body} />
 
             {faqs.length > 0 && (
-              <ScrollReveal className="mt-12">
+              <div className="mt-12">
                 <BlogFaqAccordion faqs={faqs} />
-              </ScrollReveal>
+              </div>
             )}
 
-            <ScrollReveal className="mt-10">
-              <ul className="flex list-none flex-wrap gap-2 p-0">
-                {post.tags.map((tag) => (
-                  <li key={tag}>
-                    <Chip
-                      tabIndex={-1}
-                      className="pointer-events-none cursor-default hover:border-hairline hover:text-ink-soft"
-                    >
-                      #{tag}
-                    </Chip>
-                  </li>
-                ))}
-              </ul>
-            </ScrollReveal>
-
-            <ScrollReveal className="mt-10">
-              <Card variant="feature" className="band-dark px-6 py-8 sm:px-8">
-                <h3 className="font-sora text-[length:var(--fs-h2)] font-extrabold tracking-[-0.02em] text-d-text">
-                  Enjoyed this <span className="text-lime">article</span>?
-                </h3>
-                <p className="mt-2 max-w-[46ch] text-[length:var(--fs-lead)] text-d-muted">
-                  Get notified when I publish new posts on SaaS, Laravel, and remote engineering.
-                </p>
-                <form
-                  className="mt-4 flex flex-col gap-2 sm:flex-row"
-                  onSubmit={(e) => e.preventDefault()}
-                >
-                  <Input
-                    type="email"
-                    placeholder="you@company.com"
-                    className="h-11 flex-1 border-d-hairline bg-surface text-d-text placeholder:text-d-muted focus-visible:ring-lime"
-                  />
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    className="focus-visible:ring-offset-ink"
+            <ul className="mt-10 flex list-none flex-wrap gap-2 p-0">
+              {post.tags.map((tag) => (
+                <li key={tag}>
+                  <Chip
+                    tabIndex={-1}
+                    className="pointer-events-none cursor-default hover:border-hairline hover:text-ink-soft"
                   >
-                    Subscribe
-                  </Button>
-                </form>
-              </Card>
-            </ScrollReveal>
+                    #{tag}
+                  </Chip>
+                </li>
+              ))}
+            </ul>
+
+            <Card variant="feature" className="mt-10 band-dark px-6 py-8 sm:px-8">
+              <h3 className="font-sora text-[length:var(--fs-h2)] font-extrabold tracking-[-0.02em] text-d-text">
+                Enjoyed this <span className="text-lime">article</span>?
+              </h3>
+              <p className="mt-2 max-w-[46ch] text-[length:var(--fs-lead)] text-d-muted">
+                Get notified when I publish new posts on SaaS, Laravel, and remote engineering.
+              </p>
+              <form
+                className="mt-4 flex flex-col gap-2 sm:flex-row"
+                onSubmit={(e) => e.preventDefault()}
+              >
+                <Input
+                  type="email"
+                  placeholder="you@company.com"
+                  className="h-11 flex-1 border-d-hairline bg-surface text-d-text placeholder:text-d-muted focus-visible:ring-lime"
+                />
+                <Button
+                  type="submit"
+                  variant="primary"
+                  className="focus-visible:ring-offset-ink"
+                >
+                  Subscribe
+                </Button>
+              </form>
+            </Card>
           </article>
 
           <aside className="hidden lg:col-span-4 lg:block">

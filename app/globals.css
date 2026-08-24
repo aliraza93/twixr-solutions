@@ -530,6 +530,12 @@
     will-change: opacity, transform;
   }
 
+  /* Before the observer hooks up, keep content visible so users never see a blank gap. */
+  .scroll-reveal:not([data-reveal-ready]):not(.is-inview) {
+    opacity: 1;
+    transform: none;
+  }
+
   .scroll-reveal.is-inview {
     opacity: 1;
     transform: translateY(0);
@@ -537,10 +543,10 @@
 
   @media (prefers-reduced-motion: reduce) {
     .scroll-reveal {
-      opacity: 0;
+      opacity: 1;
       transform: none;
-      transition: opacity 0.2s var(--ease-out);
-      will-change: opacity;
+      transition: none;
+      will-change: auto;
     }
 
     .scroll-reveal.is-inview {

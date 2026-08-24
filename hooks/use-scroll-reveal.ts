@@ -55,8 +55,10 @@ export function useScrollReveal<T extends HTMLElement = HTMLDivElement>(
     staggerIndex = 0,
     distance = REVEAL_DISTANCE,
     once = true,
-    rootMargin = options.margin ?? "0px 0px -8% 0px",
-    threshold = options.amount ?? 0.12,
+    // Generous margin so content near the fold reveals immediately (no blank gaps).
+    rootMargin = options.margin ?? "0px 0px 0px 0px",
+    // 0 = any pixel visible is enough — critical for tall blocks (blog bodies).
+    threshold = options.amount ?? 0,
   } = options;
 
   const ref = useRef<T>(null);
@@ -65,12 +67,29 @@ export function useScrollReveal<T extends HTMLElement = HTMLDivElement>(
     const el = ref.current;
     if (!el) return;
 
+    const reveal = () => {
+      el.classList.add("is-inview");
+    };
+
+    const isVisibleNow = () => {
+      const rect = el.getBoundingClientRect();
+      const vh = window.innerHeight || document.documentElement.clientHeight;
+      // Any overlap with the viewport (including slightly above/below for hash jumps).
+      return rect.bottom > 0 && rect.top < vh;
+    };
+
+    el.classList.add("scroll-reveal");
+
     if (prefersReducedMotion()) {
-      el.classList.add("scroll-reveal");
+      el.setAttribute("data-reveal-ready", "");
+      if (isVisibleNow()) {
+        reveal();
+        return;
+      }
       const observer = new IntersectionObserver(
         ([entry]) => {
           if (entry.isIntersecting) {
-            el.classList.add("is-inview");
+            reveal();
             if (once) observer.unobserve(el);
           }
         },
@@ -80,16 +99,29 @@ export function useScrollReveal<T extends HTMLElement = HTMLDivElement>(
       return () => observer.disconnect();
     }
 
-    el.classList.add("scroll-reveal");
     el.style.transitionDelay = `${delay + staggerIndex * stagger}s`;
     if (distance !== REVEAL_DISTANCE) {
       el.style.transform = `translateY(${distance}px)`;
     }
 
+    // Already on screen (fold, hash jump, tall partial view): show immediately — no blank gap.
+    if (isVisibleNow()) {
+      el.setAttribute("data-reveal-ready", "");
+      reveal();
+      if (once) {
+        return () => {
+          el.style.transitionDelay = "";
+        };
+      }
+    } else {
+      // Off-screen: arm the hidden state, then reveal on intersection.
+      el.setAttribute("data-reveal-ready", "");
+    }
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          el.classList.add("is-inview");
+          reveal();
           if (once) observer.unobserve(el);
         } else if (!once) {
           el.classList.remove("is-inview");

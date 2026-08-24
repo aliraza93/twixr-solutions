@@ -45,23 +45,33 @@ export function BlogDetailClient({ post, related }: BlogDetailClientProps) {
   const articleRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    const headings = toc.map((item) => document.getElementById(item.id)).filter(Boolean);
-    if (!headings.length) return;
+    if (!toc.length) return;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
-        if (visible[0]?.target.id) {
-          setActiveId(visible[0].target.id);
+    // Sticky nav (~7rem) + small buffer — last heading above this line is active.
+    // Position-based spy (not IntersectionObserver): IO only reports changed
+    // entries, so after FAQ activates, scrolling back up often leaves no heading
+    // in the band and the highlight stays stuck on FAQ.
+    const OFFSET_PX = 112;
+
+    const updateActive = () => {
+      let current = toc[0]?.id ?? "";
+      for (const item of toc) {
+        const el = document.getElementById(item.id);
+        if (!el) continue;
+        if (el.getBoundingClientRect().top <= OFFSET_PX) {
+          current = item.id;
         }
-      },
-      { rootMargin: "-20% 0px -60% 0px", threshold: [0, 0.25, 0.5, 1] }
-    );
+      }
+      setActiveId((prev) => (prev === current ? prev : current));
+    };
 
-    headings.forEach((el) => el && observer.observe(el));
-    return () => observer.disconnect();
+    updateActive();
+    window.addEventListener("scroll", updateActive, { passive: true });
+    window.addEventListener("resize", updateActive);
+    return () => {
+      window.removeEventListener("scroll", updateActive);
+      window.removeEventListener("resize", updateActive);
+    };
   }, [toc]);
 
   const shareUrl = `https://www.twixrsolutions.com/blog/${post.slug}`;

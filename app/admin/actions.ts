@@ -44,6 +44,7 @@ export async function saveBlogPostAction(form: {
   authorRole: string;
   authorImage: string;
   body: string;
+  faqs: { question: string; answer: string }[];
   published: boolean;
   order: number;
 }) {

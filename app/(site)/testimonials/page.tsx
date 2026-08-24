@@ -7,7 +7,7 @@ import { getTestimonials } from "@/lib/cms/testimonials";
 export const metadata: Metadata = pageMetadata({
   title: "Results",
   description:
-    "Real, verified client reviews from Upwork — Top Rated Plus with a 100% Job Success score and a 4.7-star rating across 40 reviews.",
+    "Real, verified client reviews from Upwork - Top Rated Plus with a 100% Job Success score and a 4.7-star rating across 40 reviews.",
   path: "/testimonials",
 });
 

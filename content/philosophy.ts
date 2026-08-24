@@ -9,5 +9,5 @@ export const philosophy = {
   ] as const,
   missionMuted: "The goal isn't more code. ",
   missionEmphasis:
-    "I think through your system's future — how it grows, where it breaks, how to prevent both — before the first line of code.",
+    "I think through your system's future - how it grows, where it breaks, how to prevent both - before the first line of code.",
 } as const;

@@ -5,7 +5,7 @@ type Props = {
   subtitle?: string;
   /** @deprecated Use `subtitle`. Kept so existing pages keep compiling. */
   description?: string;
-  /** @deprecated Studio matches IMEI density — eyebrow is ignored. */
+  /** @deprecated Studio matches IMEI density - eyebrow is ignored. */
   eyebrow?: string;
   badge?: ReactNode;
   badgePlacement?: "below" | "inline";

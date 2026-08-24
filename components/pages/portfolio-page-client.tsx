@@ -38,7 +38,7 @@ export function PortfolioPageClient({
         eyebrow="SELECTED WORK"
         title="Product Portfolio"
         emphasis="Portfolio"
-        description="SaaS platforms, APIs, and cloud-native products built for startups and global teams — from MVP to scale."
+        description="SaaS platforms, APIs, and cloud-native products built for startups and global teams - from MVP to scale."
       />
       <FeaturedPortfolio projects={featured} />
       <ProjectCatalog projects={projects} />
@@ -81,7 +81,7 @@ function ProjectCatalog({ projects }: { projects: PortfolioProject[] }) {
             eyebrow="Catalog"
             title="All Projects"
             emphasis="Projects"
-            description="Filter by category or search the stack — case studies across SaaS, web, and cloud."
+            description="Filter by category or search the stack - case studies across SaaS, web, and cloud."
           />
         </ScrollReveal>
 

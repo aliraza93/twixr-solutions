@@ -6,7 +6,7 @@ import { site } from "@/content/site";
 
 export const metadata: Metadata = pageMetadata({
   title: "About",
-  description: `${site.name} — ${site.role} and founder of Twixr Solutions. Top Rated Plus on Upwork with ${site.yearsExperience} years building SaaS, e-commerce, APIs, and cloud infrastructure with Laravel, Node, Next.js & Vue.`,
+  description: `${site.name} - ${site.role} and founder of Twixr Solutions. Top Rated Plus on Upwork with ${site.yearsExperience} years building SaaS, e-commerce, APIs, and cloud infrastructure with Laravel, Node, Next.js & Vue.`,
   path: "/about",
   type: "profile",
 });

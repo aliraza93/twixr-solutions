@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   return pageMetadata({
-    title: `${project.title} — Case Study`,
+    title: `${project.title} - Case Study`,
     description: project.longDescription,
     path: `/portfolio/${project.slug}`,
     type: "article",

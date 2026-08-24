@@ -89,7 +89,7 @@ export default async function InquiriesPage({
                         <p className="text-xs text-muted-foreground">{inquiry.email}</p>
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {inquiry.projectType || "—"}
+                        {inquiry.projectType || " - "}
                       </TableCell>
                       <TableCell>
                         <StatusPill status={inquiry.status} />

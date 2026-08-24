@@ -1,4 +1,4 @@
-# Twixr Studio — dashboard design
+# Twixr Studio - dashboard design
 
 Studio is a **tool**, not the marketing site. Layout, density, and components follow IMEI Checker’s `dashboard-design.md`. Color is remapped: IMEI blue `#2563EB` becomes Twixr pine `#0F5132`. Marketing pine/lime/Sora stay on the public site only.
 
@@ -8,7 +8,7 @@ Every page: `AdminShell` → sticky topbar (sidebar toggle + breadcrumbs) → `P
 
 - No centered max-width. No empty gutters. `--page-x` is 24px desktop / 16px mobile.
 - Sidebar: 240px, collapsible to 64px icon rail, drawer on small screens. Active item is a **solid pine fill**.
-- If a form feels wide, cap the form card — never the page.
+- If a form feels wide, cap the form card - never the page.
 
 ## Tokens (`.dashboard-shell`)
 

@@ -7,7 +7,7 @@ import { pageMetadata, jsonLdGraph, breadcrumbNode } from "@/lib/seo";
 export const metadata: Metadata = pageMetadata({
   title: "Services",
   description:
-    "SaaS development, Laravel & Node APIs, Next.js & Vue frontends, cloud/DevOps on AWS, e-commerce, and AI automation — by a Top Rated Plus full-stack engineer.",
+    "SaaS development, Laravel & Node APIs, Next.js & Vue frontends, cloud/DevOps on AWS, e-commerce, and AI automation - by a Top Rated Plus full-stack engineer.",
   path: "/services",
 });
 

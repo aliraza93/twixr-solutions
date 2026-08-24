@@ -17,7 +17,7 @@ function PrimitiveGallery() {
         eyebrow="Our methodology"
         title="One mission. Two ways we build."
         emphasis="build"
-        description="Primitives below consume semantic tokens only — wrap the tree in .band-dark and the palette inverts with no per-component overrides."
+        description="Primitives below consume semantic tokens only - wrap the tree in .band-dark and the palette inverts with no per-component overrides."
       />
 
       <div className="flex flex-wrap items-center gap-4">
@@ -45,7 +45,7 @@ function PrimitiveGallery() {
         </Card>
         <Card variant="numbered" index={1} title="Numbered card">
           <p className="mt-3 text-muted">
-            Mono index, Sora title, muted body — the Why pattern.
+            Mono index, Sora title, muted body - the Why pattern.
           </p>
         </Card>
       </div>
@@ -79,7 +79,7 @@ export function FoundationDemo() {
         <div className="ds-container relative">
           <Eyebrow>Design foundation</Eyebrow>
           <h1 className="mt-5 max-w-[18ch] font-sora text-[length:var(--fs-display)] font-extrabold leading-[1.04] tracking-[-0.02em] text-ink">
-            Tokens, type, and primitives —{" "}
+            Tokens, type, and primitives - {" "}
             <span className="text-pine">before sections</span>
           </h1>
           <p className="mt-6 max-w-[60ch] text-[length:var(--fs-lead)] text-muted">
@@ -101,7 +101,7 @@ export function FoundationDemo() {
                 Body
               </dt>
               <dd className="mt-3 font-inter text-2xl font-medium text-ink">
-                Inter 400–600
+                Inter 400 - 600
               </dd>
             </div>
             <div className="rounded-lg border border-hairline bg-canvas p-6 shadow-sm">

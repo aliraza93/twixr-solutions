@@ -32,7 +32,7 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
-const SITE_DESCRIPTION = `${site.role} with ${site.yearsExperience} years of experience in Laravel, Node, Next.js, Vue, and AWS. Top Rated Plus on Upwork — building SaaS, e-commerce, and APIs that scale.`;
+const SITE_DESCRIPTION = `${site.role} with ${site.yearsExperience} years of experience in Laravel, Node, Next.js, Vue, and AWS. Top Rated Plus on Upwork - building SaaS, e-commerce, and APIs that scale.`;
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -70,7 +70,7 @@ export const metadata: Metadata = {
         url: DEFAULT_OG,
         width: 1200,
         height: 630,
-        alt: `${SITE_NAME} — ${site.role}`,
+        alt: `${SITE_NAME} - ${site.role}`,
       },
     ],
   },

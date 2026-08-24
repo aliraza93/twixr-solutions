@@ -85,12 +85,12 @@ export const legalPages: Record<LegalSlug, LegalPage> = {
           "I do not sell or rent your information. It only leaves my control when a processor needs it to run this site or a project:",
         ],
         bullets: [
-          "Vercel — hosting, logs, and deployments.",
-          "Resend — transactional email for the contact form.",
-          "The database provider behind Studio — stored inquiries.",
-          "Cloudinary — images published from Studio.",
-          "Cal.com — if you book a call.",
-          "Upwork or LinkedIn — if you contact me there instead of the form.",
+          "Vercel - hosting, logs, and deployments.",
+          "Resend - transactional email for the contact form.",
+          "The database provider behind Studio - stored inquiries.",
+          "Cloudinary - images published from Studio.",
+          "Cal.com - if you book a call.",
+          "Upwork or LinkedIn - if you contact me there instead of the form.",
         ],
       },
       {
@@ -108,7 +108,7 @@ export const legalPages: Record<LegalSlug, LegalPage> = {
       {
         heading: "Your choices",
         paragraphs: [
-          `Email [${email}](mailto:${email}) to access, correct, or delete an enquiry I hold, or to ask what I have on file. I will respond within a reasonable time. You can also stop using the site at any time. Unsubscribing from a newsletter does not apply — I do not run one.`,
+          `Email [${email}](mailto:${email}) to access, correct, or delete an enquiry I hold, or to ask what I have on file. I will respond within a reasonable time. You can also stop using the site at any time. Unsubscribing from a newsletter does not apply - I do not run one.`,
         ],
       },
       {
@@ -148,7 +148,7 @@ export const legalPages: Record<LegalSlug, LegalPage> = {
         bullets: [
           "Do not scrape, attack, or overload the site, or try to access Studio or other private areas.",
           "Content on this site (copy, case studies, branding, code samples shown for illustration) is owned by Twixr Solutions or used with permission. You may link to pages; you may not copy the site as your own.",
-          "Case studies describe real work. Results depend on the client’s product, team, and constraints — they are not a guarantee for your project.",
+          "Case studies describe real work. Results depend on the client’s product, team, and constraints - they are not a guarantee for your project.",
         ],
       },
       {

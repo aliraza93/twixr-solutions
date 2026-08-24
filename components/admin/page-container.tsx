@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 
 /**
  * Full-width inner wrapper used on every Studio page. No max-width, no
- * mx-auto — cap individual forms, not the page. See IMEI dashboard-design.md §2.
+ * mx-auto - cap individual forms, not the page. See IMEI dashboard-design.md §2.
  */
 export function PageContainer({
   children,

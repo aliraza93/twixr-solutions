@@ -10,7 +10,7 @@ import { stripEmDashes } from "@/lib/content/strip-em-dashes";
 
 const sanitizeSchema = {
   ...defaultSchema,
-  // CMS markdown is trusted — keep rehype-slug ids as-is so TOC/anchors match
+  // CMS markdown is trusted - keep rehype-slug ids as-is so TOC/anchors match
   // (`#for-clients`). Default clobberPrefix (`user-content-`) broke scroll-spy.
   clobberPrefix: "",
   attributes: {

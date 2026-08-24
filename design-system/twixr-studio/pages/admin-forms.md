@@ -21,5 +21,5 @@
 
 - Inputs: white, strong border, visible placeholder `#5c6661`
 - Labels: ink, always associated with controls
-- Flat hover (color/border, 150–200ms). No scale-on-hover
+- Flat hover (color/border, 150 - 200ms). No scale-on-hover
 - Lucide icons only. `cursor-pointer` on clickable controls

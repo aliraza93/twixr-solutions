@@ -14,13 +14,13 @@ export const faqs: FaqItem[] = [
   {
     question: "Do you build multi-tenant SaaS platforms?",
     answer:
-      "Yes — Laravel & Node, clean and built to last, with auth, billing, and data isolation designed in from day one.",
+      "Yes - Laravel & Node, clean and built to last, with auth, billing, and data isolation designed in from day one.",
     icon: "lucide:layers",
   },
   {
     question: "Can you handle DevOps and cloud?",
     answer:
-      "Yes — CI/CD, Docker, and AWS (EC2, RDS, S3, ElastiCache) with zero-downtime deploys.",
+      "Yes - CI/CD, Docker, and AWS (EC2, RDS, S3, ElastiCache) with zero-downtime deploys.",
     icon: "lucide:cloud",
   },
   {
@@ -32,7 +32,7 @@ export const faqs: FaqItem[] = [
   {
     question: "Do you integrate AI?",
     answer:
-      "Yes — OpenAI/Anthropic, automation, and RAG pipelines — integrated where they add real value, not as a headline feature.",
+      "Yes - OpenAI/Anthropic, automation, and RAG pipelines - integrated where they add real value, not as a headline feature.",
     icon: "lucide:bot",
   },
   {
@@ -44,7 +44,7 @@ export const faqs: FaqItem[] = [
   {
     question: "Do you take on rescue projects and migrations?",
     answer:
-      "Yes — I regularly rebuild what others architected poorly, and migrate between monolith and microservices.",
+      "Yes - I regularly rebuild what others architected poorly, and migrate between monolith and microservices.",
     icon: "lucide:wrench",
   },
   {
@@ -55,7 +55,7 @@ export const faqs: FaqItem[] = [
   {
     question: "Mentoring or code reviews?",
     answer:
-      "Yes — for teams and individuals optimizing their performance or adopting new stacks.",
+      "Yes - for teams and individuals optimizing their performance or adopting new stacks.",
     icon: "lucide:users",
   },
 ];

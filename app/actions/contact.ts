@@ -57,8 +57,8 @@ function buildEmail(values: {
   message: string;
   sentAt: string;
 }) {
-  const company = values.company || "—";
-  const projectType = values.projectType || "—";
+  const company = values.company || " - ";
+  const projectType = values.projectType || " - ";
   const messageHtml = escapeHtml(values.message).replaceAll("\n", "<br />");
 
   const html = `<!DOCTYPE html>
@@ -96,7 +96,7 @@ function buildEmail(values: {
 </html>`;
 
   const text = [
-    "New enquiry — Twixr Solutions contact form",
+    "New enquiry - Twixr Solutions contact form",
     "",
     `Name: ${values.name}`,
     `Email: ${values.email}`,

@@ -47,7 +47,7 @@ export function BlogDetailClient({ post, related }: BlogDetailClientProps) {
   useEffect(() => {
     if (!toc.length) return;
 
-    // Sticky nav (~7rem) + small buffer — last heading above this line is active.
+    // Sticky nav (~7rem) + small buffer - last heading above this line is active.
     const OFFSET_PX = 112;
 
     const resolveHeading = (id: string) =>
@@ -128,7 +128,7 @@ export function BlogDetailClient({ post, related }: BlogDetailClientProps) {
 
         <section ref={articleRef} className="grid gap-8 lg:grid-cols-12 lg:gap-10">
           <article className="min-w-0 lg:col-span-8">
-            {/* No ScrollReveal on body/FAQ — tall opacity:0 wrappers caused blank articles until deep scroll. */}
+            {/* No ScrollReveal on body/FAQ - tall opacity:0 wrappers caused blank articles until deep scroll. */}
             <MarkdownContent source={body} />
 
             {faqs.length > 0 && (

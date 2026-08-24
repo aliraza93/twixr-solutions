@@ -2,7 +2,7 @@ import { site } from "./site";
 
 export const footer = {
   tagline:
-    "Senior full-stack engineer — Laravel, Node, Next.js & Vue. Top Rated Plus on Upwork, 8+ years.",
+    "Senior full-stack engineer - Laravel, Node, Next.js & Vue. Top Rated Plus on Upwork, 8+ years.",
   columns: [
     {
       title: "SERVICES",

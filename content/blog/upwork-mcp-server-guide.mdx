@@ -1,7 +1,7 @@
 ---
 slug: upwork-mcp-server-guide
 title: "Upwork MCP Server Guide: Let AI Agents Work on Upwork Safely"
-excerpt: "How to connect Claude, Cursor, and other AI agents to Upwork with an MCP server — what it can do, what it cannot, and how to keep hiring and payments under human control."
+excerpt: "How to connect Claude, Cursor, and other AI agents to Upwork with an MCP server - what it can do, what it cannot, and how to keep hiring and payments under human control."
 date: "2026-03-15"
 image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?q=80&w=1600&auto=format&fit=crop"
 category: "Engineering"
@@ -35,7 +35,7 @@ With a well-scoped Upwork MCP server, agents can typically:
 
 1. **MCP server** exposes typed tools (search_jobs, get_job, draft_proposal, …).
 2. **Your agent host** (Claude Desktop, Cursor, custom) connects over stdio or HTTP.
-3. **Auth** uses OAuth / API credentials stored in a secrets manager — never in the prompt.
+3. **Auth** uses OAuth / API credentials stored in a secrets manager - never in the prompt.
 4. **Policy layer** blocks tools that hire, pay, or change billing without a human.
 
 ```bash
@@ -67,10 +67,10 @@ If you want help wiring this into a production freelance workflow, [book a consu
 No. A responsible MCP setup keeps hire and payment tools disabled or gated behind human confirmation. Agents should draft; humans should commit.
 
 **Which AI tools does it work with?**
-Any MCP-compatible host — Claude Desktop, Cursor, and custom agent runtimes that speak MCP. The Upwork tools stay the same; only the host changes.
+Any MCP-compatible host - Claude Desktop, Cursor, and custom agent runtimes that speak MCP. The Upwork tools stay the same; only the host changes.
 
 **Is my Upwork account safe?**
 Safety depends on credential hygiene and tool policy. Use short-lived tokens, least privilege, and never paste secrets into chat history.
 
 **Do I still need to write proposals myself?**
-You can let the agent draft them, then edit tone and specifics. Most Top Rated freelancers still review every send — that is the point of the confirm step.
+You can let the agent draft them, then edit tone and specifics. Most Top Rated freelancers still review every send - that is the point of the confirm step.

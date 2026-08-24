@@ -19,7 +19,7 @@ export const process = {
   eyebrow: "How I build",
   headingLine1: "One connected cycle.",
   headingLine2: "From idea to scale.",
-  lead: "Five phases, one loop — from the first workshop to traffic that holds. Touch a node to explore.",
+  lead: "Five phases, one loop - from the first workshop to traffic that holds. Touch a node to explore.",
   hub: { label: "Twixr", sub: "Delivery" },
   phases: [
     {
@@ -34,7 +34,7 @@ export const process = {
         tools: ["Workshops", "Audits", "Architecture", "Roadmap"],
         stats: [
           { value: "100%", unit: "Alignment" },
-          { value: "1–2 wks", unit: "Typical" },
+          { value: "1 - 2 wks", unit: "Typical" },
         ],
         href: "#services",
       },
@@ -47,7 +47,7 @@ export const process = {
         index: "02",
         logo: "Architecture",
         tagline: "Built to grow",
-        desc: "Schemas, APIs, and multi-tenant foundations designed to scale — monolith or microservices, chosen on merit.",
+        desc: "Schemas, APIs, and multi-tenant foundations designed to scale - monolith or microservices, chosen on merit.",
         tools: ["PostgreSQL", "REST APIs", "Multi-tenant", "System Design"],
         stats: [
           { value: "0", unit: "Rewrites" },
@@ -64,7 +64,7 @@ export const process = {
         index: "03",
         logo: "Engineering",
         tagline: "Production-grade from merge one",
-        desc: "Laravel, Node, Next.js & Vue in tight sprints — clean, tested, maintainable.",
+        desc: "Laravel, Node, Next.js & Vue in tight sprints - clean, tested, maintainable.",
         tools: ["Laravel", "Node.js", "Next.js", "Vue"],
         stats: [
           { value: "<200ms", unit: "TTFB" },

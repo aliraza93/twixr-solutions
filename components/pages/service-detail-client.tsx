@@ -187,7 +187,7 @@ export function ServiceDetailClient({ service, testimonials }: ServiceDetailClie
             eyebrow="Pricing"
             title="Choose your package"
             emphasis="package"
-            description="Scope-based tiers — contact me for a tailored proposal."
+            description="Scope-based tiers - contact me for a tailored proposal."
             className="mb-8"
           />
           <ScrollStagger className="mx-auto grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -269,7 +269,7 @@ export function ServiceDetailClient({ service, testimonials }: ServiceDetailClie
                     asChild
                   >
                     <a
-                      href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(`${pkg.name} package — ${service.title}`)}`}
+                      href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(`${pkg.name} package - ${service.title}`)}`}
                     >
                       Contact for project
                     </a>

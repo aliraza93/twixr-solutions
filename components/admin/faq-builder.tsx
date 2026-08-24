@@ -33,7 +33,7 @@ export function FaqBuilder({ name = "faqs", defaultValue = [] }: FaqBuilderProps
             className="rounded-lg border border-hairline bg-white p-3 shadow-sm"
           >
             <div className="mb-2 flex items-center justify-between gap-2">
-              <span className="inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted">
+              <span className="inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-[0.14em] text-ink-soft">
                 <GripVertical className="h-3.5 w-3.5" aria-hidden />
                 Q&A {index + 1}
               </span>

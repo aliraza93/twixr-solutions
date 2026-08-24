@@ -54,8 +54,8 @@ function ToolbarButton({
       aria-label={label}
       onClick={onClick}
       className={cn(
-        "inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-muted transition-colors hover:bg-pine-tint hover:text-pine",
-        active && "bg-pine text-lime"
+        "inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-ink-soft transition-colors hover:bg-pine-tint hover:text-pine",
+        active && "bg-pine text-white hover:bg-pine-600 hover:text-white"
       )}
     >
       {children}
@@ -148,7 +148,11 @@ export function RichEditor({
     >
       <input type="hidden" name={name} value={markdown} />
       <div className="overflow-hidden rounded-lg border border-hairline-strong bg-white shadow-sm">
-        <div className="flex flex-wrap items-center gap-1 border-b border-hairline bg-[#f4f6f5] px-2 py-1.5">
+        <div
+          className="flex flex-wrap items-center gap-1 border-b border-hairline-strong bg-slate-100 px-2 py-1.5"
+          role="toolbar"
+          aria-label="Formatting"
+        >
           <ToolbarButton
             label="Heading 2"
             active={editor?.isActive("heading", { level: 2 })}
@@ -248,7 +252,7 @@ export function MarkdownPreview({
   }, [liveFrom]);
 
   if (!source.trim()) {
-    return <p className="text-sm text-muted">Preview will appear as you write.</p>;
+    return <p className="text-sm text-ink-soft">Preview will appear as you write.</p>;
   }
 
   return <MarkdownContent source={source} className="prose-blog--compact max-w-none" />;

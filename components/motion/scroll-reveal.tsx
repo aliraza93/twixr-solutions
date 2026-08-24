@@ -65,8 +65,8 @@ export function ScrollStagger({
   children,
   className,
   stagger = STAGGER,
-  amount = 0.08,
-  margin = "0px 0px -6% 0px",
+  amount = 0,
+  margin = "0px 0px 0px 0px",
   distance = REVEAL_DISTANCE,
 }: ScrollStaggerProps) {
   const ref = useRef<HTMLDivElement>(null);
@@ -79,7 +79,10 @@ export function ScrollStagger({
     if (!items.length) return;
 
     if (prefersReducedMotion()) {
-      items.forEach((el) => el.classList.add("is-inview"));
+      items.forEach((el) => {
+        el.classList.add("scroll-reveal", "is-inview");
+        el.setAttribute("data-reveal-ready", "");
+      });
       return;
     }
 
@@ -91,10 +94,26 @@ export function ScrollStagger({
       }
     });
 
+    const revealAll = () => items.forEach((el) => el.classList.add("is-inview"));
+
+    const rootRect = root.getBoundingClientRect();
+    const vh = window.innerHeight || document.documentElement.clientHeight;
+    if (rootRect.bottom > 0 && rootRect.top < vh) {
+      items.forEach((el) => el.setAttribute("data-reveal-ready", ""));
+      revealAll();
+      return () => {
+        items.forEach((el) => {
+          el.style.transitionDelay = "";
+        });
+      };
+    }
+
+    items.forEach((el) => el.setAttribute("data-reveal-ready", ""));
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (!entry.isIntersecting) return;
-        items.forEach((el) => el.classList.add("is-inview"));
+        revealAll();
         observer.disconnect();
       },
       { threshold: amount, rootMargin: margin }

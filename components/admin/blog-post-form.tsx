@@ -98,7 +98,7 @@ export function BlogPostForm({ post }: { post?: BlogPostRecord }) {
       />
       <RichEditor id="body" name="body" label="Body" defaultValue={post?.body} />
       <div className="rounded-lg border border-hairline bg-surface p-4">
-        <p className="mb-3 font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-muted">
+        <p className="mb-3 font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-ink-soft">
           Live markdown preview
         </p>
         <MarkdownPreview body={post?.body ?? ""} liveFrom="body" />

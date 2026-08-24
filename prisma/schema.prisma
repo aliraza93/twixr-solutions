@@ -36,6 +36,7 @@ model BlogPost {
   authorRole  String   @default("")
   authorImage String   @default("")
   body        String   @default("")
+  faqs        Json     @default("[]")
   published   Boolean  @default(false)
   sortOrder   Int      @default(0)
   createdAt   DateTime @default(now())

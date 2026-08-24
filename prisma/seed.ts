@@ -134,6 +134,7 @@ async function seed() {
         authorRole: data.authorRole ?? "",
         authorImage: data.authorImage ?? "",
         body,
+        faqs: [],
         published: true,
         sortOrder: Number.parseInt(data.order ?? "99", 10),
       },

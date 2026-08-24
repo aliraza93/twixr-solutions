@@ -7,7 +7,7 @@ import { getPortfolioProjects, getFeaturedProjects } from "@/lib/cms/portfolio";
 export const metadata: Metadata = pageMetadata({
   title: "Portfolio",
   description:
-    "Selected SaaS, e-commerce, API, and cloud projects — case studies from a Top Rated Plus full-stack engineer building products that scale.",
+    "Selected SaaS, e-commerce, API, and cloud projects - case studies from a Top Rated Plus full-stack engineer building products that scale.",
   path: "/portfolio",
 });
 

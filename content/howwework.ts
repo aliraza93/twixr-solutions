@@ -27,7 +27,7 @@ export const howWeWork = {
     {
       title: "Build",
       description:
-        "Agile sprints on modern stacks — Laravel, Node, Next.js, Vue — with automation where it helps.",
+        "Agile sprints on modern stacks - Laravel, Node, Next.js, Vue - with automation where it helps.",
       icon: "lucide:layout",
     },
     {
@@ -58,11 +58,11 @@ export const howWeWork = {
     eyebrow: "In practice",
     headingLine1: "From whiteboard to",
     headingLine2: "production.",
-    body: "The same steps run on every engagement — discovery becomes architecture, architecture becomes a pipeline, and the pipeline is what ships. No theatre, no mystery phase after “done.”",
+    body: "The same steps run on every engagement - discovery becomes architecture, architecture becomes a pipeline, and the pipeline is what ships. No theatre, no mystery phase after “done.”",
   },
 } as const;
 
-/** @deprecated Use howWeWork.steps — kept for lib/data re-exports. */
+/** @deprecated Use howWeWork.steps - kept for lib/data re-exports. */
 export const approachSteps = howWeWork.steps.map((step) => ({
   ...step,
   color: "indigo",

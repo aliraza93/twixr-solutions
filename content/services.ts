@@ -2,7 +2,7 @@ export const offerings = [
   {
     audience: "For startups & founders",
     title: "Your first SaaS, shipped properly.",
-    desc: "End-to-end Laravel/Node/Next.js so v1 is something you can actually run — not a demo that dies in staging.",
+    desc: "End-to-end Laravel/Node/Next.js so v1 is something you can actually run - not a demo that dies in staging.",
     cta: { label: "Get in touch", href: "/contact" },
   },
   {
@@ -14,14 +14,14 @@ export const offerings = [
   {
     audience: "For CTOs & product teams",
     title: "Architecture, migrations & rescue.",
-    desc: "Monolith ↔ microservices, refactors, and rebuilding what was architected poorly — plus AI automation where it pays off.",
+    desc: "Monolith ↔ microservices, refactors, and rebuilding what was architected poorly - plus AI automation where it pays off.",
     cta: { label: "Get in touch", href: "/contact" },
   },
 ] as const;
 
 export const extendedTeam = {
   heading: "A senior engineer who embeds like a partner.",
-  body: "I don't hand you a ticket queue. I ask the right questions, own the architecture, and treat your product like it's mine — which is why clients stay 2–4 years. AI and automation come in where they cut real time, not as a buzzword.",
+  body: "I don't hand you a ticket queue. I ask the right questions, own the architecture, and treat your product like it's mine - which is why clients stay 2 - 4 years. AI and automation come in where they cut real time, not as a buzzword.",
   chips: [
     "Senior engineering",
     "Architecture-first",
@@ -34,7 +34,7 @@ export const services = [
   {
     title: "SaaS & Web Apps",
     description:
-      "End-to-end Laravel, Node, and Next.js so v1 is something you can actually run — not a demo that dies in staging.",
+      "End-to-end Laravel, Node, and Next.js so v1 is something you can actually run - not a demo that dies in staging.",
     icon: "Code2",
   },
   {

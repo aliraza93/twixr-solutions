@@ -22,7 +22,7 @@ const sameAs = [site.contact.upwork, site.contact.fiverr, site.contact.linkedin]
   .filter((v): v is string => Boolean(v));
 
 type SeoInput = {
-  /** Short title — the "%s | Twixr Solutions" template adds the brand for <title>. */
+  /** Short title - the "%s | Twixr Solutions" template adds the brand for <title>. */
   title: string;
   description: string;
   /** Absolute path, e.g. "/about" or "/blog/my-post". */

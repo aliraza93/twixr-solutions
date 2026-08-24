@@ -70,7 +70,7 @@ function slugify(text: string) {
     .replace(/(^-|-$)/g, "");
 }
 
-/** Coarse block parser — kept for TipTap admin preview fallbacks. Prefer MarkdownContent. */
+/** Coarse block parser - kept for TipTap admin preview fallbacks. Prefer MarkdownContent. */
 export function parseBody(md: string): BlogContentBlock[] {
   const blocks: BlogContentBlock[] = [];
   const lines = md.split(/\r?\n/);

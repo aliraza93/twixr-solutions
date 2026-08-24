@@ -1,0 +1,29 @@
+---
+description: NEVER use em/en dashes in any Twixr site copy or code strings
+alwaysApply: true
+---
+
+# No em dashes (compulsory)
+
+Em dashes (`—`), en dashes (`–`), minus signs (`−`), and HTML entities (`&mdash;`, `&ndash;`) are forbidden in this project. They read as AI-generated and must never appear in HTML served to users or crawlers.
+
+## Required behavior
+
+- Never type `—`, `–`, or `−` in copy, UI strings, comments meant for users, MDX, CMS seeds, SEO metadata, or design-system docs.
+- Use a normal hyphen with spaces instead: ` - `
+  - Bad: `future — how it grows`
+  - Good: `future - how it grows`
+- Prefer commas, periods, or parentheses when a hyphen feels awkward.
+- Empty admin placeholders use `"-"` (ASCII hyphen), never an em dash.
+- When editing or generating content, strip these characters before committing.
+- Public/CMS text still runs through `lib/content/strip-em-dashes.ts` on save and render - that is a safety net, not permission to introduce dashes in source.
+
+## Do not
+
+- Do not hide dashes with CSS.
+- Do not leave them in source "because runtime strips them."
+- Do not reintroduce them in homepage/static `content/*` files.
+
+## Quick check
+
+Before finishing copy or UI text work, search the diff for `—` / `–` and remove any matches.

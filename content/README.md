@@ -1,6 +1,6 @@
 # Content
 
-All homepage (and shared) copy lives here. Edit these files and redeploy — you should not need to touch JSX for wording, dates, or stats.
+All homepage (and shared) copy lives here. Edit these files and redeploy - you should not need to touch JSX for wording, dates, or stats.
 
 ## Where to edit
 
@@ -14,7 +14,7 @@ All homepage (and shared) copy lives here. Edit these files and redeploy — you
 | `industries.ts` | Industries strip |
 | `experience.ts` | Career roles, education, and the proof stats row |
 | `work.ts` | Selected work cards |
-| `testimonials.ts` | Client quotes — real reviews only |
+| `testimonials.ts` | Client quotes - real reviews only |
 | `services.ts` | Service cards, audience offerings, extended-team copy |
 | `faq.ts` | FAQ questions/answers |
 | `footer.ts` | Footer columns, tagline, socials, legal links |
@@ -43,9 +43,9 @@ Body supports paragraphs, `##` / `###` headings, and `- ` lists. Add a file, red
 
 ## Still to fill
 
-1. **Testimonials** — add 4–7 more real Upwork reviews in `testimonials.ts`. Do not invent names.
-2. **Contact URLs** — real Fiverr and Cal.com (or keep `/schedule`). Email is `ali@twixrsolutions.com`.
-3. **CV PDF** — add `public/ali-raza-cv.pdf` (`cvHref` already points there).
-4. **Project links** — LeadQuiz / ManagePH / OSRS hrefs in `work.ts`.
-5. **DevLabs role** — confirm 2020–2022 is accurate.
-6. **Dead links** — Newsletter (`#newsletter`) and several socials are still `#`.
+1. **Testimonials** - add 4 - 7 more real Upwork reviews in `testimonials.ts`. Do not invent names.
+2. **Contact URLs** - real Fiverr and Cal.com (or keep `/schedule`). Email is `ali@twixrsolutions.com`.
+3. **CV PDF** - add `public/ali-raza-cv.pdf` (`cvHref` already points there).
+4. **Project links** - LeadQuiz / ManagePH / OSRS hrefs in `work.ts`.
+5. **DevLabs role** - confirm 2020 - 2022 is accurate.
+6. **Dead links** - Newsletter (`#newsletter`) and several socials are still `#`.

@@ -2,7 +2,7 @@ export const consentCopy = {
   eyebrow: "Cookies",
   title: "Cookies stay on this machine.",
   emphasis: "this machine",
-  body: "Essential cookies run the site. The booking calendar needs an extra yes — nothing here is used to advertise.",
+  body: "Essential cookies run the site. The booking calendar needs an extra yes - nothing here is used to advertise.",
   accept: "Accept",
   reject: "Essential only",
   preferences: "Preferences",

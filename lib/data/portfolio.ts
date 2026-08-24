@@ -46,7 +46,7 @@ const caseStudyExtras = {
   challenge:
     "The client needed a production-grade solution that could scale with user growth, integrate with existing tools, and ship quickly without sacrificing code quality or maintainability.",
   solution:
-    "I led architecture and full-stack delivery — from discovery and system design through implementation, testing, and deployment — using modern patterns, automated CI/CD, and clear documentation for handoff.",
+    "I led architecture and full-stack delivery - from discovery and system design through implementation, testing, and deployment - using modern patterns, automated CI/CD, and clear documentation for handoff.",
   outcomes: [
     "Reduced manual workflows and improved team velocity",
     "Shipped on schedule with measurable performance gains",
@@ -90,21 +90,21 @@ function buildCaseStudy(
     solution: extras.solution ?? caseStudyExtras.solution,
     outcomes: extras.outcomes ?? caseStudyExtras.outcomes,
     deliverables: extras.deliverables ?? caseStudyExtras.deliverables,
-    timeline: extras.timeline ?? `${project.year} · 8–12 weeks`,
+    timeline: extras.timeline ?? `${project.year} · 8 - 12 weeks`,
     role: extras.role ?? "Lead Full Stack Engineer",
     techStack: extras.techStack ?? [...project.tags],
   };
 }
 
 // Real projects from Ali's actual work history (LinkedIn + Upwork). Metrics are
-// factual/qualitative — no invented percentages. Images are representative stock
+// factual/qualitative - no invented percentages. Images are representative stock
 // visuals; swap in real product screenshots under /public/projects when available.
 const baseProjects: PortfolioProject[] = [
   {
     slug: "leadquiz-saas-funnel-platform",
-    title: "LeadQuiz — SaaS Lead-Funnel Platform",
+    title: "LeadQuiz - SaaS Lead-Funnel Platform",
     description:
-      "Full-stack SaaS that lets agencies build high-converting lead funnels — drag-and-drop builder with 30+ templates, custom domains, conditional lead scoring, and multi-client management, on AWS microservices.",
+      "Full-stack SaaS that lets agencies build high-converting lead funnels - drag-and-drop builder with 30+ templates, custom domains, conditional lead scoring, and multi-client management, on AWS microservices.",
     categoryId: "saas",
     categoryLabel: "SaaS",
     image:
@@ -120,9 +120,9 @@ const baseProjects: PortfolioProject[] = [
   },
   {
     slug: "manageph-contractor-payments-platform",
-    title: "ManagePH — Contractor Payments & Team Platform",
+    title: "ManagePH - Contractor Payments & Team Platform",
     description:
-      "Global contractor payment and team-management platform — onboarding, role-based workspaces, and payment workflows built on Laravel and React with automated CI/CD on AWS.",
+      "Global contractor payment and team-management platform - onboarding, role-based workspaces, and payment workflows built on Laravel and React with automated CI/CD on AWS.",
     categoryId: "saas",
     categoryLabel: "SaaS",
     image:
@@ -138,7 +138,7 @@ const baseProjects: PortfolioProject[] = [
   },
   {
     slug: "propdaddy-real-estate-platform",
-    title: "PropDaddy — Real-Estate Web Platform",
+    title: "PropDaddy - Real-Estate Web Platform",
     description:
       "Real-estate platform with an in-app Twilio softphone, cron-driven automation, and multi-channel outreach (SendGrid, IMAP, Slybroadcast, Twilio) backed by VPS queue workers and skip tracing.",
     categoryId: "saas",
@@ -155,9 +155,9 @@ const baseProjects: PortfolioProject[] = [
   },
   {
     slug: "forage-b2b-saas",
-    title: "Forage — B2B SaaS for D2C Brands",
+    title: "Forage - B2B SaaS for D2C Brands",
     description:
-      "B2B SaaS product enabling direct-to-consumer brands to offer consumers new experiences — built with Laravel and Inertia. A repeat, multi-project engagement.",
+      "B2B SaaS product enabling direct-to-consumer brands to offer consumers new experiences - built with Laravel and Inertia. A repeat, multi-project engagement.",
     categoryId: "saas",
     categoryLabel: "SaaS",
     image:
@@ -174,7 +174,7 @@ const baseProjects: PortfolioProject[] = [
     slug: "gaming-ecommerce-store",
     title: "Full-Stack E-commerce for Gaming Services",
     description:
-      "Full-stack e-commerce platform for a gaming-services business — custom storefront, checkout, and order flows in PHP/Laravel. The engagement earned a 5.0★ review and repeat work.",
+      "Full-stack e-commerce platform for a gaming-services business - custom storefront, checkout, and order flows in PHP/Laravel. The engagement earned a 5.0★ review and repeat work.",
     categoryId: "ecommerce",
     categoryLabel: "E-commerce",
     image:
@@ -191,7 +191,7 @@ const baseProjects: PortfolioProject[] = [
     slug: "ai-content-automation",
     title: "AI Content Automation (Gemini)",
     description:
-      "Laravel application with the Google Gemini API wired into content generation — tuned prompts and parameters for high-quality output, plus Tailwind UIs with real-time validation.",
+      "Laravel application with the Google Gemini API wired into content generation - tuned prompts and parameters for high-quality output, plus Tailwind UIs with real-time validation.",
     categoryId: "ai",
     categoryLabel: "AI & Automation",
     image:
@@ -208,7 +208,7 @@ const baseProjects: PortfolioProject[] = [
     slug: "aws-cicd-vue-laravel-dashboards",
     title: "AWS CI/CD & Vue + Laravel Dashboards",
     description:
-      "Vue.js and Laravel dashboards deployed on AWS with CodePipeline CI/CD, Elastic Beanstalk, RDS, CloudFront, and S3 — secure, scalable hosting with streamlined releases.",
+      "Vue.js and Laravel dashboards deployed on AWS with CodePipeline CI/CD, Elastic Beanstalk, RDS, CloudFront, and S3 - secure, scalable hosting with streamlined releases.",
     categoryId: "devops",
     categoryLabel: "Cloud & DevOps",
     image:
@@ -226,13 +226,13 @@ const baseProjects: PortfolioProject[] = [
 export const portfolioCaseStudies: PortfolioCaseStudy[] = [
   buildCaseStudy(baseProjects[0], {
     longDescription:
-      "LeadQuiz is a full-stack SaaS that lets agencies build and run high-converting lead funnels for their clients. It pairs a drag-and-drop funnel builder (30+ templates) with custom domains, conditional lead scoring, auto-disqualification, role-based team access, and CRM-style workflows — all on an AWS microservices backend.",
+      "LeadQuiz is a full-stack SaaS that lets agencies build and run high-converting lead funnels for their clients. It pairs a drag-and-drop funnel builder (30+ templates) with custom domains, conditional lead scoring, auto-disqualification, role-based team access, and CRM-style workflows - all on an AWS microservices backend.",
     gallery: [
       baseProjects[0].image,
       "https://images.unsplash.com/photo-1551434678-e076c223a692?q=80&w=1200&auto=format&fit=crop",
     ],
     challenge:
-      "Agencies needed one workspace to manage funnels for many clients — with isolation between accounts, flexible funnel logic, and reliable delivery of leads into whatever CRM each client already used.",
+      "Agencies needed one workspace to manage funnels for many clients - with isolation between accounts, flexible funnel logic, and reliable delivery of leads into whatever CRM each client already used.",
     solution:
       "Built a NestJS + React application on an AWS microservices architecture (ECS, RDS/PostgreSQL, S3). Delivered the drag-and-drop builder, conditional scoring, custom domains, Zapier and webhook integrations to sync leads to any CRM, and scheduled weekly per-client summary reports.",
     outcomes: [
@@ -253,7 +253,7 @@ export const portfolioCaseStudies: PortfolioCaseStudy[] = [
       "https://images.unsplash.com/photo-1554224155-6726b3ff858f?q=80&w=1200&auto=format&fit=crop",
     ],
     challenge:
-      "Managing global contractors meant juggling onboarding, team structure, and payments across tools — the client wanted a single platform with clean workflows and dependable deployments.",
+      "Managing global contractors meant juggling onboarding, team structure, and payments across tools - the client wanted a single platform with clean workflows and dependable deployments.",
     solution:
       "Delivered a Laravel + React platform with team and role management, payment workflows, and automated CI/CD to AWS for repeatable, low-risk releases.",
     outcomes: [
@@ -272,14 +272,14 @@ export const portfolioCaseStudies: PortfolioCaseStudy[] = [
     challenge:
       "The team needed to call and follow up with prospects without leaving the app, run multi-channel campaigns, and keep large volumes of contact data clean and current.",
     solution:
-      "Optimized database queries, orchestrated complex cron automation, integrated a Twilio softphone for in-app calling, and wired SendGrid, IMAP, Slybroadcast, and Twilio for campaign management — supervised by VPS queue workers with skip tracing to consolidate records.",
+      "Optimized database queries, orchestrated complex cron automation, integrated a Twilio softphone for in-app calling, and wired SendGrid, IMAP, Slybroadcast, and Twilio for campaign management - supervised by VPS queue workers with skip tracing to consolidate records.",
     outcomes: [
       "In-app calling via an integrated Twilio softphone",
       "Multi-channel outreach (SendGrid, IMAP, Slybroadcast, Twilio)",
       "Cron-driven automation with supervised queue workers",
       "Skip tracing to consolidate and clean contact records",
     ],
-    timeline: "2023 – 2024",
+    timeline: "2023 - 2024",
     role: "Full-Stack Developer",
     techStack: ["Laravel", "Twilio", "MySQL", "SendGrid", "VPS / Queues"],
   }),
@@ -289,31 +289,31 @@ export const portfolioCaseStudies: PortfolioCaseStudy[] = [
     challenge:
       "The product needed reliable full-stack delivery and clear communication to keep shipping features as the SaaS matured.",
     solution:
-      "Worked as a Laravel + Inertia full-stack developer, delivering features with clear communication — the kind of partnership that led the client to continue working together on further projects.",
+      "Worked as a Laravel + Inertia full-stack developer, delivering features with clear communication - the kind of partnership that led the client to continue working together on further projects.",
     outcomes: [
       "Full-stack feature delivery on a live B2B SaaS",
       "Laravel + Inertia application work",
       "Repeat, multi-project client relationship",
-      "“Clear communication and a subject-matter expert” — client review",
+      "“Clear communication and a subject-matter expert” - client review",
     ],
-    timeline: "2024 – 2025",
+    timeline: "2024 - 2025",
     role: "Full-Stack Developer",
     techStack: ["Laravel", "Inertia", "Vue", "MySQL"],
   }),
   buildCaseStudy(baseProjects[4], {
     longDescription:
-      "A full-stack e-commerce platform for a gaming-services business — a custom storefront with checkout and order management built in PHP/Laravel. The engagement earned a 5.0★ review and became one of Ali's standout client relationships.",
+      "A full-stack e-commerce platform for a gaming-services business - a custom storefront with checkout and order management built in PHP/Laravel. The engagement earned a 5.0★ review and became one of Ali's standout client relationships.",
     challenge:
       "The client needed a reliable, custom storefront for selling gaming services, with the flexibility a templated store couldn't offer.",
     solution:
-      "Built the storefront, checkout, and order flows in PHP/Laravel, focusing on quality and value — the work the client described as coming from “the best developer I've ever worked with.”",
+      "Built the storefront, checkout, and order flows in PHP/Laravel, focusing on quality and value - the work the client described as coming from “the best developer I've ever worked with.”",
     outcomes: [
       "Custom full-stack e-commerce storefront",
       "Checkout and order-management flows",
       "5.0★ client review",
       "Competitive value that earned repeat trust",
     ],
-    timeline: "2024 – 2025",
+    timeline: "2024 - 2025",
     role: "Full-Stack Developer",
     techStack: ["Laravel", "PHP", "Stripe", "MySQL"],
   }),
@@ -336,7 +336,7 @@ export const portfolioCaseStudies: PortfolioCaseStudy[] = [
   }),
   buildCaseStudy(baseProjects[6], {
     longDescription:
-      "As a senior backend Laravel developer, Ali built and maintained Vue.js + Laravel dashboards and owned their deployment on AWS — streamlining releases and keeping hosting secure and scalable.",
+      "As a senior backend Laravel developer, Ali built and maintained Vue.js + Laravel dashboards and owned their deployment on AWS - streamlining releases and keeping hosting secure and scalable.",
     challenge:
       "Dashboards needed dependable, repeatable deployments and scalable, secure hosting without manual, error-prone release steps.",
     solution:
@@ -347,7 +347,7 @@ export const portfolioCaseStudies: PortfolioCaseStudy[] = [
       "Elastic Beanstalk, RDS, CloudFront, and S3 hosting",
       "Secure, scalable production infrastructure",
     ],
-    timeline: "2021 – 2023",
+    timeline: "2021 - 2023",
     role: "Senior Backend Laravel Developer",
     techStack: ["AWS", "CodePipeline", "Elastic Beanstalk", "Laravel", "Vue"],
   }),

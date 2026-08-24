@@ -18,7 +18,7 @@ export {
   STAGGER,
 } from "@/lib/motion";
 
-/** @deprecated Use `EASE` — kept for existing Framer Motion callers */
+/** @deprecated Use `EASE` - kept for existing Framer Motion callers */
 export const SCROLL_REVEAL_EASE = [0.22, 1, 0.36, 1] as const;
 
 /** @deprecated Use `DURATION` + `EASE` */
@@ -35,7 +35,7 @@ export type ScrollRevealOptions = {
   once?: boolean;
   rootMargin?: string;
   threshold?: number;
-  /** @deprecated Ignored — IntersectionObserver uses `threshold` */
+  /** @deprecated Ignored - IntersectionObserver uses `threshold` */
   amount?: number;
   /** @deprecated Use `rootMargin` */
   margin?: string;
@@ -57,7 +57,7 @@ export function useScrollReveal<T extends HTMLElement = HTMLDivElement>(
     once = true,
     // Generous margin so content near the fold reveals immediately (no blank gaps).
     rootMargin = options.margin ?? "0px 0px 0px 0px",
-    // 0 = any pixel visible is enough — critical for tall blocks (blog bodies).
+    // 0 = any pixel visible is enough - critical for tall blocks (blog bodies).
     threshold = options.amount ?? 0,
   } = options;
 
@@ -104,7 +104,7 @@ export function useScrollReveal<T extends HTMLElement = HTMLDivElement>(
       el.style.transform = `translateY(${distance}px)`;
     }
 
-    // Already on screen (fold, hash jump, tall partial view): show immediately — no blank gap.
+    // Already on screen (fold, hash jump, tall partial view): show immediately - no blank gap.
     if (isVisibleNow()) {
       el.setAttribute("data-reveal-ready", "");
       reveal();

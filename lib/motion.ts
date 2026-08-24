@@ -1,4 +1,4 @@
-/** Shared motion tokens — docs/design.md §5 */
+/** Shared motion tokens - docs/design.md §5 */
 
 export const EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
 export const EASE_INOUT = "cubic-bezier(0.65, 0.05, 0.36, 1)";

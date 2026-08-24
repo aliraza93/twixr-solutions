@@ -54,7 +54,7 @@ function tileIcon(icon: StatusIcon) {
 
 type StatusPageClientProps = {
   variant: StatusVariant;
-  /** 500 retry — replaces the primary link when set. */
+  /** 500 retry - replaces the primary link when set. */
   onRetry?: () => void;
   digest?: string;
   /** Skip fixed-nav padding (global-error has no site chrome). */

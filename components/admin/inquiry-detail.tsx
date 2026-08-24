@@ -41,11 +41,11 @@ export function InquiryDetail({ inquiry }: { inquiry: Inquiry | null }) {
       <dl className="mt-6 space-y-3 text-sm">
         <div>
           <dt className="text-xs font-medium text-muted-foreground">Company</dt>
-          <dd className="mt-1 text-foreground">{inquiry.company || "—"}</dd>
+          <dd className="mt-1 text-foreground">{inquiry.company || "-"}</dd>
         </div>
         <div>
           <dt className="text-xs font-medium text-muted-foreground">Project type</dt>
-          <dd className="mt-1 text-foreground">{inquiry.projectType || "—"}</dd>
+          <dd className="mt-1 text-foreground">{inquiry.projectType || "-"}</dd>
         </div>
         <div>
           <dt className="text-xs font-medium text-muted-foreground">Message</dt>

@@ -55,7 +55,7 @@ export function ContactPageClient() {
         eyebrow="CONTACT"
         title="Let's build your next product."
         emphasis="build"
-        description="Tell me about the project — I usually reply within a few hours."
+        description="Tell me about the project - I usually reply within a few hours."
       />
       <section className="bg-canvas pb-16 md:pb-20">
         <div className="ds-container">
@@ -82,7 +82,7 @@ function ContactSidebar() {
         How to reach me
       </h2>
       <p className="mt-3 text-sm leading-relaxed text-muted sm:text-base">
-        I take on a small number of product builds at a time — SaaS, APIs, and
+        I take on a small number of product builds at a time - SaaS, APIs, and
         cloud work with {site.yearsExperience} years behind them. Email,
         Upwork, or LinkedIn, or send the form and I&apos;ll reply from my inbox.
       </p>
@@ -426,7 +426,7 @@ function ContactForm() {
           aria-live="assertive"
           className="rounded-md border border-danger/30 bg-surface px-4 py-3 text-sm text-danger"
         >
-          Something went wrong — email me directly at{" "}
+          Something went wrong - email me directly at{" "}
           <a
             href={`mailto:${site.contact.email}`}
             className="font-medium underline decoration-danger/40 underline-offset-2 hover:text-pine"

@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Twixr Solutions",
     short_name: "Twixr",
-    description: "Senior full-stack engineering — Laravel, Node, Next.js & Vue.",
+    description: "Senior full-stack engineering - Laravel, Node, Next.js & Vue.",
     start_url: "/",
     display: "standalone",
     background_color: "#FFFFFF",

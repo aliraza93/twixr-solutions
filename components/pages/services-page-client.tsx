@@ -52,7 +52,7 @@ export function ServicesPageClient({ services }: { services: ServiceListingItem[
         eyebrow="OUR SERVICES"
         title="Full Stack Development Services"
         emphasis="Development"
-        description="From concept to deployment — scalable SaaS, APIs, and web apps tailored to your business goals."
+        description="From concept to deployment - scalable SaaS, APIs, and web apps tailored to your business goals."
       />
       <ServicesGrid services={services} />
       <StatsStrip />
@@ -97,7 +97,7 @@ function ServicesGrid({ services }: { services: ServiceListingItem[] }) {
             align="center"
             eyebrow="Catalog"
             title="What I build"
-            description="Browse by track or search the stack — each card links to a deeper write-up."
+            description="Browse by track or search the stack - each card links to a deeper write-up."
           />
         </ScrollReveal>
 

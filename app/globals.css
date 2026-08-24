@@ -98,7 +98,7 @@
 
 @layer base {
   :root {
-    /* ── Design tokens (docs/design.md §1–§3, §5) ── */
+    /* ── Design tokens (docs/design.md §1 - §3, §5) ── */
     --canvas: #ffffff;
     --surface: #f5f7f4;
     --surface-2: #eaeeea;
@@ -258,7 +258,7 @@
     --ring: 210 40% 98%;
   }
 
-  /* Dark feature band — remaps semantic tokens so children auto-adapt */
+  /* Dark feature band - remaps semantic tokens so children auto-adapt */
   .band-dark {
     --canvas: var(--d-bg);
     --surface: var(--d-bg-2);
@@ -508,7 +508,7 @@
     @apply max-w-3xl text-base leading-normal text-slate-600 sm:text-lg dark:text-slate-400;
   }
 
-  /* Cal.com inline embed — transparent iframe shell */
+  /* Cal.com inline embed - transparent iframe shell */
   .cal-embed iframe {
     background: transparent !important;
     color-scheme: light;
@@ -1921,7 +1921,7 @@
   }
 }
 
-/* Blog article typography — ~65–72ch measure, generous rhythm */
+/* Blog article typography - ~65 - 72ch measure, generous rhythm */
 .prose-blog {
   max-width: 68ch;
   color: var(--muted);
@@ -2150,7 +2150,7 @@
 }
 
 /*
- * Studio / dashboard-shell — same layout language as IMEI Checker
+ * Studio / dashboard-shell - same layout language as IMEI Checker
  * (dashboard-design.md): cool slate surfaces, full-width pages, pine as
  * the brand primary instead of IMEI blue. Scoped so marketing tokens stay put.
  */
@@ -2200,7 +2200,7 @@
   --surface-2: #f1f5f9;
   --ink: #0f172a;
   --ink-soft: #475569;
-  /* Text secondary — was #f1f5f9 (a surface), which made text-muted invisible. */
+  /* Text secondary - was #f1f5f9 (a surface), which made text-muted invisible. */
   --muted: #64748b;
   --muted-2: #94a3b8;
   --hairline: #e2e8f0;

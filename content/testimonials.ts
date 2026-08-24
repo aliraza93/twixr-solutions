@@ -45,7 +45,7 @@ export const testimonialsCopy = {
 
 // All quotes below are REAL, verbatim reviews from Ali's Upwork profile
 // (upwork.com/freelancers/~01e1dd4667ee1975e6). Do not edit the wording or
-// invent names — clients are shown as first name + initial, exactly as Upwork displays them.
+// invent names - clients are shown as first name + initial, exactly as Upwork displays them.
 export const testimonials: Testimonial[] = [
   item(
     "Ali is the best developer I've ever worked with. The quality of his work and his experience in developing are insane. On top of all that, his pricing is very competitive for the value you are getting. Hidden GEM of Upwork.",

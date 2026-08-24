@@ -51,7 +51,7 @@ const sharedPackages = {
     id: "starter",
     name: "Starter",
     subtitle: "Focused MVP scope",
-    delivery: "4–6 weeks",
+    delivery: "4 - 6 weeks",
     revisions: "2 rounds",
     features,
   }),
@@ -59,7 +59,7 @@ const sharedPackages = {
     id: "growth",
     name: "Growth",
     subtitle: "Production-ready build",
-    delivery: "8–12 weeks",
+    delivery: "8 - 12 weeks",
     revisions: "4 rounds",
     features,
     popular,
@@ -83,9 +83,9 @@ export const services: ServiceDetail[] = [
     categoryLabel: "Web & SaaS",
     title: "SaaS & Web App Development",
     description:
-      "End-to-end SaaS platforms built for scale — multi-tenancy, billing, auth, and dashboards.",
+      "End-to-end SaaS platforms built for scale - multi-tenancy, billing, auth, and dashboards.",
     longDescription:
-      "I design and ship full-stack SaaS products from architecture through launch — multi-tenant data models, subscription billing, role-based access, admin dashboards, and analytics that scale with your business.",
+      "I design and ship full-stack SaaS products from architecture through launch - multi-tenant data models, subscription billing, role-based access, admin dashboards, and analytics that scale with your business.",
     tags: ["Next.js", "Laravel", "PostgreSQL", "Stripe"],
     gallery: [
       "/services/saas-web-app-development.svg",
@@ -132,22 +132,22 @@ export const services: ServiceDetail[] = [
       {
         question: "Do you build both the frontend and backend?",
         answer:
-          "Yes. I deliver end-to-end SaaS builds — Next.js frontends with Laravel or Node APIs, PostgreSQL, and Stripe integrations in one cohesive codebase.",
+          "Yes. I deliver end-to-end SaaS builds - Next.js frontends with Laravel or Node APIs, PostgreSQL, and Stripe integrations in one cohesive codebase.",
       },
       {
         question: "Can you work with an existing codebase?",
         answer:
-          "Absolutely. I regularly audit, refactor, and extend existing SaaS products — adding billing, tenancy, or new feature modules without disrupting live users.",
+          "Absolutely. I regularly audit, refactor, and extend existing SaaS products - adding billing, tenancy, or new feature modules without disrupting live users.",
       },
       {
         question: "How do you handle multi-tenancy?",
         answer:
-          "I implement tenant isolation at the database and application layer — subdomain or account-based routing, scoped queries, and per-tenant configuration as your product requires.",
+          "I implement tenant isolation at the database and application layer - subdomain or account-based routing, scoped queries, and per-tenant configuration as your product requires.",
       },
       {
         question: "What does scope-based pricing mean?",
         answer:
-          "Each tier reflects a defined scope and timeline. After a discovery call, I provide a clear proposal aligned to your MVP or growth goals — no hidden fees.",
+          "Each tier reflects a defined scope and timeline. After a discovery call, I provide a clear proposal aligned to your MVP or growth goals - no hidden fees.",
       },
     ],
   },
@@ -161,7 +161,7 @@ export const services: ServiceDetail[] = [
     description:
       "High-performance REST and GraphQL APIs, queues, microservices, and admin panels.",
     longDescription:
-      "Production-grade Laravel backends with clean architecture — REST and GraphQL APIs, queue workers, event-driven workflows, admin panels, and integrations built for reliability and scale.",
+      "Production-grade Laravel backends with clean architecture - REST and GraphQL APIs, queue workers, event-driven workflows, admin panels, and integrations built for reliability and scale.",
     tags: ["Laravel", "PHP", "MySQL", "Redis"],
     gallery: [
       "/services/laravel-api-backend.svg",
@@ -206,7 +206,7 @@ export const services: ServiceDetail[] = [
     ],
     faqs: [
       {
-        question: "REST or GraphQL — which do you recommend?",
+        question: "REST or GraphQL - which do you recommend?",
         answer:
           "REST suits most B2B and mobile clients. GraphQL is ideal when clients need flexible queries. I advise based on your frontend and third-party integration needs.",
       },
@@ -232,7 +232,7 @@ export const services: ServiceDetail[] = [
     description:
       "Fast, SEO-optimized frontends with server components, animations, and pixel-perfect UI.",
     longDescription:
-      "High-performance Next.js applications with App Router, server components, and polished UI — built for SEO, accessibility, and conversion, with motion and design systems that match your brand.",
+      "High-performance Next.js applications with App Router, server components, and polished UI - built for SEO, accessibility, and conversion, with motion and design systems that match your brand.",
     tags: ["Next.js", "TypeScript", "Tailwind", "Framer Motion"],
     gallery: ["/services/nextjs-frontend.svg", "/services/nextjs-frontend.svg"],
     included: [
@@ -281,7 +281,7 @@ export const services: ServiceDetail[] = [
       {
         question: "App Router or Pages Router?",
         answer:
-          "I default to App Router for new projects — better data fetching, layouts, and SEO. I also maintain legacy Pages Router codebases when needed.",
+          "I default to App Router for new projects - better data fetching, layouts, and SEO. I also maintain legacy Pages Router codebases when needed.",
       },
       {
         question: "How do you handle animations?",
@@ -300,7 +300,7 @@ export const services: ServiceDetail[] = [
     description:
       "LLM-powered chatbots, workflow automation, and AI integrations built for real business impact.",
     longDescription:
-      "Practical AI integrations — RAG chatbots, workflow automation, and LLM-powered features embedded in your product, with guardrails, monitoring, and costs under control.",
+      "Practical AI integrations - RAG chatbots, workflow automation, and LLM-powered features embedded in your product, with guardrails, monitoring, and costs under control.",
     tags: ["OpenAI", "LangChain", "Python", "Node.js"],
     gallery: [
       "/services/ai-automation-chatbots.svg",
@@ -357,7 +357,7 @@ export const services: ServiceDetail[] = [
       {
         question: "Can AI automate our internal workflows?",
         answer:
-          "Yes — email triage, data extraction, report generation, and webhook-driven automations using LangChain, Python, or n8n.",
+          "Yes - email triage, data extraction, report generation, and webhook-driven automations using LangChain, Python, or n8n.",
       },
     ],
   },
@@ -371,7 +371,7 @@ export const services: ServiceDetail[] = [
     description:
       "AWS setup, CI/CD pipelines, Docker, and zero-downtime deployments with monitoring built in.",
     longDescription:
-      "Reliable cloud infrastructure and DevOps practices — IaC, CI/CD, container orchestration, and observability so your team ships fast without sacrificing uptime or security.",
+      "Reliable cloud infrastructure and DevOps practices - IaC, CI/CD, container orchestration, and observability so your team ships fast without sacrificing uptime or security.",
     tags: ["AWS", "Docker", "GitHub Actions", "Terraform"],
     gallery: [
       "/services/cloud-infrastructure-devops.svg",
@@ -418,12 +418,12 @@ export const services: ServiceDetail[] = [
       {
         question: "AWS, GCP, or DigitalOcean?",
         answer:
-          "I work across all three. AWS for enterprise scale, GCP for data/ML workloads, DigitalOcean for lean startups — recommendation depends on your stack and budget.",
+          "I work across all three. AWS for enterprise scale, GCP for data/ML workloads, DigitalOcean for lean startups - recommendation depends on your stack and budget.",
       },
       {
         question: "Do you manage Kubernetes?",
         answer:
-          "Yes — EKS, GKE, or managed alternatives. I also help teams avoid K8s complexity when simpler orchestration suffices.",
+          "Yes - EKS, GKE, or managed alternatives. I also help teams avoid K8s complexity when simpler orchestration suffices.",
       },
       {
         question: "Can you migrate our existing servers?",

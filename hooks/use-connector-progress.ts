@@ -5,11 +5,11 @@ import gsap from "gsap";
 
 export type ConnectorStationAt = (index: number, count: number) => number;
 
-/** First station at 0, last at 1 — How We Work timeline. */
+/** First station at 0, last at 1 - How We Work timeline. */
 export const edgeStations: ConnectorStationAt = (i, n) =>
   n <= 1 ? 1 : i / (n - 1);
 
-/** Stations at midpoints so nothing is pre-lit — Philosophy equation. */
+/** Stations at midpoints so nothing is pre-lit - Philosophy equation. */
 export const midStations: ConnectorStationAt = (i, n) =>
   n <= 0 ? 1 : (i + 0.5) / n;
 

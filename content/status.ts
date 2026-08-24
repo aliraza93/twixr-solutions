@@ -41,7 +41,7 @@ export const statusPages = {
     ctaTitle: "Looking for a project partner?",
     ctaEmphasis: "partner",
     ctaDescription:
-      "If you landed here while scoping a build, skip the detour — start a project and I'll reply.",
+      "If you landed here while scoping a build, skip the detour - start a project and I'll reply.",
     description:
       "That page doesn't exist on Twixr Solutions. Return home or browse the portfolio.",
   },
@@ -63,7 +63,7 @@ export const statusPages = {
     ctaTitle: "Need a human instead?",
     ctaEmphasis: "human",
     ctaDescription:
-      "If a page keeps failing, send a note — I'll trace it and get you unblocked.",
+      "If a page keeps failing, send a note - I'll trace it and get you unblocked.",
     description:
       "Something broke while rendering this page. Retry, or contact Twixr Solutions.",
   },
@@ -79,7 +79,7 @@ export const statusPages = {
     ],
     missionMuted: "The site is briefly offline for a deploy. ",
     missionEmphasis:
-      "I should be back shortly — email or book a call if you need me now.",
+      "I should be back shortly - email or book a call if you need me now.",
     primary: { label: "Book a call", href: "/schedule" },
     secondary: { label: "Email me", href: "/contact" },
     ctaTitle: "Still want to start a project?",

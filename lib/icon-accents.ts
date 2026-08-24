@@ -5,7 +5,7 @@ export type IconAccent = {
   glow: string;
 };
 
-/** Accent on primary (dark) buttons — matches hero mesh cyan. */
+/** Accent on primary (dark) buttons - matches hero mesh cyan. */
 export const ICON_ON_PRIMARY = "text-sky-300";
 
 /** Contact & location accents aligned with blue→violet hero gradient. */
@@ -13,7 +13,7 @@ export const ICON_MAIL = "text-blue-600 dark:text-blue-400";
 export const ICON_LOCATION = "text-indigo-600 dark:text-indigo-400";
 
 /**
- * Rotating accents — indigo / violet / blue / cyan family only
+ * Rotating accents - indigo / violet / blue / cyan family only
  * (matches hero gradient, mesh blobs, and slate primary).
  */
 export const ICON_ACCENTS: IconAccent[] = [
@@ -78,7 +78,7 @@ export function getNamedIconAccent(name: string, fallbackIndex = 0): IconAccent 
   return NAMED_ICON_ACCENTS[name] ?? getIconAccent(fallbackIndex);
 }
 
-/** Service & category icons — same indigo/violet/blue/cyan system. */
+/** Service & category icons - same indigo/violet/blue/cyan system. */
 export const SERVICE_ICON_COLORS = {
   Layers: "text-violet-600 dark:text-violet-400",
   Server: "text-indigo-600 dark:text-indigo-400",

@@ -43,7 +43,7 @@ type OrbitDiagramProps = {
 
 /** Math degrees: 0 = 3 o'clock, clockwise as angle increases (y grows down). */
 const ANGLES = [-90, -18, 54, 126, 198] as const;
-/** Radius as % of the square stage — leaves room for 76px nodes + labels. */
+/** Radius as % of the square stage - leaves room for 76px nodes + labels. */
 const R = 40.5;
 const TRACK_DASH = "4 6";
 

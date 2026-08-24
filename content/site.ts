@@ -3,7 +3,7 @@ export const site = {
   brand: "Twixr Solutions",
   role: "Senior Full-Stack Engineer",
   tagline:
-    "Senior full-stack engineer building SaaS, e-commerce, and APIs that scale — Laravel, Node, Next.js & Vue on AWS. AI automation when it adds real value.",
+    "Senior full-stack engineer building SaaS, e-commerce, and APIs that scale - Laravel, Node, Next.js & Vue on AWS. AI automation when it adds real value.",
   yearsExperience: "8+",
 
   proof: [
@@ -16,11 +16,11 @@ export const site = {
     { label: "Experience", value: "8+ yrs" },
   ],
 
-  // Raw values — single source of truth.
+  // Raw values - single source of truth.
   contact: {
     email: "aliraza.2369196@gmail.com",
     upwork: "https://www.upwork.com/freelancers/~01e1dd4667ee1975e6",
-    fiverr: "", // no public Fiverr profile — left blank so SEO/sameAs skips it
+    fiverr: "", // no public Fiverr profile - left blank so SEO/sameAs skips it
     linkedin: "https://www.linkedin.com/in/aliraza6332",
     booking: "https://cal.com/ali-raza-2haylj/30min",
   },

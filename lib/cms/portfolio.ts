@@ -9,6 +9,7 @@ import {
 import type { PortfolioCaseStudy, PortfolioProject } from "@/lib/cms/types";
 import { prisma, requireDb, withDb } from "@/lib/cms/db";
 import { isPersistedId } from "@/lib/cms/utils";
+import { stripEmDashesDeep } from "@/lib/content/strip-em-dashes";
 
 function listingOf(study: PortfolioCaseStudy): PortfolioProject {
   const {
@@ -41,20 +42,22 @@ async function loadAll(): Promise<(PortfolioCaseStudy & { id: string; sort_order
       orderBy: { sortOrder: "asc" },
     });
     if (!rows.length) return null;
-    return rows.map((row) => ({
-      ...(row.data as unknown as PortfolioCaseStudy),
-      slug: row.slug,
-      title: row.title,
-      featured: row.featured,
-      id: row.id,
-      sort_order: row.sortOrder,
-    }));
+    return rows.map((row) =>
+      stripEmDashesDeep({
+        ...(row.data as unknown as PortfolioCaseStudy),
+        slug: row.slug,
+        title: row.title,
+        featured: row.featured,
+        id: row.id,
+        sort_order: row.sortOrder,
+      })
+    );
   }, null);
 }
 
 export const getPortfolioProjects = cache(async (): Promise<PortfolioProject[]> => {
   const rows = await loadAll();
-  if (!rows) return fileProjects();
+  if (!rows) return stripEmDashesDeep(fileProjects());
   return rows.map(listingOf);
 });
 
@@ -72,7 +75,10 @@ export const getPortfolioSlugs = cache(async (): Promise<string[]> => {
 export const getPortfolioBySlug = cache(
   async (slug: string): Promise<PortfolioCaseStudy | undefined> => {
     const rows = await loadAll();
-    if (!rows) return fileBySlug(slug);
+    if (!rows) {
+      const file = fileBySlug(slug);
+      return file ? stripEmDashesDeep(file) : undefined;
+    }
     return rows.find((row) => row.slug === slug);
   }
 );
@@ -102,21 +108,22 @@ export async function upsertPortfolioProject(
   input: PortfolioCaseStudy & { id?: string; sort_order?: number }
 ) {
   const db = requireDb();
+  const cleaned = stripEmDashesDeep(input);
   const payload = {
-    slug: input.slug,
-    title: input.title,
-    featured: Boolean(input.featured),
-    data: input as unknown as Prisma.InputJsonValue,
-    sortOrder: input.sort_order ?? 0,
+    slug: cleaned.slug,
+    title: cleaned.title,
+    featured: Boolean(cleaned.featured),
+    data: cleaned as unknown as Prisma.InputJsonValue,
+    sortOrder: cleaned.sort_order ?? 0,
   };
 
-  if (isPersistedId(input.id)) {
-    await db.portfolioProject.update({ where: { id: input.id }, data: payload });
-    return input.id;
+  if (isPersistedId(cleaned.id)) {
+    await db.portfolioProject.update({ where: { id: cleaned.id }, data: payload });
+    return cleaned.id;
   }
 
   const created = await db.portfolioProject.upsert({
-    where: { slug: input.slug },
+    where: { slug: cleaned.slug },
     create: payload,
     update: payload,
   });

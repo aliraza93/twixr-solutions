@@ -3,6 +3,7 @@ import { testimonials as fileTestimonials } from "@/content/testimonials";
 import type { Testimonial } from "@/lib/cms/types";
 import { prisma, requireDb, withDb } from "@/lib/cms/db";
 import { isPersistedId } from "@/lib/cms/utils";
+import { stripEmDashes, stripEmDashesDeep } from "@/lib/content/strip-em-dashes";
 
 function toItem(row: {
   id: string;
@@ -15,17 +16,18 @@ function toItem(row: {
   rating: number;
   sortOrder: number;
 }): Testimonial & { id: string; sort_order: number } {
+  const quote = stripEmDashes(row.quote);
   return {
     id: row.id,
-    quote: row.quote,
+    quote,
     name: row.name,
-    title: row.title,
-    company: row.company,
+    title: stripEmDashes(row.title),
+    company: stripEmDashes(row.company),
     platform: row.platform,
     avatar: row.avatar,
     rating: row.rating,
-    content: row.quote,
-    role: row.title || row.company || "Client",
+    content: quote,
+    role: stripEmDashes(row.title || row.company || "Client"),
     image: row.avatar,
     sort_order: row.sortOrder,
   };
@@ -34,8 +36,8 @@ function toItem(row: {
 export const getTestimonials = cache(async (): Promise<Testimonial[]> => {
   return withDb(async () => {
     const rows = await prisma.testimonial.findMany({ orderBy: { sortOrder: "asc" } });
-    return rows.length ? rows.map(toItem) : fileTestimonials;
-  }, fileTestimonials);
+    return rows.length ? rows.map(toItem) : stripEmDashesDeep(fileTestimonials);
+  }, stripEmDashesDeep(fileTestimonials));
 });
 
 export async function listTestimonialsAdmin() {
@@ -57,10 +59,10 @@ export async function upsertTestimonial(
 ) {
   const db = requireDb();
   const data = {
-    quote: input.quote,
+    quote: stripEmDashes(input.quote),
     name: input.name,
-    title: input.title,
-    company: input.company,
+    title: stripEmDashes(input.title),
+    company: stripEmDashes(input.company),
     platform: input.platform,
     avatar: input.avatar,
     rating: input.rating,

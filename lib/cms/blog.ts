@@ -9,29 +9,31 @@ import { parseBody, resolvePostFaqs } from "@/content/blog-schema";
 import type { BlogListing, BlogPost, BlogPostRecord } from "@/lib/cms/types";
 import { prisma, requireDb, withDb } from "@/lib/cms/db";
 import { isPersistedId } from "@/lib/cms/utils";
+import { stripEmDashes, stripEmDashesDeep } from "@/lib/content/strip-em-dashes";
 import type { BlogPost as PrismaBlogPost } from "@prisma/client";
 
 function toRecord(row: PrismaBlogPost): BlogPostRecord {
-  const faqs = resolvePostFaqs(row.body, row.faqs);
+  const body = stripEmDashes(row.body);
+  const faqs = resolvePostFaqs(body, stripEmDashesDeep(row.faqs));
   return {
     id: row.id,
     slug: row.slug,
-    title: row.title,
-    excerpt: row.excerpt,
+    title: stripEmDashes(row.title),
+    excerpt: stripEmDashes(row.excerpt),
     date: row.date,
     image: row.image,
     category: row.category,
     tags: row.tags,
     readingTime: row.readingTime,
     author: row.author,
-    authorRole: row.authorRole,
+    authorRole: stripEmDashes(row.authorRole),
     authorImage: row.authorImage,
-    body: row.body,
+    body,
     faqs,
     published: row.published,
     order: row.sortOrder,
     updatedAt: row.updatedAt.toISOString(),
-    content: parseBody(row.body),
+    content: parseBody(body),
   };
 }
 
@@ -60,7 +62,7 @@ async function loadPublished(): Promise<BlogPostRecord[] | null> {
 
 export const getBlogListings = cache(async (): Promise<BlogListing[]> => {
   const rows = await loadPublished();
-  if (!rows) return fileListings();
+  if (!rows) return stripEmDashesDeep(fileListings());
   return rows.map(listingOf);
 });
 
@@ -77,7 +79,11 @@ export const getBlogBySlug = cache(async (slug: string): Promise<BlogPost | unde
     });
     return row ? toRecord(row) : null;
   }, null);
-  return fromDb ?? fileBySlug(slug);
+  if (fromDb) return fromDb;
+
+  const file = fileBySlug(slug);
+  if (!file) return undefined;
+  return stripEmDashesDeep(file);
 });
 
 export async function getBlogCategories() {
@@ -159,18 +165,18 @@ export async function upsertBlogPost(
   const db = requireDb();
   const data = {
     slug: input.slug,
-    title: input.title,
-    excerpt: input.excerpt,
+    title: stripEmDashes(input.title),
+    excerpt: stripEmDashes(input.excerpt),
     date: input.date,
     image: input.image,
     category: input.category,
     tags: [...input.tags],
     readingTime: input.readingTime,
     author: input.author,
-    authorRole: input.authorRole,
+    authorRole: stripEmDashes(input.authorRole),
     authorImage: input.authorImage,
-    body: input.body,
-    faqs: input.faqs ?? [],
+    body: stripEmDashes(input.body),
+    faqs: stripEmDashesDeep(input.faqs ?? []),
     published: input.published,
     sortOrder: input.order,
   };

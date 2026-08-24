@@ -1,10 +1,15 @@
 import fs from "node:fs";
 import path from "node:path";
 import type { BlogListing, BlogPost } from "./blog-schema";
-import { parseBody } from "./blog-schema";
+import { parseBody, resolvePostFaqs } from "./blog-schema";
 
 export type { BlogContentBlock, BlogListing, BlogPost } from "./blog-schema";
-export { getTableOfContents, parseBody } from "./blog-schema";
+export {
+  getTableOfContents,
+  parseBody,
+  resolvePostBody,
+  resolvePostFaqs,
+} from "./blog-schema";
 
 type Frontmatter = Record<string, string>;
 
@@ -36,6 +41,7 @@ function parsePost(raw: string): BlogPost {
     .map((t) => t.trim())
     .filter(Boolean);
 
+  const faqs = resolvePostFaqs(body);
   return {
     slug: data.slug,
     title: data.title,
@@ -48,6 +54,8 @@ function parsePost(raw: string): BlogPost {
     author: data.author,
     authorRole: data.authorRole,
     authorImage: data.authorImage,
+    body,
+    faqs,
     content: parseBody(body),
   };
 }

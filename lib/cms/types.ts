@@ -104,6 +104,7 @@ export type BlogPostRecord = BlogPost & {
   body: string;
   published: boolean;
   order: number;
+  faqs: { question: string; answer: string }[];
 };
 
 export type {

@@ -21,7 +21,7 @@ import {
 import { toast } from "sonner";
 import { Field } from "@/components/admin/fields";
 import { uploadAdminFile } from "@/lib/cms/client-upload";
-import { parseBody } from "@/content/blog-schema";
+import { MarkdownContent } from "@/components/blog/markdown-content";
 import { cn } from "@/lib/utils";
 
 const turndown = new TurndownService({
@@ -223,42 +223,35 @@ export function RichEditor({
   );
 }
 
-export function MarkdownPreview({ body }: { body: string }) {
-  const blocks = parseBody(body || "");
-  if (!blocks.length) {
-    return <p className="text-sm text-muted">Preview will appear after you save.</p>;
+export function MarkdownPreview({
+  body,
+  liveFrom,
+}: {
+  body: string;
+  /** When set, mirror the hidden form field with this name (e.g. "body"). */
+  liveFrom?: string;
+}) {
+  const [source, setSource] = useState(body || "");
+
+  useEffect(() => {
+    setSource(body || "");
+  }, [body]);
+
+  useEffect(() => {
+    if (!liveFrom) return;
+    const input = document.querySelector<HTMLInputElement>(`input[name="${liveFrom}"]`);
+    if (!input) return;
+    const sync = () => setSource(input.value || "");
+    sync();
+    const timer = window.setInterval(sync, 500);
+    return () => window.clearInterval(timer);
+  }, [liveFrom]);
+
+  if (!source.trim()) {
+    return <p className="text-sm text-muted">Preview will appear as you write.</p>;
   }
 
-  return (
-    <div className="space-y-3 rounded-lg border border-hairline bg-surface p-4 text-sm text-ink">
-      {blocks.map((block, index) => {
-        if (block.type === "heading") {
-          const Tag = block.level === 2 ? "h3" : "h4";
-          return (
-            <Tag key={`${block.id}-${index}`} className="font-sora font-bold">
-              {block.text}
-            </Tag>
-          );
-        }
-        if (block.type === "list") {
-          return (
-            <ul key={index} className="list-disc space-y-1 pl-5">
-              {block.items.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          );
-        }
-        if (block.type === "image") {
-          return (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img key={index} src={block.src} alt={block.alt} className="rounded-md" />
-          );
-        }
-        return <p key={index}>{block.text}</p>;
-      })}
-    </div>
-  );
+  return <MarkdownContent source={source} className="prose-blog--compact max-w-none" />;
 }
 
 /** @deprecated Use RichEditor */

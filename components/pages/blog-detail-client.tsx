@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, Linkedin, Mail, Twitter } from "lucide-react";
@@ -9,9 +9,12 @@ import { Card } from "@/components/ui/card";
 import { Chip } from "@/components/ui/chip";
 import { Input } from "@/components/ui/input";
 import { SectionHeading } from "@/components/ui/section-heading";
+import { MarkdownContent } from "@/components/blog/markdown-content";
+import { BlogFaqAccordion } from "@/components/blog/faq-accordion";
+import { ReadingProgress } from "@/components/blog/reading-progress";
 import { cn } from "@/lib/utils";
-import type { BlogContentBlock, BlogListing, BlogPost } from "@/lib/data/blog";
-import { getTableOfContents } from "@/lib/data/blog";
+import type { BlogListing, BlogPost } from "@/lib/data/blog";
+import { getTableOfContents, resolvePostBody, resolvePostFaqs } from "@/lib/data/blog";
 import {
   ScrollReveal,
   ScrollRevealItem,
@@ -26,7 +29,18 @@ type BlogDetailClientProps = {
 };
 
 export function BlogDetailClient({ post, related }: BlogDetailClientProps) {
-  const toc = getTableOfContents(post.content);
+  const faqs = useMemo(
+    () => resolvePostFaqs(post.body ?? "", post.faqs),
+    [post.body, post.faqs]
+  );
+  const body = useMemo(
+    () => resolvePostBody(post.body ?? "", faqs),
+    [post.body, faqs]
+  );
+  const toc = useMemo(
+    () => getTableOfContents(body, { includeFaq: faqs.length > 0 }),
+    [body, faqs.length]
+  );
   const [activeId, setActiveId] = useState(toc[0]?.id ?? "");
   const articleRef = useRef<HTMLElement>(null);
 
@@ -50,10 +64,11 @@ export function BlogDetailClient({ post, related }: BlogDetailClientProps) {
     return () => observer.disconnect();
   }, [toc]);
 
-  const shareUrl = `https://twixrsolutions.com/blog/${post.slug}`;
+  const shareUrl = `https://www.twixrsolutions.com/blog/${post.slug}`;
 
   return (
     <main className="min-h-screen bg-canvas pt-[120px] lg:pt-[140px]">
+      <ReadingProgress />
       <div className="ds-container pb-16 md:pb-20">
         <ScrollReveal className="mb-6">
           <Button variant="text" asChild>
@@ -94,7 +109,7 @@ export function BlogDetailClient({ post, related }: BlogDetailClientProps) {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={post.image}
-            alt={post.title}
+            alt={`Cover image for ${post.title}`}
             className="aspect-21/9 w-full object-cover"
           />
         </ScrollReveal>
@@ -102,10 +117,14 @@ export function BlogDetailClient({ post, related }: BlogDetailClientProps) {
         <section ref={articleRef} className="grid gap-8 lg:grid-cols-12 lg:gap-10">
           <article className="min-w-0 lg:col-span-8">
             <ScrollReveal>
-              <div className="prose-blog space-y-5">
-                <BlogContent blocks={post.content} />
-              </div>
+              <MarkdownContent source={body} />
             </ScrollReveal>
+
+            {faqs.length > 0 && (
+              <ScrollReveal className="mt-12">
+                <BlogFaqAccordion faqs={faqs} />
+              </ScrollReveal>
+            )}
 
             <ScrollReveal className="mt-10">
               <ul className="flex list-none flex-wrap gap-2 p-0">
@@ -158,7 +177,7 @@ export function BlogDetailClient({ post, related }: BlogDetailClientProps) {
                   <p className="mb-3 font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted">
                     On this page
                   </p>
-                  <nav className="space-y-1">
+                  <nav aria-label="Table of contents" className="space-y-1">
                     {toc.map((item) => (
                       <a
                         key={item.id}
@@ -279,64 +298,6 @@ export function BlogDetailClient({ post, related }: BlogDetailClientProps) {
         )}
       </div>
     </main>
-  );
-}
-
-function BlogContent({ blocks }: { blocks: BlogContentBlock[] }) {
-  return (
-    <>
-      {blocks.map((block, i) => {
-        if (block.type === "paragraph") {
-          return (
-            <p key={i} className="text-sm leading-relaxed text-muted sm:text-base">
-              {block.text}
-            </p>
-          );
-        }
-        if (block.type === "heading") {
-          const Tag = block.level === 2 ? "h2" : "h3";
-          return (
-            <Tag
-              key={block.id}
-              id={block.id}
-              className={cn(
-                "scroll-mt-28 font-sora font-bold tracking-[-0.02em] text-ink",
-                block.level === 2 ? "text-xl sm:text-2xl" : "text-lg sm:text-xl"
-              )}
-            >
-              {block.text}
-            </Tag>
-          );
-        }
-        if (block.type === "list") {
-          return (
-            <ul key={i} className="space-y-2 pl-1">
-              {block.items.map((item) => (
-                <li
-                  key={item}
-                  className="flex items-start gap-2 text-sm leading-relaxed text-muted sm:text-base"
-                >
-                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-pine" />
-                  {item}
-                </li>
-              ))}
-            </ul>
-          );
-        }
-        if (block.type === "image") {
-          return (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              key={i}
-              src={block.src}
-              alt={block.alt}
-              className="w-full rounded-lg border border-hairline"
-            />
-          );
-        }
-        return null;
-      })}
-    </>
   );
 }
 

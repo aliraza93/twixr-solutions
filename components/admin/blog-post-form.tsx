@@ -6,13 +6,15 @@ import { toast } from "sonner";
 import type { BlogPostRecord } from "@/lib/cms/types";
 import { saveBlogPostAction } from "@/app/admin/actions";
 import { TextField } from "@/components/admin/fields";
-import { RichEditor } from "@/components/admin/markdown-editor";
+import { RichEditor, MarkdownPreview } from "@/components/admin/markdown-editor";
+import { FaqBuilder } from "@/components/admin/faq-builder";
 import { FileUploader } from "@/components/admin/file-uploader";
 import { DatePickerField } from "@/components/admin/date-picker-field";
 import { SelectField, SwitchField } from "@/components/admin/select-field";
 import { FormActions } from "@/components/admin/resource-form-layout";
 import { Button } from "@/components/ui/button";
 import { slugify } from "@/lib/cms/utils";
+import { normalizeFaqs } from "@/lib/blog/markdown";
 
 const CATEGORIES = ["SaaS", "Design", "Architecture", "Engineering", "Dubai", "Product"];
 
@@ -50,6 +52,7 @@ export function BlogPostForm({ post }: { post?: BlogPostRecord }) {
               authorRole: String(data.get("authorRole") ?? ""),
               authorImage: String(data.get("authorImage") ?? ""),
               body: String(data.get("body") ?? ""),
+              faqs: normalizeFaqs(JSON.parse(String(data.get("faqs") || "[]"))),
               published: data.get("published") === "on",
               order: Number(data.get("order") ?? 0),
             });
@@ -94,6 +97,13 @@ export function BlogPostForm({ post }: { post?: BlogPostRecord }) {
         placeholder="Short summary for listings"
       />
       <RichEditor id="body" name="body" label="Body" defaultValue={post?.body} />
+      <div className="rounded-lg border border-hairline bg-surface p-4">
+        <p className="mb-3 font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-muted">
+          Live markdown preview
+        </p>
+        <MarkdownPreview body={post?.body ?? ""} liveFrom="body" />
+      </div>
+      <FaqBuilder name="faqs" defaultValue={post?.faqs ?? []} />
       <SwitchField
         name="published"
         label="Published"

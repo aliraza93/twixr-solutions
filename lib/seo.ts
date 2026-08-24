@@ -42,14 +42,18 @@ export function pageMetadata({
   image = DEFAULT_OG,
   type = "website",
   publishedTime,
+  modifiedTime,
   authors,
+  tags,
   noindex,
-}: SeoInput): Metadata {
+}: SeoInput & { modifiedTime?: string; tags?: string[] }): Metadata {
   const url = absoluteUrl(path);
   const ogTitle = `${title} | ${SITE_NAME}`;
+  const desc =
+    description.length > 160 ? `${description.slice(0, 157).trimEnd()}…` : description;
   return {
     title,
-    description,
+    description: desc,
     alternates: { canonical: url },
     openGraph: {
       type,
@@ -57,15 +61,17 @@ export function pageMetadata({
       url,
       siteName: SITE_NAME,
       title: ogTitle,
-      description,
+      description: desc,
       images: [{ url: image, width: 1200, height: 630, alt: ogTitle }],
       ...(publishedTime ? { publishedTime } : {}),
+      ...(modifiedTime ? { modifiedTime } : {}),
       ...(authors ? { authors } : {}),
+      ...(tags?.length ? { tags } : {}),
     },
     twitter: {
       card: "summary_large_image",
       title: ogTitle,
-      description,
+      description: desc,
       images: [image],
       creator: TWITTER_HANDLE,
     },
@@ -189,20 +195,28 @@ export function articleNode(post: {
   date: string;
   image: string;
   author?: string;
+  tags?: readonly string[];
+  updatedAt?: string;
 }): Node {
   const url = absoluteUrl(`/blog/${post.slug}`);
+  const imageUrl = post.image?.startsWith("http")
+    ? post.image
+    : absoluteUrl(post.image || DEFAULT_OG);
   return {
     "@type": "BlogPosting",
     headline: post.title,
     description: post.excerpt,
-    image: post.image?.startsWith("http") ? post.image : absoluteUrl(post.image),
+    image: imageUrl,
     datePublished: post.date,
-    dateModified: post.date,
+    dateModified: post.updatedAt ?? post.date,
     url,
     mainEntityOfPage: { "@type": "WebPage", "@id": url },
     author: { "@id": PERSON_ID, name: post.author ?? site.name },
     publisher: { "@id": ORG_ID },
     inLanguage: "en",
+    ...(post.tags?.length
+      ? { keywords: post.tags.join(", "), articleSection: post.tags[0] }
+      : {}),
   };
 }
 
@@ -228,7 +242,14 @@ export function faqPageNode(faqs: { question: string; answer: string }[]): Node 
     mainEntity: faqs.map((f) => ({
       "@type": "Question",
       name: f.question,
-      acceptedAnswer: { "@type": "Answer", text: f.answer },
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: f.answer
+          .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+          .replace(/[*_`~#>]+/g, "")
+          .replace(/\s+/g, " ")
+          .trim(),
+      },
     })),
   };
 }

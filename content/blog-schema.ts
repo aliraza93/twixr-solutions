@@ -1,3 +1,11 @@
+import type { BlogFaq } from "@/lib/blog/markdown";
+import {
+  extractFaqsFromMarkdown,
+  getMarkdownToc,
+  normalizeFaqs,
+  stripFaqSection,
+} from "@/lib/blog/markdown";
+
 export type BlogContentBlock =
   | { type: "paragraph"; text: string }
   | { type: "heading"; id: string; level: 2 | 3; text: string }
@@ -19,15 +27,40 @@ export type BlogPost = BlogListing & {
   author: string;
   authorRole: string;
   authorImage: string;
+  /** Raw markdown body (preferred for rendering). */
+  body?: string;
+  /** Structured FAQs for accordion + FAQPage JSON-LD. */
+  faqs: BlogFaq[];
+  updatedAt?: string;
+  /** @deprecated Prefer `body` + MarkdownContent. Kept for transitional admin preview. */
   content: BlogContentBlock[];
 };
 
 export function getTableOfContents(
-  content: BlogContentBlock[]
+  content: BlogContentBlock[] | string,
+  options?: { includeFaq?: boolean }
 ): { id: string; text: string; level: number }[] {
+  if (typeof content === "string") {
+    const toc = getMarkdownToc(stripFaqSection(content));
+    if (options?.includeFaq) {
+      toc.push({ id: "faq", text: "FAQ", level: 2 });
+    }
+    return toc;
+  }
   return content
     .filter((b): b is Extract<BlogContentBlock, { type: "heading" }> => b.type === "heading")
     .map((b) => ({ id: b.id, text: b.text, level: b.level }));
+}
+
+export function resolvePostFaqs(body: string, faqs?: unknown): BlogFaq[] {
+  const structured = normalizeFaqs(faqs);
+  if (structured.length) return structured;
+  return extractFaqsFromMarkdown(body);
+}
+
+export function resolvePostBody(body: string, faqs: BlogFaq[]): string {
+  if (!faqs.length) return body;
+  return stripFaqSection(body);
 }
 
 function slugify(text: string) {
@@ -37,6 +70,7 @@ function slugify(text: string) {
     .replace(/(^-|-$)/g, "");
 }
 
+/** Coarse block parser — kept for TipTap admin preview fallbacks. Prefer MarkdownContent. */
 export function parseBody(md: string): BlogContentBlock[] {
   const blocks: BlogContentBlock[] = [];
   const lines = md.split(/\r?\n/);

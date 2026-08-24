@@ -5,13 +5,14 @@ import {
   getBlogListings as fileListings,
   getBlogSlugs as fileSlugs,
 } from "@/content/blog";
-import { parseBody } from "@/content/blog-schema";
+import { parseBody, resolvePostFaqs } from "@/content/blog-schema";
 import type { BlogListing, BlogPost, BlogPostRecord } from "@/lib/cms/types";
 import { prisma, requireDb, withDb } from "@/lib/cms/db";
 import { isPersistedId } from "@/lib/cms/utils";
 import type { BlogPost as PrismaBlogPost } from "@prisma/client";
 
 function toRecord(row: PrismaBlogPost): BlogPostRecord {
+  const faqs = resolvePostFaqs(row.body, row.faqs);
   return {
     id: row.id,
     slug: row.slug,
@@ -26,19 +27,25 @@ function toRecord(row: PrismaBlogPost): BlogPostRecord {
     authorRole: row.authorRole,
     authorImage: row.authorImage,
     body: row.body,
+    faqs,
     published: row.published,
     order: row.sortOrder,
+    updatedAt: row.updatedAt.toISOString(),
     content: parseBody(row.body),
   };
 }
 
 function listingOf(post: BlogPost): BlogListing {
-  const { content: _content, author, authorRole, authorImage, ...listing } = post;
-  void _content;
-  void author;
-  void authorRole;
-  void authorImage;
-  return listing;
+  return {
+    slug: post.slug,
+    title: post.title,
+    excerpt: post.excerpt,
+    date: post.date,
+    image: post.image,
+    category: post.category,
+    tags: post.tags,
+    readingTime: post.readingTime,
+  };
 }
 
 async function loadPublished(): Promise<BlogPostRecord[] | null> {
@@ -113,7 +120,8 @@ function fallbackAdminPosts(): BlogPostRecord[] {
       authorRole: post?.authorRole ?? "",
       authorImage: post?.authorImage ?? "",
       content: post?.content ?? [],
-      body: "",
+      body: post?.body ?? "",
+      faqs: post?.faqs ?? [],
       published: true,
       order: index + 1,
     };
@@ -138,7 +146,8 @@ export async function getBlogPostAdmin(id: string): Promise<BlogPostRecord | nul
   return {
     id: file.slug,
     ...file,
-    body: "",
+    body: file.body ?? "",
+    faqs: file.faqs ?? [],
     published: true,
     order: 0,
   };
@@ -161,6 +170,7 @@ export async function upsertBlogPost(
     authorRole: input.authorRole,
     authorImage: input.authorImage,
     body: input.body,
+    faqs: input.faqs ?? [],
     published: input.published,
     sortOrder: input.order,
   };

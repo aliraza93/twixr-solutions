@@ -9,6 +9,9 @@ import { cn } from "@/lib/utils";
 
 const sanitizeSchema = {
   ...defaultSchema,
+  // CMS markdown is trusted — keep rehype-slug ids as-is so TOC/anchors match
+  // (`#for-clients`). Default clobberPrefix (`user-content-`) broke scroll-spy.
+  clobberPrefix: "",
   attributes: {
     ...defaultSchema.attributes,
     h1: [...(defaultSchema.attributes?.h1 ?? []), "id"],

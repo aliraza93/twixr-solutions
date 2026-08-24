@@ -6,6 +6,7 @@ import rehypeSlug from "rehype-slug";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import { cn } from "@/lib/utils";
+import { stripEmDashes } from "@/lib/content/strip-em-dashes";
 
 const sanitizeSchema = {
   ...defaultSchema,
@@ -48,6 +49,8 @@ type MarkdownContentProps = {
 
 export function MarkdownContent({ source, className }: MarkdownContentProps) {
   if (!source?.trim()) return null;
+
+  const cleaned = stripEmDashes(source);
 
   return (
     <div className={cn("prose-blog", className)}>
@@ -92,7 +95,7 @@ export function MarkdownContent({ source, className }: MarkdownContentProps) {
           ),
         }}
       >
-        {source}
+        {cleaned}
       </ReactMarkdown>
     </div>
   );

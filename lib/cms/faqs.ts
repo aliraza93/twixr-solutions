@@ -3,12 +3,18 @@ import { faqs as fileFaqs } from "@/content/faq";
 import type { FaqItem } from "@/lib/cms/types";
 import { prisma, requireDb, withDb } from "@/lib/cms/db";
 import { isPersistedId } from "@/lib/cms/utils";
+import { stripEmDashes, stripEmDashesDeep } from "@/lib/content/strip-em-dashes";
 
 export const getFaqs = cache(async (): Promise<FaqItem[]> => {
   return withDb(async () => {
     const rows = await prisma.faq.findMany({ orderBy: { sortOrder: "asc" } });
-    return rows.length ? rows : fileFaqs;
-  }, fileFaqs);
+    if (!rows.length) return stripEmDashesDeep(fileFaqs);
+    return rows.map((row) => ({
+      question: stripEmDashes(row.question),
+      answer: stripEmDashes(row.answer),
+      icon: row.icon,
+    }));
+  }, stripEmDashesDeep(fileFaqs));
 });
 
 export async function listFaqsAdmin() {
@@ -32,8 +38,8 @@ export async function upsertFaq(
 ) {
   const db = requireDb();
   const data = {
-    question: input.question,
-    answer: input.answer,
+    question: stripEmDashes(input.question),
+    answer: stripEmDashes(input.answer),
     icon: input.icon,
     sortOrder: input.sort_order ?? 0,
   };

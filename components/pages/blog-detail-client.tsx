@@ -48,15 +48,17 @@ export function BlogDetailClient({ post, related }: BlogDetailClientProps) {
     if (!toc.length) return;
 
     // Sticky nav (~7rem) + small buffer — last heading above this line is active.
-    // Position-based spy (not IntersectionObserver): IO only reports changed
-    // entries, so after FAQ activates, scrolling back up often leaves no heading
-    // in the band and the highlight stays stuck on FAQ.
     const OFFSET_PX = 112;
+
+    const resolveHeading = (id: string) =>
+      document.getElementById(id) ??
+      // Legacy fallback if sanitize still prefixes ids
+      document.getElementById(`user-content-${id}`);
 
     const updateActive = () => {
       let current = toc[0]?.id ?? "";
       for (const item of toc) {
-        const el = document.getElementById(item.id);
+        const el = resolveHeading(item.id);
         if (!el) continue;
         if (el.getBoundingClientRect().top <= OFFSET_PX) {
           current = item.id;

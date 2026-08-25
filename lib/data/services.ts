@@ -78,7 +78,7 @@ export const services: ServiceDetail[] = [
   {
     slug: "saas-web-app-development",
     icon: "Layers",
-    illustration: "/services/saas-web-app-development.svg",
+    illustration: "/services/saas-web-apps.jpeg",
     categoryId: "product",
     categoryLabel: "Web & SaaS",
     title: "SaaS & Web App Development",
@@ -88,8 +88,8 @@ export const services: ServiceDetail[] = [
       "I design and ship full-stack SaaS products from architecture through launch - multi-tenant data models, subscription billing, role-based access, admin dashboards, and analytics that scale with your business.",
     tags: ["Next.js", "Laravel", "PostgreSQL", "Stripe"],
     gallery: [
-      "/services/saas-web-app-development.svg",
-      "/services/saas-web-app-development.svg",
+      "/services/saas-web-apps.jpeg",
+      "/services/saas-web-apps.jpeg",
     ],
     included: [
       "Product discovery & technical architecture",
@@ -154,7 +154,7 @@ export const services: ServiceDetail[] = [
   {
     slug: "laravel-api-backend",
     icon: "Server",
-    illustration: "/services/laravel-api-backend.svg",
+    illustration: "/services/laravel-node-apis.jpeg",
     categoryId: "backend",
     categoryLabel: "API & backend",
     title: "Laravel API & Backend",
@@ -164,8 +164,8 @@ export const services: ServiceDetail[] = [
       "Production-grade Laravel backends with clean architecture - REST and GraphQL APIs, queue workers, event-driven workflows, admin panels, and integrations built for reliability and scale.",
     tags: ["Laravel", "PHP", "MySQL", "Redis"],
     gallery: [
-      "/services/laravel-api-backend.svg",
-      "/services/laravel-api-backend.svg",
+      "/services/laravel-node-apis.jpeg",
+      "/services/laravel-node-apis.jpeg",
     ],
     included: [
       "API design & OpenAPI documentation",
@@ -225,7 +225,7 @@ export const services: ServiceDetail[] = [
   {
     slug: "nextjs-frontend",
     icon: "Monitor",
-    illustration: "/services/nextjs-frontend.svg",
+    illustration: "/services/nextjs-vue-frontends.jpeg",
     categoryId: "product",
     categoryLabel: "Frontend",
     title: "Next.js Frontend Development",
@@ -234,7 +234,7 @@ export const services: ServiceDetail[] = [
     longDescription:
       "High-performance Next.js applications with App Router, server components, and polished UI - built for SEO, accessibility, and conversion, with motion and design systems that match your brand.",
     tags: ["Next.js", "TypeScript", "Tailwind", "Framer Motion"],
-    gallery: ["/services/nextjs-frontend.svg", "/services/nextjs-frontend.svg"],
+    gallery: ["/services/nextjs-vue-frontends.jpeg", "/services/nextjs-vue-frontends.jpeg"],
     included: [
       "Responsive UI implementation",
       "Server & client components",
@@ -293,7 +293,7 @@ export const services: ServiceDetail[] = [
   {
     slug: "ai-automation-chatbots",
     icon: "Bot",
-    illustration: "/services/ai-automation-chatbots.svg",
+    illustration: "/services/ai-automation.jpeg",
     categoryId: "ai",
     categoryLabel: "AI automation",
     title: "AI Automation & Chatbots",
@@ -303,8 +303,8 @@ export const services: ServiceDetail[] = [
       "Practical AI integrations - RAG chatbots, workflow automation, and LLM-powered features embedded in your product, with guardrails, monitoring, and costs under control.",
     tags: ["OpenAI", "LangChain", "Python", "Node.js"],
     gallery: [
-      "/services/ai-automation-chatbots.svg",
-      "/services/ai-automation-chatbots.svg",
+      "/services/ai-automation.jpeg",
+      "/services/ai-automation.jpeg",
     ],
     included: [
       "Use-case discovery & prompt design",
@@ -364,7 +364,7 @@ export const services: ServiceDetail[] = [
   {
     slug: "cloud-infrastructure-devops",
     icon: "Cloud",
-    illustration: "/services/cloud-infrastructure-devops.svg",
+    illustration: "/services/cloud-devops.jpeg",
     categoryId: "cloud",
     categoryLabel: "Cloud & DevOps",
     title: "Cloud Infrastructure & DevOps",
@@ -374,8 +374,8 @@ export const services: ServiceDetail[] = [
       "Reliable cloud infrastructure and DevOps practices - IaC, CI/CD, container orchestration, and observability so your team ships fast without sacrificing uptime or security.",
     tags: ["AWS", "Docker", "GitHub Actions", "Terraform"],
     gallery: [
-      "/services/cloud-infrastructure-devops.svg",
-      "/services/cloud-infrastructure-devops.svg",
+      "/services/cloud-devops.jpeg",
+      "/services/cloud-devops.jpeg",
     ],
     included: [
       "Infrastructure audit & roadmap",

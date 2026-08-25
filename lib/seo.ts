@@ -11,6 +11,29 @@ export function absoluteUrl(path = "/"): string {
   return new URL(path, SITE_URL).toString();
 }
 
+/**
+ * Return a social-share-safe image URL. WhatsApp/iMessage refuse to render a
+ * preview (no image AND no title/description) when og:image is a heavy PNG or
+ * odd aspect ratio, so for Cloudinary sources we inject delivery transforms to
+ * force a ~1200x630 JPEG under WhatsApp's size limit. Non-Cloudinary URLs
+ * (relative /og-image.png, Vercel Blob, etc.) are returned unchanged.
+ */
+export function socialImage(url?: string): string {
+  const img = url || DEFAULT_OG;
+  const marker = "/image/upload/";
+  const at = img.indexOf(marker);
+  if (img.includes("res.cloudinary.com") && at !== -1) {
+    const after = img.slice(at + marker.length);
+    const firstSegment = after.split("/")[0] ?? "";
+    const alreadyTransformed =
+      firstSegment.includes("_") || firstSegment.includes(",");
+    if (!alreadyTransformed) {
+      return `${img.slice(0, at + marker.length)}f_jpg,q_auto:good,w_1200,h_630,c_fill,g_auto/${after}`;
+    }
+  }
+  return img;
+}
+
 /** Only emit contact values that are real (not the REPLACE_ME placeholders). */
 function real(value?: string): string | undefined {
   if (!value || value.includes("REPLACE_ME")) return undefined;
@@ -51,6 +74,8 @@ export function pageMetadata({
   const ogTitle = `${title} | ${SITE_NAME}`;
   const desc =
     description.length > 160 ? `${description.slice(0, 157).trimEnd()}…` : description;
+  const ogImage = socialImage(image);
+  const isJpg = ogImage.includes("f_jpg");
   return {
     title,
     description: desc,
@@ -62,7 +87,15 @@ export function pageMetadata({
       siteName: SITE_NAME,
       title: ogTitle,
       description: desc,
-      images: [{ url: image, width: 1200, height: 630, alt: ogTitle }],
+      images: [
+        {
+          url: ogImage,
+          width: 1200,
+          height: 630,
+          alt: ogTitle,
+          ...(isJpg ? { type: "image/jpeg" } : {}),
+        },
+      ],
       ...(publishedTime ? { publishedTime } : {}),
       ...(modifiedTime ? { modifiedTime } : {}),
       ...(authors ? { authors } : {}),
@@ -72,7 +105,7 @@ export function pageMetadata({
       card: "summary_large_image",
       title: ogTitle,
       description: desc,
-      images: [image],
+      images: [ogImage],
       creator: TWITTER_HANDLE,
     },
     ...(noindex ? { robots: { index: false, follow: false } } : {}),
@@ -199,9 +232,11 @@ export function articleNode(post: {
   updatedAt?: string;
 }): Node {
   const url = absoluteUrl(`/blog/${post.slug}`);
-  const imageUrl = post.image?.startsWith("http")
-    ? post.image
-    : absoluteUrl(post.image || DEFAULT_OG);
+  const imageUrl = socialImage(
+    post.image?.startsWith("http")
+      ? post.image
+      : absoluteUrl(post.image || DEFAULT_OG)
+  );
   return {
     "@type": "BlogPosting",
     headline: post.title,

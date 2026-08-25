@@ -54,10 +54,30 @@ function AboutIntro() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={aboutBio.image}
-                  alt={aboutBio.name}
+                  alt={`${aboutBio.name} - ${aboutBio.title}`}
                   className="h-auto w-full"
                 />
               </div>
+
+              <a
+                href={aboutBio.upworkProfile}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="View Ali Raza's Upwork Top Rated Plus profile"
+                className="group mt-4 block overflow-hidden rounded-lg border border-hairline bg-canvas transition-colors duration-[var(--dur-fast)] hover:border-ink"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={aboutBio.upworkProof}
+                  alt="Ali Raza - Upwork Top Rated Plus: 100% Job Success, 4.7 stars across 40 reviews, 49 jobs and 2,600+ hours"
+                  className="h-auto w-full"
+                  loading="lazy"
+                />
+              </a>
+              <p className="mt-2 text-center text-xs text-muted">
+                <span className="font-medium text-pine">Verified on Upwork</span> · Top
+                Rated Plus · 100% Job Success
+              </p>
             </div>
           </ScrollReveal>
 

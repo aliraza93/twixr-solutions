@@ -58,6 +58,13 @@ export const metadata: Metadata = {
   authors: [{ name: site.name, url: absoluteUrl("/about") }],
   creator: site.name,
   publisher: SITE_NAME,
+  alternates: {
+    types: {
+      "application/rss+xml": [
+        { url: absoluteUrl("/feed.xml"), title: `${SITE_NAME} Blog` },
+      ],
+    },
+  },
   openGraph: {
     type: "website",
     locale: "en_US",

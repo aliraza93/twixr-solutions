@@ -40,6 +40,7 @@ export const footer = {
       links: [
         { label: "Contact form",    href: "/contact" },
         { label: "Email",           href: `mailto:${site.contact.email}`, external: false },
+        { label: "GitHub",          href: site.contact.github, external: true },
         { label: "Upwork",          href: site.contact.upwork, external: true },
         { label: "LinkedIn",        href: site.contact.linkedin, external: true },
         { label: "Schedule a Call", href: "/schedule" },

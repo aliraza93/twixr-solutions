@@ -38,6 +38,7 @@ export function SiteSettingsForm({
             ...site.contact,
             email: String(data.get("email") ?? site.contact.email),
             upwork: String(data.get("upwork") ?? site.contact.upwork),
+            github: String(data.get("github") ?? site.contact.github),
             linkedin: String(data.get("linkedin") ?? site.contact.linkedin),
             booking: String(data.get("booking") ?? site.contact.booking),
             fiverr: String(data.get("fiverr") ?? site.contact.fiverr),
@@ -66,6 +67,7 @@ export function SiteSettingsForm({
         <TextField label="Email" name="email" defaultValue={site.contact.email} />
         <TextField label="Response time" name="responseTime" defaultValue={site.responseTime} />
         <TextField label="Upwork URL" name="upwork" defaultValue={site.contact.upwork} />
+        <TextField label="GitHub URL" name="github" defaultValue={site.contact.github} />
         <TextField label="LinkedIn URL" name="linkedin" defaultValue={site.contact.linkedin} />
         <TextField label="Booking URL" name="booking" defaultValue={site.contact.booking} />
         <TextField label="Fiverr URL" name="fiverr" defaultValue={site.contact.fiverr} />

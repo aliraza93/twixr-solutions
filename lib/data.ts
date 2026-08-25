@@ -18,6 +18,7 @@ const SERVICE_ICONS = {
 const METHOD_ICONS: Record<(typeof site.contactMethods)[number]["key"], string> = {
   email: "lucide:mail",
   upwork: "simple-icons:upwork",
+  github: "simple-icons:github",
   linkedin: "simple-icons:linkedin",
   booking: "lucide:calendar",
 };

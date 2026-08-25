@@ -20,6 +20,7 @@ import {
   ScrollRevealItem,
   ScrollStagger,
 } from "@/components/motion/scroll-reveal";
+import { site } from "@/content/site";
 
 const CONTACT_EMAIL = "ali@twixrsolutions.com";
 
@@ -259,6 +260,14 @@ export function BlogDetailClient({ post, related }: BlogDetailClientProps) {
                 <Button variant="ghost" className="mt-4 w-full" asChild>
                   <a href={`mailto:${CONTACT_EMAIL}`}>Get in touch</a>
                 </Button>
+                <a
+                  href={site.contact.github}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 flex w-full items-center justify-center gap-2 py-2 text-xs font-medium text-muted transition-colors hover:text-pine"
+                >
+                  GitHub profile
+                </a>
               </Card>
             </div>
           </aside>

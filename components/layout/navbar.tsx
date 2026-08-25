@@ -16,6 +16,22 @@ type NavbarProps = {
   primaryCta?: SiteCta;
 };
 
+const GITHUB_URL = site.contact.github;
+
+/** Filled GitHub mark - denser than Lucide's outline stroke. */
+function GitHubIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden
+      className={className}
+    >
+      <path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.21 11.39.6.11.82-.26.82-.58 0-.28-.01-1.04-.02-2.04-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.33-1.76-1.33-1.76-1.09-.74.08-.73.08-.73 1.2.09 1.84 1.24 1.84 1.24 1.07 1.83 2.8 1.3 3.49.99.11-.78.42-1.3.76-1.6-2.66-.3-5.46-1.33-5.46-5.93 0-1.31.47-2.38 1.24-3.22-.12-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23.96-.27 1.98-.4 3-.4s2.04.13 3 .4c2.29-1.55 3.3-1.23 3.3-1.23.66 1.66.24 2.88.12 3.18.77.84 1.24 1.91 1.24 3.22 0 4.61-2.8 5.62-5.47 5.92.43.37.81 1.1.81 2.22 0 1.6-.01 2.89-.01 3.29 0 .32.22.7.83.58C20.56 21.8 24 17.3 24 12 24 5.37 18.63 0 12 0z" />
+    </svg>
+  );
+}
+
 function isActive(pathname: string, href: string) {
   if (href === "/") return pathname === "/";
   return pathname === href || pathname.startsWith(`${href}/`);
@@ -153,6 +169,19 @@ export function Navbar({ nav, primaryCta }: NavbarProps) {
           </nav>
 
           <div className="site-nav__actions">
+            <a
+              href={GITHUB_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="GitHub profile"
+              className={cn(
+                "inline-flex items-center justify-center rounded-full text-ink transition-colors duration-[var(--dur-fast)] hover:bg-surface hover:text-pine",
+                scrolled ? "h-9 w-9" : "h-10 w-10"
+              )}
+            >
+              <GitHubIcon className={scrolled ? "h-[18px] w-[18px]" : "h-5 w-5"} />
+            </a>
+
             <Button
               variant="primary"
               className={cn(
@@ -252,6 +281,16 @@ export function Navbar({ nav, primaryCta }: NavbarProps) {
                         </span>
                       </Link>
                     </Button>
+                    <a
+                      href={GITHUB_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setOpen(false)}
+                      className="mt-4 flex items-center justify-center gap-2 py-2 font-mono text-xs font-medium uppercase tracking-[0.14em] text-d-text transition-colors hover:text-d-lime"
+                    >
+                      <GitHubIcon className="h-4 w-4" />
+                      github.com/aliraza93
+                    </a>
                   </div>
                 </Dialog.Content>
               </Dialog.Portal>

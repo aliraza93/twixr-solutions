@@ -40,7 +40,12 @@ function real(value?: string): string | undefined {
   return value;
 }
 
-const sameAs = [site.contact.upwork, site.contact.fiverr, site.contact.linkedin]
+const sameAs = [
+  site.contact.upwork,
+  site.contact.fiverr,
+  site.contact.linkedin,
+  site.contact.github,
+]
   .map(real)
   .filter((v): v is string => Boolean(v));
 

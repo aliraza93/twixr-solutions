@@ -22,6 +22,7 @@ export const site = {
     upwork: "https://www.upwork.com/freelancers/~01e1dd4667ee1975e6",
     fiverr: "", // no public Fiverr profile - left blank so SEO/sameAs skips it
     linkedin: "https://www.linkedin.com/in/aliraza6332",
+    github: "https://github.com/aliraza93",
     booking: "https://cal.com/ali-raza-2haylj/30min",
   },
 
@@ -32,6 +33,7 @@ export const site = {
   contactMethods: [
     { key: "email",    label: "Email",       value: "aliraza.2369196@gmail.com", href: "mailto:aliraza.2369196@gmail.com", external: false },
     { key: "upwork",   label: "Upwork",      value: "Top Rated Plus",            href: "https://www.upwork.com/freelancers/~01e1dd4667ee1975e6", external: true },
+    { key: "github",   label: "GitHub",      value: "github.com/aliraza93",      href: "https://github.com/aliraza93", external: true },
     { key: "linkedin", label: "LinkedIn",    value: "in/aliraza6332",            href: "https://www.linkedin.com/in/aliraza6332", external: true },
     { key: "booking",  label: "Book a call", value: "Cal.com",                   href: "https://cal.com/ali-raza-2haylj/30min", external: true },
   ],

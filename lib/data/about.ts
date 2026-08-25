@@ -5,7 +5,8 @@ export const aboutBio = {
   title: site.role,
   subtitle: "Building scalable SaaS, e-commerce, and APIs for global clients.",
   image: "/ali-raza.jpg",
-  upworkProfile: "https://www.upwork.com/freelancers/~01e1dd4667ee1975e6",
+  upworkProfile: site.contact.upwork,
+  githubProfile: site.contact.github,
   upworkProof: "/upwork-top-rated-plus.png",
   paragraphs: [
     `I'm a Senior Full-Stack Engineer with ${site.yearsExperience} years of experience shipping production web applications, SaaS platforms, and APIs. As Founder & Full-Stack Engineer at ${site.brand}, I partner with startups and established teams to turn complex requirements into reliable, maintainable software.`,

@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import * as Dialog from "@radix-ui/react-dialog";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Github } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { site } from "@/content/site";
 import { cn } from "@/lib/utils";
@@ -15,6 +15,8 @@ type NavbarProps = {
   nav?: readonly NavLink[];
   primaryCta?: SiteCta;
 };
+
+const GITHUB_URL = site.contact.github;
 
 function isActive(pathname: string, href: string) {
   if (href === "/") return pathname === "/";
@@ -153,6 +155,19 @@ export function Navbar({ nav, primaryCta }: NavbarProps) {
           </nav>
 
           <div className="site-nav__actions">
+            <a
+              href={GITHUB_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="GitHub profile"
+              className={cn(
+                "inline-flex items-center justify-center rounded-full text-ink-soft transition-colors duration-[var(--dur-fast)] hover:bg-surface hover:text-ink",
+                scrolled ? "h-9 w-9" : "h-10 w-10"
+              )}
+            >
+              <Github className={scrolled ? "h-4 w-4" : "h-[18px] w-[18px]"} aria-hidden />
+            </a>
+
             <Button
               variant="primary"
               className={cn(
@@ -252,6 +267,16 @@ export function Navbar({ nav, primaryCta }: NavbarProps) {
                         </span>
                       </Link>
                     </Button>
+                    <a
+                      href={GITHUB_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setOpen(false)}
+                      className="mt-4 flex items-center justify-center gap-2 py-2 font-mono text-xs font-medium uppercase tracking-[0.14em] text-d-muted transition-colors hover:text-d-lime"
+                    >
+                      <Github className="h-4 w-4" aria-hidden />
+                      github.com/aliraza93
+                    </a>
                   </div>
                 </Dialog.Content>
               </Dialog.Portal>

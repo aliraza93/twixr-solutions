@@ -39,6 +39,7 @@ export type SiteContent = {
     upwork: string;
     fiverr: string;
     linkedin: string;
+    github: string;
     booking: string;
   };
   responseTime: string;

@@ -12,7 +12,9 @@
     "seed:cms": "node scripts/prisma-env.mjs db seed"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.120.0",
     "@calcom/embed-react": "^1.5.3",
+    "@google/genai": "^2.19.0",
     "@hookform/resolvers": "^5.2.2",
     "@iconify/react": "^6.0.2",
     "@prisma/client": "^6.19.2",
@@ -32,6 +34,7 @@
     "@tiptap/react": "^3.30.2",
     "@tiptap/starter-kit": "^3.30.2",
     "@vercel/blob": "^2.8.0",
+    "@vercel/og": "^1.0.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",

@@ -1,7 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { Brief } from "@prisma/client";
 import { pipeline } from "@/lib/pipeline/config";
-import { parseJsonFromModel } from "@/lib/pipeline/json";
 import { buildBlogPrompt } from "@/lib/pipeline/prompt";
 
 export type BlogDraft = {
@@ -18,6 +17,64 @@ export type BlogDraft = {
   sources: string[];
 };
 
+const BLOG_DRAFT_TOOL = {
+  name: "submit_blog_draft",
+  description: "Submit the finished blog draft as structured fields.",
+  input_schema: {
+    type: "object" as const,
+    additionalProperties: false,
+    properties: {
+      slug: { type: "string" as const },
+      title: { type: "string" as const },
+      excerpt: { type: "string" as const },
+      category: { type: "string" as const },
+      tags: { type: "array" as const, items: { type: "string" as const } },
+      readingTime: { type: "string" as const },
+      body: { type: "string" as const },
+      faqs: {
+        type: "array" as const,
+        items: {
+          type: "object" as const,
+          additionalProperties: false,
+          properties: {
+            question: { type: "string" as const },
+            answer: { type: "string" as const },
+          },
+          required: ["question", "answer"],
+        },
+      },
+      coverAlt: { type: "string" as const },
+      inlineImagePrompts: {
+        type: "array" as const,
+        items: {
+          type: "object" as const,
+          additionalProperties: false,
+          properties: {
+            placeholder: { type: "string" as const },
+            prompt: { type: "string" as const },
+            alt: { type: "string" as const },
+          },
+          required: ["placeholder", "prompt", "alt"],
+        },
+      },
+      sources: { type: "array" as const, items: { type: "string" as const } },
+    },
+    required: [
+      "slug",
+      "title",
+      "excerpt",
+      "category",
+      "tags",
+      "readingTime",
+      "body",
+      "faqs",
+      "coverAlt",
+      "inlineImagePrompts",
+      "sources",
+    ],
+  },
+};
+
 export async function generateBlog(brief: Brief): Promise<BlogDraft> {
   const apiKey = process.env.ANTHROPIC_API_KEY?.trim();
   if (!apiKey) {
@@ -30,16 +87,19 @@ export async function generateBlog(brief: Brief): Promise<BlogDraft> {
     model: pipeline.models.blog,
     max_tokens: 8192,
     system,
+    tools: [BLOG_DRAFT_TOOL],
+    tool_choice: { type: "tool", name: "submit_blog_draft" },
     messages: [{ role: "user", content: user }],
   });
 
-  const text = response.content
-    .filter((block) => block.type === "text")
-    .map((block) => (block.type === "text" ? block.text : ""))
-    .join("\n");
+  const toolBlock = response.content.find(
+    (block) => block.type === "tool_use" && block.name === "submit_blog_draft"
+  );
+  if (!toolBlock || toolBlock.type !== "tool_use") {
+    throw new Error("Model did not return a blog draft tool payload");
+  }
 
-  const draft = parseJsonFromModel<BlogDraft>(text);
-  return normalizeDraft(draft);
+  return normalizeDraft(toolBlock.input as BlogDraft);
 }
 
 function normalizeDraft(raw: BlogDraft): BlogDraft {

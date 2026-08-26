@@ -31,7 +31,7 @@ export function buildBlogPrompt(brief: Brief): { system: string; user: string } 
 
   const system = [
     "You draft one long-form blog post for Twixr Solutions / Ali Raza.",
-    "Return ONE JSON object only (no prose outside JSON). Match the BlogDraft contract exactly.",
+    "You MUST call the submit_blog_draft tool with the finished draft. Do not reply with free-form prose.",
     "",
     absoluteRules(),
     "",
@@ -61,7 +61,7 @@ export function buildBlogPrompt(brief: Brief): { system: string; user: string } 
     "SWIPE / STRUCTURE HINTS:",
     swipe,
     "",
-    "OUTPUT JSON shape:",
+    "OUTPUT: call submit_blog_draft with these fields:",
     "{",
     '  "slug": "kebab-case-unique",',
     '  "title": "string",',
@@ -101,7 +101,7 @@ export function buildLinkedInPrompt(blog: LinkedInBlogContext): {
 
   const system = [
     "You rewrite a blog post into one LinkedIn post for Ali Raza / Twixr Solutions.",
-    "Return ONE JSON object only.",
+    "You MUST call the submit_linkedin_draft tool with the finished post. Do not reply with free-form prose.",
     "",
     absoluteRules(),
     "",
@@ -132,7 +132,7 @@ export function buildLinkedInPrompt(blog: LinkedInBlogContext): {
     "- Hashtags: 4-6 on the last line",
     "- Total post text <= 3000 characters",
     "",
-    "OUTPUT JSON:",
+    "OUTPUT: call submit_linkedin_draft with:",
     "{",
     '  "text": "full post including hashtag line",',
     '  "altHooks": ["hook option 2", "hook option 3"],',

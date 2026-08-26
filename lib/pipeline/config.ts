@@ -7,7 +7,7 @@ export const pipeline = {
     blog: process.env.ANTHROPIC_BLOG_MODEL ?? "claude-sonnet-4-6",
     social: process.env.ANTHROPIC_SOCIAL_MODEL ?? "claude-haiku-4-5",
     image: process.env.GEMINI_IMAGE_MODEL ?? "gemini-2.5-flash-image",
-    critic: process.env.GEMINI_CRITIC_MODEL ?? "gemini-2.5-flash",
+    critic: process.env.GEMINI_CRITIC_MODEL ?? "gemini-3.6-flash",
   },
   linkedin: {
     token: process.env.LINKEDIN_ACCESS_TOKEN ?? "",

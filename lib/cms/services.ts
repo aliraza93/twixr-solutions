@@ -37,9 +37,14 @@ function resolveServiceImage(path: string | undefined, slug: string): string {
   return SERVICE_IMAGE_BY_SLUG[slug] ?? path ?? "";
 }
 
-function withCurrentImages<T extends ServiceDetail>(service: T): T {
+function withCurrentImages<
+  T extends { slug: string; illustration: string; gallery?: string[] },
+>(service: T): T {
   const image = resolveServiceImage(service.illustration, service.slug);
-  const gallery = (service.gallery?.length ? service.gallery : [image]).map((src) =>
+  if (service.gallery === undefined) {
+    return { ...service, illustration: image };
+  }
+  const gallery = (service.gallery.length ? service.gallery : [image]).map((src) =>
     resolveServiceImage(src, service.slug)
   );
   return { ...service, illustration: image, gallery };

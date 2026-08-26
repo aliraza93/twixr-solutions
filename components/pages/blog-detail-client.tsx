@@ -121,7 +121,7 @@ export function BlogDetailClient({ post, related }: BlogDetailClientProps) {
         <ScrollReveal delay={0.05} className="mb-10 overflow-hidden rounded-lg border border-hairline">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={post.image}
+            src={post.image || "/og-image.png"}
             alt={`Cover image for ${post.title}`}
             className="aspect-21/9 w-full object-cover"
           />
@@ -328,7 +328,7 @@ function RelatedPostCard({ post }: { post: BlogListing }) {
           aria-hidden
         >
           <Image
-            src={post.image}
+            src={post.image || "/og-image.png"}
             alt=""
             fill
             sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"

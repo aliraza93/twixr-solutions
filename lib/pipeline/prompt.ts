@@ -78,6 +78,9 @@ export function buildBlogPrompt(brief: Brief): { system: string; user: string } 
     "",
     "Body rules: markdown only. Prefer structured faqs (do not rely on a ## FAQ section).",
     "Sell the outcome, not the stack. Problem-first opening.",
+    "REQUIRED: include exactly 2 or 3 inline image placeholders in the body as their own lines,",
+    "e.g. ![Diagram of the N+1 fix](__INLINE_1__), and matching inlineImagePrompts entries.",
+    "Each inlineImagePrompts.prompt must describe a specific visual (diagram, before/after, code card, metaphor).",
   ].join("\n");
 
   return { system, user };

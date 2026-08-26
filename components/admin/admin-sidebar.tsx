@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   BookOpen,
   Briefcase,
+  ClipboardCheck,
   ExternalLink,
   FileText,
   HelpCircle,
@@ -45,6 +46,7 @@ const inboxItems: NavItem[] = [
 
 const publishingItems: NavItem[] = [
   { title: "Blog", href: "/admin/blog", icon: BookOpen },
+  { title: "Review", href: "/admin/review", icon: ClipboardCheck },
 ];
 
 const catalogueItems: NavItem[] = [

@@ -246,6 +246,9 @@ export async function runGenerate(
       cBlog.score >= pipeline.criticMinScore &&
       imageReasons.length === 0;
 
+    // Auto-publish by default: validators/critic still run and log, but do not block.
+    const shouldPublish = !dryRun && (pipeline.autoPublish || blogOk);
+
     const reviewReasons = [
       ...imageReasons,
       ...vBlog.reasons,
@@ -267,18 +270,18 @@ export async function runGenerate(
       authorImage: pipeline.defaults.authorImage,
       body: inline.body,
       faqs: draft.faqs,
-      published: blogOk && !dryRun,
+      published: shouldPublish,
       order,
       origin: "pipeline",
-      reviewState: blogOk && !dryRun ? "approved" : "needs_review",
-      reviewReasons,
+      reviewState: shouldPublish ? "approved" : "needs_review",
+      reviewReasons: shouldPublish && pipeline.autoPublish ? [] : reviewReasons,
       criticScore: cBlog.score,
       briefId: brief.id,
     });
 
     let socialPostId: string | undefined;
 
-    if (blogOk) {
+    if (shouldPublish) {
       try {
         const li = await generateLinkedIn({
           title: draft.title,
@@ -343,6 +346,9 @@ export async function runGenerate(
           ...cLi.issues.map((i) => `critic: ${i}`),
         ];
 
+        // Always schedule when auto-publishing; publish cron posts when due.
+        const scheduleLinkedIn = pipeline.autoPublish || liOk;
+
         const scheduledFor = new Date(Date.now() + 12 * 60 * 60 * 1000);
         socialPostId = await withDb(async () => {
           const db = requireDb();
@@ -353,8 +359,10 @@ export async function runGenerate(
               body: stripEmDashes(li.text),
               imageUrl: liImageUrl,
               visibility: "PUBLIC",
-              status: liOk ? "scheduled" : "needs_review",
-              reviewReasons: liReasons as Prisma.InputJsonValue,
+              status: scheduleLinkedIn ? "scheduled" : "needs_review",
+              reviewReasons: (scheduleLinkedIn && pipeline.autoPublish
+                ? []
+                : liReasons) as Prisma.InputJsonValue,
               criticScore: cLi.score,
               scheduledFor,
             },
@@ -365,13 +373,13 @@ export async function runGenerate(
         await logStage({
           runId,
           stage: "linkedin",
-          status: liOk ? "ok" : "warn",
+          status: scheduleLinkedIn ? "ok" : "warn",
           refType: "SocialPost",
           refId: socialPostId,
-          message: liOk
+          message: scheduleLinkedIn
             ? `Scheduled for ${scheduledFor.toISOString()}`
             : "Parked needs_review",
-          meta: { reasons: liReasons, score: cLi.score },
+          meta: { reasons: liReasons, score: cLi.score, liOk },
         });
       } catch (error) {
         await logStage({
@@ -390,6 +398,7 @@ export async function runGenerate(
         stage: "linkedin",
         status: "skip",
         message: "Skipped because blog did not pass gate",
+        meta: { reasons: reviewReasons, autoPublish: pipeline.autoPublish },
       });
     }
 
@@ -414,10 +423,12 @@ export async function runGenerate(
     return {
       runId,
       status: "ok",
-      message: blogOk
+      message: shouldPublish
         ? dryRun
           ? "Generated (dry run, unpublished)"
-          : "Generated and approved"
+          : pipeline.autoPublish
+            ? "Generated and auto-published"
+            : "Generated and approved"
         : "Generated, needs review",
       blogPostId,
       socialPostId,

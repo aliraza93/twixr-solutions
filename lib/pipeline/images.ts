@@ -1,6 +1,8 @@
+import { randomInt } from "node:crypto";
 import { GoogleGenAI, Modality } from "@google/genai";
 import { uploadToCloudinary } from "@/lib/cms/cloudinary";
 import {
+  BRAND_STYLES,
   pickBrandStyle,
   type BrandStyle,
 } from "@/lib/pipeline/brand-styles";
@@ -26,28 +28,43 @@ function client(): GoogleGenAI {
   return new GoogleGenAI({ apiKey });
 }
 
-function extractImageBytes(response: {
-  candidates?: Array<{
-    content?: {
-      parts?: Array<{ inlineData?: { data?: string; mimeType?: string } }>;
-    };
-  }>;
-  data?: string;
-}): { bytes: Buffer; mimeType: string } | null {
-  const parts = response.candidates?.[0]?.content?.parts ?? [];
-  for (const part of parts) {
-    if (part.inlineData?.data) {
-      return {
-        bytes: Buffer.from(part.inlineData.data, "base64"),
-        mimeType: part.inlineData.mimeType || "image/png",
-      };
+type InlinePart = {
+  inlineData?: { data?: string; mimeType?: string };
+  inline_data?: { data?: string; mime_type?: string; mimeType?: string };
+};
+
+function partsFromResponse(response: unknown): InlinePart[] {
+  if (!response || typeof response !== "object") return [];
+  const r = response as {
+    parts?: InlinePart[];
+    candidates?: Array<{ content?: { parts?: InlinePart[] } }>;
+    data?: string;
+  };
+  if (Array.isArray(r.parts) && r.parts.length) return r.parts;
+  const candidateParts = r.candidates?.[0]?.content?.parts;
+  if (Array.isArray(candidateParts)) return candidateParts;
+  return [];
+}
+
+function extractImageBytes(response: unknown): {
+  bytes: Buffer;
+  mimeType: string;
+} | null {
+  for (const part of partsFromResponse(response)) {
+    const data = part.inlineData?.data ?? part.inline_data?.data;
+    const mimeType =
+      part.inlineData?.mimeType ??
+      part.inline_data?.mimeType ??
+      part.inline_data?.mime_type ??
+      "image/png";
+    if (data) {
+      return { bytes: Buffer.from(data, "base64"), mimeType };
     }
   }
-  if (response.data) {
-    return {
-      bytes: Buffer.from(response.data, "base64"),
-      mimeType: "image/png",
-    };
+
+  const r = response as { data?: string } | null;
+  if (r?.data) {
+    return { bytes: Buffer.from(r.data, "base64"), mimeType: "image/png" };
   }
   return null;
 }
@@ -57,10 +74,16 @@ function withBrandStyle(prompt: string, style: BrandStyle): string {
     prompt.trim(),
     "",
     `Brand style (${style.label}): ${style.aiPrompt}`,
-    "Colors: pine #0f5132, lime #bef03a, ink #0b0f0d, canvas near-black or white as the style requires.",
+    "Colors: pine #0f5132, lime #bef03a, ink #0b0f0d.",
     "Do not render long paragraphs of text. Short labels only if needed.",
-    "No third-party logos. No stock-photo people. No watermarks except optional tiny twixrsolutions.com.",
+    "No third-party logos. No stock-photo people.",
   ].join("\n");
+}
+
+function nextStyle(exclude: string[] = []): BrandStyle {
+  const pool = BRAND_STYLES.filter((s) => !exclude.includes(s.id));
+  const choices = pool.length ? pool : BRAND_STYLES;
+  return choices[randomInt(choices.length)];
 }
 
 export async function generateImage(
@@ -80,7 +103,10 @@ export async function generateImage(
 
   const image = extractImageBytes(response);
   if (!image) {
-    throw new Error("Image model returned no image bytes");
+    const preview = JSON.stringify(response)?.slice(0, 400) ?? "empty";
+    throw new Error(
+      `Image model returned no image bytes (model=${pipeline.models.image}). Response preview: ${preview}`
+    );
   }
 
   const ext = image.mimeType.includes("jpeg") ? "jpg" : "png";
@@ -99,6 +125,7 @@ export type InlineImageResult = {
   failed: number;
   urls: string[];
   styleIds: string[];
+  errors: string[];
 };
 
 function ensureInlinePlaceholders(draft: BlogDraft): BlogDraft {
@@ -132,10 +159,13 @@ export async function generateInlineImages(
   let failed = 0;
   const urls: string[] = [];
   const styleIds: string[] = [];
+  const errors: string[] = [];
   const prompts = prepared.inlineImagePrompts.slice(0, MAX_INLINE);
+  const usedStyles: string[] = [];
 
   for (const item of prompts) {
-    const style = pickBrandStyle();
+    const style = nextStyle(usedStyles);
+    usedStyles.push(style.id);
     styleIds.push(style.id);
     try {
       const url = await generateImage(item.prompt, {
@@ -153,10 +183,9 @@ export async function generateInlineImages(
       generated += 1;
     } catch (error) {
       failed += 1;
-      console.warn(
-        `Inline image failed for ${item.placeholder}:`,
-        error instanceof Error ? error.message : error
-      );
+      const message = error instanceof Error ? error.message : String(error);
+      errors.push(`${item.placeholder}: ${message}`);
+      console.warn(`Inline image failed for ${item.placeholder}:`, message);
       const escaped = item.placeholder.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       body = body
         .split("\n")
@@ -165,7 +194,7 @@ export async function generateInlineImages(
     }
   }
 
-  return { body, generated, failed, urls, styleIds };
+  return { body, generated, failed, urls, styleIds, errors };
 }
 
 export async function linkedinImage(topic: string): Promise<{
@@ -193,11 +222,12 @@ export async function aiCoverImage(draft: BlogDraft): Promise<{
 }> {
   const style = pickBrandStyle();
   const prompt = [
-    "Editorial blog cover image, wide 16:9, premium technical publication.",
+    "Editorial blog cover image, wide 16:9, premium technical publication quality.",
     `Title concept: ${draft.title}.`,
     `Category: ${draft.category}.`,
     draft.coverAlt ? `Visual direction: ${draft.coverAlt}.` : "",
-    "Do not paint the full title as small text. Visual metaphor only; large shapes over fine print.",
+    "Strong visual metaphor. Do not paint the full title as small text.",
+    "Large shapes, atmospheric lighting, magazine-quality composition.",
   ]
     .filter(Boolean)
     .join(" ");

@@ -159,7 +159,12 @@ export async function runGenerate(
       stage: "images",
       status: inline.generated >= 2 && !inline.failed ? "ok" : "warn",
       message: `Inline images generated=${inline.generated} failed=${inline.failed}`,
-      meta: { urls: inline.urls, styleIds: inline.styleIds },
+      meta: {
+        urls: inline.urls,
+        styleIds: inline.styleIds,
+        errors: inline.errors,
+        model: pipeline.models.image,
+      },
     });
 
     const imageReasons: string[] = [];

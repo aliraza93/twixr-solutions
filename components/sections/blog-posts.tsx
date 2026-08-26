@@ -101,7 +101,7 @@ function InsightCard({
             )}
           >
             <Image
-              src={post.image}
+              src={post.image || "/og-image.png"}
               alt=""
               fill
               sizes={

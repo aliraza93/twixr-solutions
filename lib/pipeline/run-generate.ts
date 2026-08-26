@@ -121,22 +121,27 @@ export async function runGenerate(
     });
 
     let coverUrl = "";
+    let coverStyleId = "";
     try {
       if (pipeline.coverMode === "ai") {
-        coverUrl = await aiCoverImage(draft);
+        const cover = await aiCoverImage(draft);
+        coverUrl = cover.url;
+        coverStyleId = cover.styleId;
       } else {
-        coverUrl = await renderOgCover({
+        const cover = await renderOgCover({
           title: draft.title,
           category: draft.category,
           slug: draft.slug,
         });
+        coverUrl = cover.url;
+        coverStyleId = cover.styleId;
       }
       await logStage({
         runId,
         stage: "images",
         status: "ok",
-        message: `Cover via ${pipeline.coverMode}`,
-        meta: { coverUrl },
+        message: `Cover via ${pipeline.coverMode} (${coverStyleId})`,
+        meta: { coverUrl, coverStyleId },
       });
     } catch (error) {
       await logStage({
@@ -152,10 +157,18 @@ export async function runGenerate(
     await logStage({
       runId,
       stage: "images",
-      status: inline.failed ? "warn" : "ok",
+      status: inline.generated >= 2 && !inline.failed ? "ok" : "warn",
       message: `Inline images generated=${inline.generated} failed=${inline.failed}`,
-      meta: { urls: inline.urls },
+      meta: { urls: inline.urls, styleIds: inline.styleIds },
     });
+
+    const imageReasons: string[] = [];
+    if (!coverUrl) imageReasons.push("Cover image missing");
+    if (inline.generated < 2) {
+      imageReasons.push(
+        `Need at least 2 inline images, got ${inline.generated}`
+      );
+    }
 
     const order = await nextSortOrder();
     const blogPostId = await upsertBlogPost({
@@ -225,9 +238,11 @@ export async function runGenerate(
     const blogOk =
       vBlog.ok &&
       cBlog.verdict === "pass" &&
-      cBlog.score >= pipeline.criticMinScore;
+      cBlog.score >= pipeline.criticMinScore &&
+      imageReasons.length === 0;
 
     const reviewReasons = [
+      ...imageReasons,
       ...vBlog.reasons,
       ...cBlog.issues.map((i) => `critic: ${i}`),
     ];
@@ -279,7 +294,8 @@ export async function runGenerate(
 
         let liImageUrl = "";
         try {
-          liImageUrl = await linkedinImage(brief.topic);
+          const liImg = await linkedinImage(brief.topic);
+          liImageUrl = liImg.url;
         } catch (error) {
           await logStage({
             runId,

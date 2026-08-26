@@ -106,7 +106,7 @@ function InsightCard({ post }: { post: BlogListing }) {
           aria-hidden
         >
           <Image
-            src={post.image}
+            src={post.image || "/og-image.png"}
             alt=""
             fill
             sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"

@@ -167,6 +167,7 @@ export async function upsertBlogPost(
     reviewReasons?: string[];
     criticScore?: number | null;
     briefId?: string | null;
+    publishAt?: Date | null;
   }
 ) {
   const db = requireDb();
@@ -193,6 +194,7 @@ export async function upsertBlogPost(
       : {}),
     ...(input.criticScore !== undefined ? { criticScore: input.criticScore } : {}),
     ...(input.briefId !== undefined ? { briefId: input.briefId } : {}),
+    ...(input.publishAt !== undefined ? { publishAt: input.publishAt } : {}),
   };
 
   if (isPersistedId(input.id)) {

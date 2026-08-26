@@ -2,6 +2,15 @@ export const pipeline = {
   enabled: process.env.PIPELINE_ENABLED !== "false",
   /** When true (default), publish blog + schedule LinkedIn without needs_review. */
   autoPublish: process.env.PIPELINE_AUTO_PUBLISH !== "false",
+  /** Soft weekly cadence (random days). Default 3-4 posts/week. */
+  postsPerWeekMin: Number(process.env.PIPELINE_POSTS_PER_WEEK_MIN ?? 3),
+  postsPerWeekMax: Number(process.env.PIPELINE_POSTS_PER_WEEK_MAX ?? 4),
+  /** Hours after generate before the blog goes live (random in range). */
+  blogPublishDelayMinHours: Number(process.env.PIPELINE_BLOG_DELAY_MIN_HOURS ?? 1),
+  blogPublishDelayMaxHours: Number(process.env.PIPELINE_BLOG_DELAY_MAX_HOURS ?? 36),
+  /** Hours after blog publish before LinkedIn (random in range). */
+  linkedinDelayMinHours: Number(process.env.PIPELINE_LINKEDIN_DELAY_MIN_HOURS ?? 1),
+  linkedinDelayMaxHours: Number(process.env.PIPELINE_LINKEDIN_DELAY_MAX_HOURS ?? 20),
   criticMinScore: Number(process.env.CRITIC_MIN_SCORE ?? 78),
   coverMode: (process.env.COVER_IMAGE_MODE ?? "ai") as "og" | "ai",
   notifyTo: process.env.PIPELINE_NOTIFY_TO ?? process.env.CONTACT_TO_EMAIL ?? "",

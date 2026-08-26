@@ -50,9 +50,12 @@ model BlogPost {
   briefId       String?
   brief         Brief?   @relation(fields: [briefId], references: [id])
   socialPosts   SocialPost[] @relation("BlogToSocial")
+  // when set and published=false, publish-due cron flips published at/after this time
+  publishAt     DateTime?
 
   @@index([published, sortOrder])
   @@index([reviewState])
+  @@index([publishAt, published])
   @@map("blog_posts")
 }
 

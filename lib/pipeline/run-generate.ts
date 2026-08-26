@@ -19,10 +19,17 @@ import {
 import { createRunId, logStage } from "@/lib/pipeline/log";
 import { notifyRunSummary } from "@/lib/pipeline/notify";
 import { renderOgCover } from "@/lib/pipeline/og-cover";
+import {
+  randomBlogPublishAt,
+  randomLinkedInScheduledFor,
+  shouldGenerateToday,
+} from "@/lib/pipeline/schedule";
 import { validateBlog, validateLinkedIn } from "@/lib/pipeline/validators";
 
 export type RunGenerateOptions = {
   dryRun?: boolean;
+  /** Bypass weekly cadence (manual / curl testing). */
+  force?: boolean;
 };
 
 export type RunGenerateResult = {
@@ -61,6 +68,7 @@ export async function runGenerate(
 ): Promise<RunGenerateResult> {
   const runId = createRunId();
   const dryRun = Boolean(options.dryRun);
+  const force = Boolean(options.force);
 
   try {
     if (!pipeline.enabled) {
@@ -72,6 +80,24 @@ export async function runGenerate(
       });
       await notifyRunSummary(runId);
       return { runId, status: "skip", message: "Pipeline disabled" };
+    }
+
+    const cadence = await shouldGenerateToday(force);
+    await logStage({
+      runId,
+      stage: "brief",
+      status: cadence.go ? "ok" : "skip",
+      message: cadence.reason,
+      meta: {
+        postedThisWeek: cadence.postedThisWeek,
+        target: cadence.target,
+        daysLeftIncludingToday: cadence.daysLeftIncludingToday,
+        force,
+      },
+    });
+    if (!cadence.go) {
+      await notifyRunSummary(runId);
+      return { runId, status: "skip", message: cadence.reason };
     }
 
     if (await pipelineBlogExistsForToday()) {
@@ -247,7 +273,10 @@ export async function runGenerate(
       imageReasons.length === 0;
 
     // Auto-publish by default: validators/critic still run and log, but do not block.
-    const shouldPublish = !dryRun && (pipeline.autoPublish || blogOk);
+    const approved = !dryRun && (pipeline.autoPublish || blogOk);
+    const blogPublishAt = approved ? randomBlogPublishAt() : null;
+    const publishNow =
+      approved && blogPublishAt !== null && blogPublishAt.getTime() <= Date.now();
 
     const reviewReasons = [
       ...imageReasons,
@@ -270,18 +299,31 @@ export async function runGenerate(
       authorImage: pipeline.defaults.authorImage,
       body: inline.body,
       faqs: draft.faqs,
-      published: shouldPublish,
+      published: publishNow,
       order,
       origin: "pipeline",
-      reviewState: shouldPublish ? "approved" : "needs_review",
-      reviewReasons: shouldPublish && pipeline.autoPublish ? [] : reviewReasons,
+      reviewState: approved ? "approved" : "needs_review",
+      reviewReasons: approved && pipeline.autoPublish ? [] : reviewReasons,
       criticScore: cBlog.score,
       briefId: brief.id,
+      publishAt: blogPublishAt,
     });
+
+    if (approved && blogPublishAt && !publishNow) {
+      await logStage({
+        runId,
+        stage: "blog",
+        status: "ok",
+        refType: "BlogPost",
+        refId: blogPostId,
+        message: `Blog scheduled for ${blogPublishAt.toISOString()}`,
+        meta: { publishAt: blogPublishAt.toISOString() },
+      });
+    }
 
     let socialPostId: string | undefined;
 
-    if (shouldPublish) {
+    if (approved && blogPublishAt) {
       try {
         const li = await generateLinkedIn({
           title: draft.title,
@@ -346,10 +388,9 @@ export async function runGenerate(
           ...cLi.issues.map((i) => `critic: ${i}`),
         ];
 
-        // Always schedule when auto-publishing; publish cron posts when due.
         const scheduleLinkedIn = pipeline.autoPublish || liOk;
+        const scheduledFor = randomLinkedInScheduledFor(blogPublishAt);
 
-        const scheduledFor = new Date(Date.now() + 12 * 60 * 60 * 1000);
         socialPostId = await withDb(async () => {
           const db = requireDb();
           const row = await db.socialPost.create({
@@ -379,7 +420,12 @@ export async function runGenerate(
           message: scheduleLinkedIn
             ? `Scheduled for ${scheduledFor.toISOString()}`
             : "Parked needs_review",
-          meta: { reasons: liReasons, score: cLi.score, liOk },
+          meta: {
+            reasons: liReasons,
+            score: cLi.score,
+            liOk,
+            blogPublishAt: blogPublishAt.toISOString(),
+          },
         });
       } catch (error) {
         await logStage({
@@ -423,12 +469,12 @@ export async function runGenerate(
     return {
       runId,
       status: "ok",
-      message: shouldPublish
+      message: approved
         ? dryRun
           ? "Generated (dry run, unpublished)"
-          : pipeline.autoPublish
-            ? "Generated and auto-published"
-            : "Generated and approved"
+          : publishNow
+            ? "Generated and published"
+            : `Generated; blog goes live at ${blogPublishAt?.toISOString()}`
         : "Generated, needs review",
       blogPostId,
       socialPostId,

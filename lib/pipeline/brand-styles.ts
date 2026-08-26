@@ -1,3 +1,5 @@
+import { randomInt } from "node:crypto";
+
 /** Twixr brand visual presets. One is chosen at random per asset. */
 
 export type BrandStyleId =
@@ -133,8 +135,7 @@ export function pickBrandStyle(seed?: string): BrandStyle {
     }
     return BRAND_STYLES[hash % BRAND_STYLES.length];
   }
-  const index = Math.floor(Math.random() * BRAND_STYLES.length);
-  return BRAND_STYLES[index];
+  return BRAND_STYLES[randomInt(BRAND_STYLES.length)];
 }
 
 export function brandStyleById(id: string | undefined): BrandStyle {

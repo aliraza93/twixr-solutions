@@ -45,20 +45,39 @@ if (!databaseUrl) {
   process.exit(1);
 }
 
-const prismaBin = path.join(process.cwd(), "node_modules", ".bin", "prisma");
 const args = process.argv.slice(2);
 if (args.length === 0) {
-  console.error("Usage: node scripts/prisma-env.mjs <prisma args>");
+  console.error(
+    "Usage: node scripts/prisma-env.mjs <prisma args>\n" +
+      "   or: node scripts/prisma-env.mjs run <command> [args...]"
+  );
   process.exit(1);
 }
 
+const env = {
+  ...process.env,
+  ...fileEnv,
+  DATABASE_URL: databaseUrl,
+};
+
+if (args[0] === "run") {
+  const cmd = args[1];
+  const cmdArgs = args.slice(2);
+  if (!cmd) {
+    console.error("Usage: node scripts/prisma-env.mjs run <command> [args...]");
+    process.exit(1);
+  }
+  const result = spawnSync(cmd, cmdArgs, {
+    stdio: "inherit",
+    env,
+  });
+  process.exit(result.status ?? 1);
+}
+
+const prismaBin = path.join(process.cwd(), "node_modules", ".bin", "prisma");
 const result = spawnSync(prismaBin, args, {
   stdio: "inherit",
-  env: {
-    ...process.env,
-    ...fileEnv,
-    DATABASE_URL: databaseUrl,
-  },
+  env,
 });
 
 process.exit(result.status ?? 1);

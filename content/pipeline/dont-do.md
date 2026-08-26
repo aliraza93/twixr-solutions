@@ -1,0 +1,2 @@
+- Anything that reads like a thought leader  -  kill on sight
+- Unverifiable stat hooks  -  low trust

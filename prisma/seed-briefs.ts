@@ -19,9 +19,10 @@ type ParsedTopic = {
 
 function parseTopicBank(md: string): ParsedTopic[] {
   const lines = md.split("\n");
-  let basePillar = "Build";
-  let pillar = "Build";
+  let basePillar = "";
+  let pillar = "";
   let requiresLiveSource = false;
+  let inTopics = false;
   const out: ParsedTopic[] = [];
 
   for (const raw of lines) {
@@ -29,28 +30,38 @@ function parseTopicBank(md: string): ParsedTopic[] {
     if (line.startsWith("## ")) {
       const heading = line.slice(3).trim();
       const upper = heading.toUpperCase();
+      if (upper.startsWith("FORMAT")) {
+        inTopics = false;
+        basePillar = "";
+        pillar = "";
+        continue;
+      }
       if (upper.startsWith("BUILD")) {
         basePillar = "Build";
         requiresLiveSource = false;
+        inTopics = true;
       } else if (upper.startsWith("TIMELY")) {
         basePillar = "Timely";
         requiresLiveSource = true;
+        inTopics = true;
       } else if (upper.startsWith("BUSINESS")) {
         basePillar = "Business";
         requiresLiveSource = false;
+        inTopics = true;
       } else if (upper.startsWith("CODE CARDS")) {
         basePillar = "Code card";
         requiresLiveSource = false;
-      } else if (upper.startsWith("FORMAT")) {
-        basePillar = "Build";
-        requiresLiveSource = false;
+        inTopics = true;
       } else {
-        basePillar = heading.split(/\s+/)[0] || "Build";
-        requiresLiveSource = false;
+        inTopics = false;
+        basePillar = "";
+        pillar = "";
+        continue;
       }
       pillar = basePillar;
       continue;
     }
+    if (!inTopics || !basePillar) continue;
     if (line.startsWith("### ")) {
       const sub = line.slice(4).trim();
       pillar = `${basePillar}/${sub}`;

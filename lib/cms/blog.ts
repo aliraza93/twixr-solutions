@@ -160,7 +160,14 @@ export async function getBlogPostAdmin(id: string): Promise<BlogPostRecord | nul
 }
 
 export async function upsertBlogPost(
-  input: Omit<BlogPostRecord, "id" | "content"> & { id?: string }
+  input: Omit<BlogPostRecord, "id" | "content"> & {
+    id?: string;
+    origin?: string;
+    reviewState?: string;
+    reviewReasons?: string[];
+    criticScore?: number | null;
+    briefId?: string | null;
+  }
 ) {
   const db = requireDb();
   const data = {
@@ -179,6 +186,13 @@ export async function upsertBlogPost(
     faqs: stripEmDashesDeep(input.faqs ?? []),
     published: input.published,
     sortOrder: input.order,
+    ...(input.origin !== undefined ? { origin: input.origin } : {}),
+    ...(input.reviewState !== undefined ? { reviewState: input.reviewState } : {}),
+    ...(input.reviewReasons !== undefined
+      ? { reviewReasons: input.reviewReasons }
+      : {}),
+    ...(input.criticScore !== undefined ? { criticScore: input.criticScore } : {}),
+    ...(input.briefId !== undefined ? { briefId: input.briefId } : {}),
   };
 
   if (isPersistedId(input.id)) {

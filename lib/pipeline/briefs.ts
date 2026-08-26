@@ -3,21 +3,16 @@ import { requireDb, withDb } from "@/lib/cms/db";
 
 /** Oldest queued brief due now. Does not mark used. */
 export async function takeNextBrief(): Promise<Brief | null> {
-  return withDb(async () => {
-    const db = requireDb();
-    const now = new Date();
-    const brief = await db.brief.findFirst({
-      where: {
-        status: "queued",
-        OR: [{ scheduledFor: null }, { scheduledFor: { lte: now } }],
-      },
-      orderBy: [
-        { scheduledFor: { sort: "asc", nulls: "first" } },
-        { createdAt: "asc" },
-      ],
-    });
-    return brief;
-  }, null);
+  const db = requireDb();
+  const now = new Date();
+  // Avoid withDb null-fallback here: a DB/Prisma error would look like an empty queue.
+  return db.brief.findFirst({
+    where: {
+      status: "queued",
+      OR: [{ scheduledFor: null }, { scheduledFor: { lte: now } }],
+    },
+    orderBy: [{ createdAt: "asc" }],
+  });
 }
 
 export async function markBriefUsed(id: string): Promise<void> {

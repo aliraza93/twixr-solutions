@@ -59,17 +59,36 @@ export async function runPublishLinkedin(
 
     const validation = await validateLinkedIn(post.body);
     if (!validation.ok) {
-      await withDb(async () => {
-        const db = requireDb();
-        await db.socialPost.update({
-          where: { id: post.id },
-          data: {
-            status: "needs_review",
-            reviewReasons: validation.reasons,
-            failReason: validation.reasons.join("; "),
-          },
+      if (!pipeline.autoPublish) {
+        await withDb(async () => {
+          const db = requireDb();
+          await db.socialPost.update({
+            where: { id: post.id },
+            data: {
+              status: "needs_review",
+              reviewReasons: validation.reasons,
+              failReason: validation.reasons.join("; "),
+            },
+          });
+        }, undefined);
+
+        await logStage({
+          runId,
+          stage: "publish",
+          status: "warn",
+          refType: "SocialPost",
+          refId: post.id,
+          message: "Re-validation failed; parked needs_review",
+          meta: { reasons: validation.reasons },
         });
-      }, undefined);
+        await notifyRunSummary(runId);
+        return {
+          runId,
+          status: "fail",
+          message: "Validation failed",
+          socialPostId: post.id,
+        };
+      }
 
       await logStage({
         runId,
@@ -77,16 +96,9 @@ export async function runPublishLinkedin(
         status: "warn",
         refType: "SocialPost",
         refId: post.id,
-        message: "Re-validation failed; parked needs_review",
+        message: "Validation warnings ignored (PIPELINE_AUTO_PUBLISH)",
         meta: { reasons: validation.reasons },
       });
-      await notifyRunSummary(runId);
-      return {
-        runId,
-        status: "fail",
-        message: "Validation failed",
-        socialPostId: post.id,
-      };
     }
 
     if (dryRun) {

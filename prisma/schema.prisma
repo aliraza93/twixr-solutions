@@ -42,8 +42,73 @@ model BlogPost {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  // pipeline bookkeeping (optional/defaulted so CMS editor stays unchanged)
+  origin        String   @default("manual") // "manual" | "pipeline"
+  reviewState   String   @default("none") // "none" | "needs_review" | "approved"
+  reviewReasons Json     @default("[]") // string[] of failed checks
+  criticScore   Int?
+  briefId       String?
+  brief         Brief?   @relation(fields: [briefId], references: [id])
+  socialPosts   SocialPost[] @relation("BlogToSocial")
+
   @@index([published, sortOrder])
+  @@index([reviewState])
   @@map("blog_posts")
+}
+
+model Brief {
+  id                 String    @id @default(cuid())
+  pillar             String // "Build/Laravel", "Timely", "Business/Upwork", ...
+  topic              String // short specific phrase
+  targetKeyword      String    @default("")
+  angle              String    @default("")
+  realExample        String    @default("") // optional real, verified detail. Never fabricated.
+  requiresLiveSource Boolean   @default(false) // true for Timely/news briefs -> forces web verification
+  status             String    @default("queued") // "queued" | "used" | "skipped"
+  scheduledFor       DateTime?
+  usedAt             DateTime?
+  posts              BlogPost[]
+  createdAt          DateTime  @default(now())
+
+  @@index([status, scheduledFor])
+  @@map("briefs")
+}
+
+model SocialPost {
+  id            String    @id @default(cuid())
+  channel       String    @default("linkedin")
+  blogPostId    String?
+  blogPost      BlogPost? @relation(fields: [blogPostId], references: [id], name: "BlogToSocial")
+  body          String // exact text to post, <= 3000 chars
+  imageUrl      String    @default("") // Cloudinary URL, optional
+  visibility    String    @default("PUBLIC") // "PUBLIC" | "CONNECTIONS"
+  status        String    @default("scheduled") // "scheduled" | "needs_review" | "published" | "failed"
+  reviewReasons Json      @default("[]")
+  criticScore   Int?
+  scheduledFor  DateTime // ~12h after the blog publishes
+  publishedAt   DateTime?
+  externalId    String? // urn:li:share:... on success
+  failReason    String    @default("")
+  createdAt     DateTime  @default(now())
+
+  @@index([status, scheduledFor])
+  @@map("social_posts")
+}
+
+model GenerationLog {
+  id        String   @id @default(cuid())
+  runId     String // groups all rows from one cron invocation
+  stage     String // "brief" | "blog" | "images" | "critic" | "validate" | "linkedin" | "publish" | "notify"
+  status    String // "ok" | "warn" | "fail" | "skip"
+  refType   String   @default("") // "BlogPost" | "SocialPost" | "Brief"
+  refId     String   @default("")
+  message   String   @default("")
+  meta      Json     @default("{}") // tokens, model, cost, scores, urls
+  createdAt DateTime @default(now())
+
+  @@index([runId])
+  @@index([stage, status])
+  @@map("generation_logs")
 }
 
 model Service {

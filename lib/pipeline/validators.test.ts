@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { ensureLinkedInBlogLink } from "@/lib/pipeline/generate-linkedin";
 import {
   bannedPhrases,
   dashCheck,
@@ -49,5 +50,24 @@ describe("hashtagCheck", () => {
     const ok =
       "Hook\n\nBody text here\n\n#Laravel #NestJS #AWS #WebDev #Upwork";
     assert.deepEqual(hashtagCheck(ok), []);
+  });
+});
+
+describe("ensureLinkedInBlogLink", () => {
+  const url = "https://www.twixrsolutions.com/blog/example-post";
+
+  it("inserts the blog URL before the hashtag line", () => {
+    const input =
+      "Hook\n\nBody text here\n\nWhat do you think?\n\n#Laravel #NestJS #AWS #WebDev #Upwork";
+    const out = ensureLinkedInBlogLink(input, url);
+    assert.ok(out.includes(`Full write-up: ${url}`));
+    assert.ok(out.trimEnd().endsWith("#Laravel #NestJS #AWS #WebDev #Upwork"));
+    assert.deepEqual(hashtagCheck(out), []);
+  });
+
+  it("does not duplicate when the URL is already present", () => {
+    const input = `Hook\n\nFull write-up: ${url}\n\n#Laravel #NestJS #AWS #WebDev #Upwork`;
+    const out = ensureLinkedInBlogLink(input, url);
+    assert.equal(out.split(url).length - 1, 1);
   });
 });

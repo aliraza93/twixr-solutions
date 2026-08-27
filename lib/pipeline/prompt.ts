@@ -91,6 +91,8 @@ export type LinkedInBlogContext = {
   excerpt: string;
   body: string;
   category: string;
+  /** Absolute URL to the related Twixr blog post. */
+  blogUrl: string;
   topic?: string;
   realExample?: string;
 };
@@ -120,6 +122,7 @@ export function buildLinkedInPrompt(blog: LinkedInBlogContext): {
     `Excerpt: ${blog.excerpt}`,
     blog.topic ? `Topic: ${blog.topic}` : "",
     `Real example (use only if non-empty): ${blog.realExample || "(none - keep personal angle general)"}`,
+    `Blog URL (must appear in the post before hashtags): ${blog.blogUrl}`,
     "",
     "Blog body (source material, do not copy wholesale):",
     blog.body.slice(0, 12000),
@@ -132,12 +135,13 @@ export function buildLinkedInPrompt(blog: LinkedInBlogContext): {
     "- Body (4-8 short lines): white space, specific tools/patterns",
     "- Personal angle (1 line): general unless a real example exists",
     "- CTA: one easy question",
+    `- Then a line: Full write-up: ${blog.blogUrl}`,
     "- Hashtags: 4-6 on the last line",
     "- Total post text <= 3000 characters",
     "",
     "OUTPUT: call submit_linkedin_draft with:",
     "{",
-    '  "text": "full post including hashtag line",',
+    '  "text": "full post including blog URL and hashtag line",',
     '  "altHooks": ["hook option 2", "hook option 3"],',
     '  "hashtags": ["#Tag1", "#Tag2", "..."]',
     "}",

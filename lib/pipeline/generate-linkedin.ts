@@ -11,6 +11,38 @@ export type LinkedInDraft = {
   hashtags: string[];
 };
 
+/** Guarantee the Twixr blog URL sits before the hashtag line. */
+export function ensureLinkedInBlogLink(text: string, blogUrl: string): string {
+  const trimmed = text.trim();
+  if (!blogUrl || trimmed.includes(blogUrl)) {
+    return trimmed.slice(0, 3000);
+  }
+
+  const lines = trimmed.split("\n");
+  let lastIdx = lines.length - 1;
+  while (lastIdx >= 0 && !lines[lastIdx].trim()) lastIdx--;
+
+  const last = lastIdx >= 0 ? lines[lastIdx].trim() : "";
+  const tagCount = (last.match(/#[\w]+/g) ?? []).length;
+  const hashtagLine = tagCount >= 4 ? last : null;
+
+  const suffix = hashtagLine
+    ? `\n\nFull write-up: ${blogUrl}\n\n${hashtagLine}`
+    : `\n\nFull write-up: ${blogUrl}`;
+
+  const body = hashtagLine
+    ? lines.slice(0, lastIdx).join("\n").replace(/\s+$/, "")
+    : trimmed;
+
+  const maxBody = Math.max(0, 3000 - suffix.length);
+  const clipped =
+    body.length > maxBody
+      ? body.slice(0, maxBody).replace(/\s+\S*$/, "").trimEnd()
+      : body;
+
+  return `${clipped}${suffix}`;
+}
+
 const LINKEDIN_DRAFT_TOOL = {
   name: "submit_linkedin_draft",
   description: "Submit the finished LinkedIn post as structured fields.",
@@ -55,7 +87,10 @@ export async function generateLinkedIn(
 
   const draft = toolBlock.input as LinkedInDraft;
   return {
-    text: String(draft.text ?? "").trim().slice(0, 3000),
+    text: ensureLinkedInBlogLink(
+      String(draft.text ?? "").trim(),
+      blog.blogUrl
+    ),
     altHooks: Array.isArray(draft.altHooks)
       ? draft.altHooks.map((h) => String(h).trim()).filter(Boolean).slice(0, 3)
       : [],

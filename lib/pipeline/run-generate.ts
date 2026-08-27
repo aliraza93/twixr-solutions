@@ -24,6 +24,7 @@ import {
   randomLinkedInScheduledFor,
   shouldGenerateToday,
 } from "@/lib/pipeline/schedule";
+import { absoluteUrl } from "@/lib/seo";
 import { validateBlog, validateLinkedIn } from "@/lib/pipeline/validators";
 
 export type RunGenerateOptions = {
@@ -330,6 +331,7 @@ export async function runGenerate(
           excerpt: draft.excerpt,
           body: inline.body,
           category: draft.category,
+          blogUrl: absoluteUrl(`/blog/${draft.slug}`),
           topic: brief.topic,
           realExample: brief.realExample,
         });

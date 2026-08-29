@@ -75,7 +75,11 @@ function loadPosts(): BlogPost[] {
         post: parsePost(raw),
       };
     })
-    .sort((a, b) => a.order - b.order)
+    .sort((a, b) => {
+      const dateCmp = b.post.date.localeCompare(a.post.date);
+      if (dateCmp !== 0) return dateCmp;
+      return b.order - a.order;
+    })
     .map(({ post }) => post);
 }
 

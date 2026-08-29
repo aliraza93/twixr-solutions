@@ -11,6 +11,13 @@ export const pipeline = {
   /** Hours after blog publish before LinkedIn (random in range). */
   linkedinDelayMinHours: Number(process.env.PIPELINE_LINKEDIN_DELAY_MIN_HOURS ?? 1),
   linkedinDelayMaxHours: Number(process.env.PIPELINE_LINKEDIN_DELAY_MAX_HOURS ?? 20),
+  /** Relative weights for brief pillar selection (do not need to sum to 100). */
+  pillarWeights: {
+    build: Number(process.env.PIPELINE_WEIGHT_BUILD ?? 40),
+    business: Number(process.env.PIPELINE_WEIGHT_BUSINESS ?? 30),
+    timely: Number(process.env.PIPELINE_WEIGHT_TIMELY ?? 20),
+    codeCard: Number(process.env.PIPELINE_WEIGHT_CODE_CARD ?? 10),
+  },
   criticMinScore: Number(process.env.CRITIC_MIN_SCORE ?? 78),
   coverMode: (process.env.COVER_IMAGE_MODE ?? "ai") as "og" | "ai",
   notifyTo: process.env.PIPELINE_NOTIFY_TO ?? process.env.CONTACT_TO_EMAIL ?? "",

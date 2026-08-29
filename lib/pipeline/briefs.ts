@@ -1,18 +1,127 @@
+import { randomInt } from "node:crypto";
 import type { Brief } from "@prisma/client";
 import { requireDb, withDb } from "@/lib/cms/db";
+import { pipeline } from "@/lib/pipeline/config";
 
-/** Oldest queued brief due now. Does not mark used. */
+export type BasePillar = "Build" | "Business" | "Timely" | "Code card";
+
+const BASE_PILLARS: BasePillar[] = ["Build", "Business", "Timely", "Code card"];
+
+/** Map `Build/Laravel` -> `Build`, `Code card/...` -> `Code card`. */
+export function basePillarOf(pillar: string): BasePillar {
+  const raw = pillar.trim();
+  if (/^code\s*card/i.test(raw)) return "Code card";
+  const head = raw.split("/")[0]?.trim() ?? raw;
+  const hit = BASE_PILLARS.find(
+    (p) => p.toLowerCase() === head.toLowerCase()
+  );
+  return hit ?? "Build";
+}
+
+function weightFor(base: BasePillar): number {
+  const w = pipeline.pillarWeights;
+  switch (base) {
+    case "Build":
+      return w.build;
+    case "Business":
+      return w.business;
+    case "Timely":
+      return w.timely;
+    case "Code card":
+      return w.codeCard;
+  }
+}
+
+function pickWeighted(options: Array<{ key: string; weight: number }>): string {
+  const positive = options.map((o) => ({
+    key: o.key,
+    weight: Math.max(0, o.weight),
+  }));
+  const total = positive.reduce((sum, o) => sum + o.weight, 0);
+  if (total <= 0) {
+    return positive[randomInt(positive.length)].key;
+  }
+  // Scale so fractional env weights still work.
+  const scale = 1000;
+  let roll = randomInt(Math.max(1, Math.round(total * scale)));
+  for (const o of positive) {
+    roll -= Math.round(o.weight * scale);
+    if (roll < 0) return o.key;
+  }
+  return positive[positive.length - 1].key;
+}
+
+async function recentBasePillars(limit: number): Promise<BasePillar[]> {
+  const db = requireDb();
+  const used = await db.brief.findMany({
+    where: { status: "used", usedAt: { not: null } },
+    orderBy: { usedAt: "desc" },
+    take: limit,
+    select: { pillar: true },
+  });
+  return used.map((b) => basePillarOf(b.pillar));
+}
+
+/**
+ * Weighted random pillar (with anti-streak), then a due queued brief.
+ * Build also rotates subsections so Laravel does not dominate.
+ */
 export async function takeNextBrief(): Promise<Brief | null> {
   const db = requireDb();
   const now = new Date();
-  // Avoid withDb null-fallback here: a DB/Prisma error would look like an empty queue.
-  return db.brief.findFirst({
-    where: {
-      status: "queued",
-      OR: [{ scheduledFor: null }, { scheduledFor: { lte: now } }],
-    },
-    orderBy: [{ createdAt: "asc" }],
+  const dueFilter = {
+    status: "queued" as const,
+    OR: [{ scheduledFor: null }, { scheduledFor: { lte: now } }],
+  };
+
+  const queued = await db.brief.findMany({
+    where: dueFilter,
+    orderBy: { createdAt: "asc" },
+    select: { id: true, pillar: true, createdAt: true },
   });
+  if (queued.length === 0) return null;
+
+  const byBase = new Map<BasePillar, typeof queued>();
+  for (const row of queued) {
+    const base = basePillarOf(row.pillar);
+    const list = byBase.get(base) ?? [];
+    list.push(row);
+    byBase.set(base, list);
+  }
+
+  let available = [...byBase.keys()];
+  const recent = await recentBasePillars(2);
+  if (
+    recent.length >= 2 &&
+    recent[0] === recent[1] &&
+    available.length > 1
+  ) {
+    const streak = recent[0];
+    const without = available.filter((p) => p !== streak);
+    if (without.length) available = without;
+  }
+
+  const chosenBase = pickWeighted(
+    available.map((key) => ({ key, weight: weightFor(key) }))
+  ) as BasePillar;
+
+  const inPillar = byBase.get(chosenBase) ?? [];
+  if (inPillar.length === 0) {
+    return db.brief.findFirst({
+      where: dueFilter,
+      orderBy: { createdAt: "asc" },
+    });
+  }
+
+  let candidates = inPillar;
+  if (chosenBase === "Build") {
+    const subsections = [...new Set(inPillar.map((b) => b.pillar))];
+    const subsection = subsections[randomInt(subsections.length)];
+    candidates = inPillar.filter((b) => b.pillar === subsection);
+  }
+
+  const oldest = candidates[0];
+  return db.brief.findUnique({ where: { id: oldest.id } });
 }
 
 export async function markBriefUsed(id: string): Promise<void> {

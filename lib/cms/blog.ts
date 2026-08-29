@@ -54,7 +54,11 @@ async function loadPublished(): Promise<BlogPostRecord[] | null> {
   return withDb(async () => {
     const rows = await prisma.blogPost.findMany({
       where: { published: true },
-      orderBy: { sortOrder: "asc" },
+      orderBy: [
+        { date: "desc" },
+        { sortOrder: "desc" },
+        { createdAt: "desc" },
+      ],
     });
     return rows.length ? rows.map(toRecord) : null;
   }, null);
@@ -110,7 +114,13 @@ export async function getRelatedPosts(slug: string, limit = 3): Promise<BlogList
 
 export async function listBlogPostsAdmin(): Promise<BlogPostRecord[]> {
   return withDb(async () => {
-    const rows = await prisma.blogPost.findMany({ orderBy: { sortOrder: "asc" } });
+    const rows = await prisma.blogPost.findMany({
+      orderBy: [
+        { date: "desc" },
+        { sortOrder: "desc" },
+        { createdAt: "desc" },
+      ],
+    });
     if (!rows.length) return fallbackAdminPosts();
     return rows.map(toRecord);
   }, fallbackAdminPosts());

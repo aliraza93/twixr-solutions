@@ -346,7 +346,11 @@ export async function runGenerate(
 
         let liImageUrl = "";
         try {
-          const liImg = await linkedinImage(brief.topic);
+          const liImg = await linkedinImage({
+            title: draft.title,
+            topic: brief.topic,
+            category: draft.category,
+          });
           liImageUrl = liImg.url;
         } catch (error) {
           await logStage({

@@ -27,8 +27,9 @@ Based in Lahore.
 
 - **HOOK (1 - 2 lines):** problem-first. Name a pain the reader already feels,
   in their words - make them think "that's me." Not a topic announcement.
-- **BODY (4 - 8 short lines):** generous white space, arrows or numbered lists
-  where natural, real tools/versions/patterns. One idea per line.
+- **BODY (3 - 5 short lines):** generous white space, arrows or numbered lists
+  where natural, real tools/versions/patterns. One idea per line. Do not dump
+  the whole blog.
 - **PERSONAL ANGLE (1 line):** tie to Ali's real experience.
 - **CTA (1 line):** one easy question that invites a comment.
 - **HASHTAGS:** 4 - 6, mixing broad (#Laravel #WebDev) and niche

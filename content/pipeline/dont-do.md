@@ -1,2 +1,3 @@
-- Anything that reads like a thought leader  -  kill on sight
-- Unverifiable stat hooks  -  low trust
+- Anything that reads like a thought leader - kill on sight
+- Unverifiable stat hooks - low trust
+- LinkedIn: no paste of the blog outline; no 8+ bullet dumps; no mini-essay that restates the full post

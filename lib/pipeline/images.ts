@@ -70,12 +70,14 @@ function extractImageBytes(response: unknown): {
 }
 
 function withBrandStyle(prompt: string, style: BrandStyle): string {
+  const { background, accent, ink, muted, panel } = style.og;
   return [
     prompt.trim(),
     "",
-    `Brand style (${style.label}): ${style.aiPrompt}`,
-    "Colors: pine #0f5132, lime #bef03a, ink #0b0f0d.",
-    "Do not render long paragraphs of text. Short labels only if needed.",
+    `Visual direction: ${style.aiPrompt}`,
+    `Colors for this image only: background ${background}, accent ${accent}, ink ${ink}, muted ${muted}, panel ${panel}.`,
+    "Match these hexes. Do not use other palettes.",
+    "Never paint style names, palette names, hex codes, or the words Brand style onto the image.",
     "No third-party logos. No stock-photo people.",
   ].join("\n");
 }
@@ -197,16 +199,59 @@ export async function generateInlineImages(
   return { body, generated, failed, urls, styleIds, errors };
 }
 
-export async function linkedinImage(topic: string): Promise<{
+const LINKEDIN_LAYOUTS = [
+  "Centered metaphor object in the middle; short title across the top; twixrsolutions.com bottom-right.",
+  "Left third: large short title. Right two-thirds: one bold visual metaphor. twixrsolutions.com bottom-right.",
+  "One oversized abstract icon or metaphor filling most of the frame; tiny title strip at top; twixrsolutions.com on a thin footer bar.",
+  "Diagonal accent band from top-left to bottom-right; short title on the band; simple metaphor beside it; twixrsolutions.com bottom-right.",
+  "Quiet minimal field; short title centered; small metaphor mark above it; twixrsolutions.com centered on a footer bar.",
+  "Top title lockup; middle single metaphor; bottom corner badge with twixrsolutions.com only.",
+  "Split horizontal: soft upper wash with short title; lower half metaphor scene; twixrsolutions.com bottom-right.",
+  "Poster frame with generous margin; short title upper-left; metaphor lower-right; twixrsolutions.com bottom-right.",
+  "Circular spotlight glow behind one metaphor; short title below the glow; twixrsolutions.com bottom-right.",
+  "Editorial card look: short title, one supporting phrase max 4 words, one metaphor shape; twixrsolutions.com bottom-right.",
+] as const;
+
+function shortLinkedInTitle(title: string, maxWords = 7): string {
+  const words = title.trim().split(/\s+/).filter(Boolean);
+  if (words.length <= maxWords) return words.join(" ");
+  return words.slice(0, maxWords).join(" ");
+}
+
+export type LinkedInImageInput = {
+  title: string;
+  topic: string;
+  category?: string;
+};
+
+export async function linkedinImage(
+  input: LinkedInImageInput | string
+): Promise<{
   url: string;
   styleId: string;
 }> {
+  const title =
+    typeof input === "string" ? input : input.title || input.topic;
+  const topic = typeof input === "string" ? input : input.topic || input.title;
+  const category = typeof input === "string" ? undefined : input.category;
+  const headline = shortLinkedInTitle(title);
+  const layout = LINKEDIN_LAYOUTS[randomInt(LINKEDIN_LAYOUTS.length)];
   const style = pickBrandStyle();
+
   const prompt = [
-    "Create a clean, original square social graphic for a LinkedIn post.",
-    `Topic: ${topic}.`,
-    "Composition should read clearly at phone size.",
-  ].join(" ");
+    "Create a clean 1080x1080 LinkedIn post graphic for Twixr Solutions.",
+    "This is a branded social card, NOT an infographic.",
+    `Layout recipe: ${layout}`,
+    `Short title text to paint (exact words, large and readable): "${headline}"`,
+    `Topic metaphor (visual only, do not write a long caption): ${topic}.`,
+    category ? `Category mood: ${category}.` : "",
+    "Required branding: include the exact readable text twixrsolutions.com (website URL). Prefer bottom-right or a thin footer bar.",
+    "Hard bans: multi-column layouts, bullet lists, flowcharts, diagrams with many labels, tiny unreadable text, fake UI chrome, watermarks other than twixrsolutions.com, style names, palette names, hex codes.",
+    "At most one short title plus the domain. No paragraphs. No numbered lists on the image.",
+    "One clear visual metaphor. Premium, sparse, phone-readable.",
+  ]
+    .filter(Boolean)
+    .join("\n");
 
   const url = await generateImage(prompt, {
     size: "1080x1080",

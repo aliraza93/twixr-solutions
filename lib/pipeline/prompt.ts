@@ -105,7 +105,8 @@ export function buildLinkedInPrompt(blog: LinkedInBlogContext): {
   const dontDo = readKb("dont-do");
 
   const system = [
-    "You rewrite a blog post into one LinkedIn post for Ali Raza / Twixr Solutions.",
+    "You rewrite a blog post into one short LinkedIn post for Ali Raza / Twixr Solutions.",
+    "Write for the feed: peer-to-peer, scannable, not a blog dump.",
     "You MUST call the submit_linkedin_draft tool with the finished post. Do not reply with free-form prose.",
     "",
     absoluteRules(),
@@ -115,7 +116,7 @@ export function buildLinkedInPrompt(blog: LinkedInBlogContext): {
   ].join("\n");
 
   const user = [
-    "Create a LinkedIn post derived from this blog.",
+    "Create a LinkedIn post derived from this blog. One insight + one concrete tip. Do not restate the whole article.",
     "",
     `Title: ${blog.title}`,
     `Category: ${blog.category}`,
@@ -124,20 +125,23 @@ export function buildLinkedInPrompt(blog: LinkedInBlogContext): {
     `Real example (use only if non-empty): ${blog.realExample || "(none - keep personal angle general)"}`,
     `Blog URL (must appear in the post before hashtags): ${blog.blogUrl}`,
     "",
-    "Blog body (source material, do not copy wholesale):",
-    blog.body.slice(0, 12000),
+    "Source notes (excerpt + short body slice only - do not outline or paste sections):",
+    blog.excerpt,
+    "",
+    blog.body.slice(0, 3000),
     "",
     "DO NOT DO:",
     dontDo,
     "",
     "LinkedIn structure:",
-    "- Hook (1-2 lines): problem-first",
-    "- Body (4-8 short lines): white space, specific tools/patterns",
+    "- Hook (1-2 lines): problem-first, specific",
+    "- Body (3-5 short lines max): white space, one idea per line, name real tools/patterns",
     "- Personal angle (1 line): general unless a real example exists",
     "- CTA: one easy question",
     `- Then a line: Full write-up: ${blog.blogUrl}`,
     "- Hashtags: 4-6 on the last line",
-    "- Total post text <= 3000 characters",
+    "- Soft target 800-1400 characters. Hard max 3000. Prefer shorter.",
+    "- No mini-essay. No 6+ bullet dumps. No paste of the blog outline.",
     "",
     "OUTPUT: call submit_linkedin_draft with:",
     "{",

@@ -1,5 +1,9 @@
 # Topic bank
 
+Runtime selection is **weighted and random** in code (`takeNextBrief`): pillars
+are mixed (Build / Business / Timely / Code card), with anti-streak and random
+Build subsections. File order here is for humans - it is not publish order.
+
 The generator picks from here. Variety comes from **format x pillar**, not from a
 longer list alone - the same topic told three ways reads as three different posts.
 

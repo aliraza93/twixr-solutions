@@ -11,6 +11,7 @@ import { pipeline } from "@/lib/pipeline/config";
 import { criticBlog, criticLinkedIn, type CriticResult } from "@/lib/pipeline/critic";
 import { generateBlog } from "@/lib/pipeline/generate-blog";
 import { generateLinkedIn } from "@/lib/pipeline/generate-linkedin";
+import { generateX } from "@/lib/pipeline/generate-x";
 import {
   aiCoverImage,
   generateInlineImages,
@@ -39,6 +40,7 @@ export type RunGenerateResult = {
   message: string;
   blogPostId?: string;
   socialPostId?: string;
+  xPostId?: string;
 };
 
 function todayDate(): string {
@@ -323,6 +325,8 @@ export async function runGenerate(
     }
 
     let socialPostId: string | undefined;
+    let xPostId: string | undefined;
+    let sharedSocialImageUrl = "";
 
     if (approved && blogPublishAt) {
       try {
@@ -344,14 +348,13 @@ export async function runGenerate(
           meta: { altHooks: li.altHooks, hashtags: li.hashtags },
         });
 
-        let liImageUrl = "";
         try {
           const liImg = await linkedinImage({
             title: draft.title,
             topic: brief.topic,
             category: draft.category,
           });
-          liImageUrl = liImg.url;
+          sharedSocialImageUrl = liImg.url;
         } catch (error) {
           await logStage({
             runId,
@@ -404,7 +407,7 @@ export async function runGenerate(
               channel: "linkedin",
               blogPostId,
               body: stripEmDashes(li.text),
-              imageUrl: liImageUrl,
+              imageUrl: sharedSocialImageUrl,
               visibility: "PUBLIC",
               status: scheduleLinkedIn ? "scheduled" : "needs_review",
               reviewReasons: (scheduleLinkedIn && pipeline.autoPublish
@@ -443,6 +446,81 @@ export async function runGenerate(
               ? error.message
               : "LinkedIn generation failed",
         });
+      }
+
+      // X drafts for manual posting in admin (no X API / no billing).
+      if (pipeline.xManualDrafts) {
+        try {
+          const blogUrl = absoluteUrl(`/blog/${draft.slug}`);
+          const xDraft = await generateX({
+            title: draft.title,
+            excerpt: draft.excerpt,
+            category: draft.category,
+            blogUrl,
+            topic: brief.topic,
+          });
+
+          let xImageUrl = sharedSocialImageUrl;
+          if (!xImageUrl) {
+            try {
+              const xImg = await linkedinImage({
+                title: draft.title,
+                topic: brief.topic,
+                category: draft.category,
+              });
+              xImageUrl = xImg.url;
+            } catch (error) {
+              await logStage({
+                runId,
+                stage: "images",
+                status: "warn",
+                message:
+                  error instanceof Error
+                    ? error.message
+                    : "X image failed",
+              });
+            }
+          }
+
+          xPostId = await withDb(async () => {
+            const db = requireDb();
+            const row = await db.socialPost.create({
+              data: {
+                channel: "x",
+                blogPostId,
+                body: stripEmDashes(xDraft.text),
+                imageUrl: xImageUrl,
+                visibility: "PUBLIC",
+                status: "manual",
+                reviewReasons: [],
+                criticScore: null,
+                scheduledFor: blogPublishAt,
+              },
+            });
+            return row.id;
+          }, undefined);
+
+          await logStage({
+            runId,
+            stage: "x",
+            status: "ok",
+            refType: "SocialPost",
+            refId: xPostId,
+            message: "X draft ready for manual posting in /admin/x",
+            meta: { channel: "x", altHooks: xDraft.altHooks },
+          });
+        } catch (error) {
+          await logStage({
+            runId,
+            stage: "x",
+            status: "warn",
+            message:
+              error instanceof Error
+                ? error.message
+                : "X draft generation failed",
+            meta: { channel: "x" },
+          });
+        }
       }
     } else {
       await logStage({
@@ -484,6 +562,7 @@ export async function runGenerate(
         : "Generated, needs review",
       blogPostId,
       socialPostId,
+      xPostId,
     };
   } catch (error) {
     const message =

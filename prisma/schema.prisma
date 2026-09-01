@@ -85,7 +85,7 @@ model SocialPost {
   body          String // exact text to post, <= 3000 chars
   imageUrl      String    @default("") // Cloudinary URL, optional
   visibility    String    @default("PUBLIC") // "PUBLIC" | "CONNECTIONS"
-  status        String    @default("scheduled") // "scheduled" | "needs_review" | "published" | "failed"
+  status        String    @default("scheduled") // "scheduled" | "needs_review" | "manual" | "published" | "failed"
   reviewReasons Json      @default("[]")
   criticScore   Int?
   scheduledFor  DateTime // ~12h after the blog publishes

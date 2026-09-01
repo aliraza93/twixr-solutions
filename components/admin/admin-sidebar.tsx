@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  AtSign,
   BookOpen,
   Briefcase,
   ClipboardCheck,
@@ -46,6 +47,7 @@ const inboxItems: NavItem[] = [
 
 const publishingItems: NavItem[] = [
   { title: "Blog", href: "/admin/blog", icon: BookOpen },
+  { title: "X posts", href: "/admin/x", icon: AtSign },
   { title: "Review", href: "/admin/review", icon: ClipboardCheck },
 ];
 

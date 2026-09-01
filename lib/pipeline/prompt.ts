@@ -155,3 +155,56 @@ export function buildLinkedInPrompt(blog: LinkedInBlogContext): {
 
   return { system, user };
 }
+
+export type XBlogContext = {
+  title: string;
+  excerpt: string;
+  category: string;
+  blogUrl: string;
+  topic?: string;
+};
+
+export function buildXPrompt(blog: XBlogContext): {
+  system: string;
+  user: string;
+} {
+  const dontDo = readKb("dont-do");
+
+  const system = [
+    "You write one short X (Twitter) post for Ali Raza / Twixr Solutions.",
+    "You MUST call the submit_x_draft tool. Do not reply with free-form prose.",
+    "",
+    absoluteRules(),
+    "6. Hard max 280 characters for the full post text (X counts URLs as 23 chars).",
+    "7. Punchy feed post: hook + one tip. Not a LinkedIn essay. Not a thread.",
+  ].join("\n");
+
+  const user = [
+    "Create one X post from this blog.",
+    "",
+    `Title: ${blog.title}`,
+    `Category: ${blog.category}`,
+    `Excerpt: ${blog.excerpt}`,
+    blog.topic ? `Topic: ${blog.topic}` : "",
+    `Blog URL (include near the end): ${blog.blogUrl}`,
+    "",
+    "DO NOT DO:",
+    dontDo,
+    "",
+    "Rules:",
+    "- Max 280 characters total including the URL and hashtags.",
+    "- 1-3 short lines. Problem-first hook.",
+    "- End with the blog URL, then 1-2 hashtags max (or none).",
+    "- No emojis unless one fits naturally. Prefer none.",
+    "",
+    "OUTPUT: call submit_x_draft with:",
+    "{",
+    '  "text": "full tweet including URL",',
+    '  "altHooks": ["alt hook 1", "alt hook 2"]',
+    "}",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  return { system, user };
+}

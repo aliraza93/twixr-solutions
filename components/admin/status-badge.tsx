@@ -81,6 +81,9 @@ const PILL_MAP: Record<string, { status: Status; label: string }> = {
   archived: { status: "revoked", label: "Archived" },
   published: { status: "enabled", label: "Published" },
   draft: { status: "disabled", label: "Draft" },
+  ready: { status: "processing", label: "Ready" },
+  posted: { status: "enabled", label: "Posted" },
+  discarded: { status: "revoked", label: "Discarded" },
 };
 
 /** Maps CMS status strings onto the shared StatusBadge. */

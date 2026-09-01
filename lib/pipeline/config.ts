@@ -5,6 +5,8 @@ export const pipeline = {
   /** Soft weekly cadence (random days). Default 3-4 posts/week. */
   postsPerWeekMin: Number(process.env.PIPELINE_POSTS_PER_WEEK_MIN ?? 3),
   postsPerWeekMax: Number(process.env.PIPELINE_POSTS_PER_WEEK_MAX ?? 4),
+  /** Generate X drafts for manual posting in admin (no X API). Default on. */
+  xManualDrafts: process.env.PIPELINE_X_MANUAL !== "false",
   /** Hours after generate before the blog goes live (random in range). */
   blogPublishDelayMinHours: Number(process.env.PIPELINE_BLOG_DELAY_MIN_HOURS ?? 1),
   blogPublishDelayMaxHours: Number(process.env.PIPELINE_BLOG_DELAY_MAX_HOURS ?? 36),

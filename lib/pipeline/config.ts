@@ -7,6 +7,19 @@ export const pipeline = {
   postsPerWeekMax: Number(process.env.PIPELINE_POSTS_PER_WEEK_MAX ?? 4),
   /** Generate X drafts for manual posting in admin (no X API). Default on. */
   xManualDrafts: process.env.PIPELINE_X_MANUAL !== "false",
+  /** SEO inventory + cannibalization + verified internal links. Default on. */
+  seoEnabled: process.env.PIPELINE_SEO_ENABLED !== "false",
+  /** Block generation when near-duplicate intent is detected. Default on. */
+  seoCannibalBlock: process.env.PIPELINE_SEO_CANNIBAL_BLOCK !== "false",
+  /**
+   * Prefer high-score TopicOpportunity rows over topic-bank briefs.
+   * Default on when SEO is enabled.
+   */
+  seoOpportunityPrefer: process.env.PIPELINE_SEO_OPPORTUNITY_PREFER !== "false",
+  /** Minimum priority (0-100) to promote an opportunity ahead of the topic bank. */
+  seoOpportunityMinPriority: Number(
+    process.env.PIPELINE_SEO_OPPORTUNITY_MIN_PRIORITY ?? 75
+  ),
   /** Hours after generate before the blog goes live (random in range). */
   blogPublishDelayMinHours: Number(process.env.PIPELINE_BLOG_DELAY_MIN_HOURS ?? 1),
   blogPublishDelayMaxHours: Number(process.env.PIPELINE_BLOG_DELAY_MAX_HOURS ?? 36),

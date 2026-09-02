@@ -16,6 +16,7 @@ import {
   MessageSquareQuote,
   PanelsTopLeft,
   Settings,
+  Sparkles,
 } from "lucide-react";
 import { signOutAdmin } from "@/app/admin/login/actions";
 import {
@@ -47,6 +48,7 @@ const inboxItems: NavItem[] = [
 
 const publishingItems: NavItem[] = [
   { title: "Blog", href: "/admin/blog", icon: BookOpen },
+  { title: "Generate", href: "/admin/blog/generate", icon: Sparkles },
   { title: "X posts", href: "/admin/x", icon: AtSign },
   { title: "Review", href: "/admin/review", icon: ClipboardCheck },
 ];

@@ -1,3 +1,6 @@
 - Anything that reads like a thought leader - kill on sight
 - Unverifiable stat hooks - low trust
 - LinkedIn: no paste of the blog outline; no 8+ bullet dumps; no mini-essay that restates the full post
+- Do not pad word count for SEO; stop when the problem is solved
+- News/timely: no invented model names, versions, prices, dates, or benchmarks; cite sources or drop the claim
+- Do not flatten every post into the same generic SEO outline; keep the assigned editorial format

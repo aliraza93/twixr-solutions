@@ -26,9 +26,14 @@ export default async function AdminBlogPage() {
       title="Blog"
       subtitle="Draft and publish posts. The public site only shows published entries."
       actions={
-        <Button asChild>
-          <Link href="/admin/blog/new">New post</Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild variant="outline">
+            <Link href="/admin/blog/generate">Generate</Link>
+          </Button>
+          <Button asChild>
+            <Link href="/admin/blog/new">New post</Link>
+          </Button>
+        </div>
       }
       toolbar={
         <DataToolbar>

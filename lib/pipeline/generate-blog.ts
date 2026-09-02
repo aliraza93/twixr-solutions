@@ -1,7 +1,10 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { Brief } from "@prisma/client";
 import { pipeline } from "@/lib/pipeline/config";
-import { buildBlogPrompt } from "@/lib/pipeline/prompt";
+import {
+  buildBlogPrompt,
+  type BlogPromptSeoContext,
+} from "@/lib/pipeline/prompt";
 
 export type BlogDraft = {
   slug: string;
@@ -15,6 +18,9 @@ export type BlogDraft = {
   coverAlt: string;
   inlineImagePrompts: { placeholder: string; prompt: string; alt: string }[];
   sources: string[];
+  primaryKeyword?: string;
+  searchIntent?: string;
+  contentCluster?: string;
 };
 
 const BLOG_DRAFT_TOOL = {
@@ -58,6 +64,9 @@ const BLOG_DRAFT_TOOL = {
         },
       },
       sources: { type: "array" as const, items: { type: "string" as const } },
+      primaryKeyword: { type: "string" as const },
+      searchIntent: { type: "string" as const },
+      contentCluster: { type: "string" as const },
     },
     required: [
       "slug",
@@ -75,13 +84,16 @@ const BLOG_DRAFT_TOOL = {
   },
 };
 
-export async function generateBlog(brief: Brief): Promise<BlogDraft> {
+export async function generateBlog(
+  brief: Brief,
+  seo?: BlogPromptSeoContext
+): Promise<BlogDraft> {
   const apiKey = process.env.ANTHROPIC_API_KEY?.trim();
   if (!apiKey) {
     throw new Error("ANTHROPIC_API_KEY is not set");
   }
 
-  const { system, user } = buildBlogPrompt(brief);
+  const { system, user } = buildBlogPrompt(brief, seo);
   const client = new Anthropic({ apiKey });
   const response = await client.messages.create({
     model: pipeline.models.blog,
@@ -140,5 +152,8 @@ function normalizeDraft(raw: BlogDraft): BlogDraft {
     sources: Array.isArray(raw.sources)
       ? raw.sources.map((s) => String(s).trim()).filter(Boolean)
       : [],
+    primaryKeyword: String(raw.primaryKeyword ?? "").trim() || undefined,
+    searchIntent: String(raw.searchIntent ?? "").trim() || undefined,
+    contentCluster: String(raw.contentCluster ?? "").trim() || undefined,
   };
 }

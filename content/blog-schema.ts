@@ -21,6 +21,8 @@ export type BlogListing = {
   category: string;
   tags: readonly string[];
   readingTime: string;
+  /** Optional topical cluster for related-post scoring (pipeline SEO). */
+  contentCluster?: string;
 };
 
 export type BlogPost = BlogListing & {

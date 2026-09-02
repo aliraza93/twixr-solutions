@@ -10,6 +10,7 @@ import type { BlogListing, BlogPost, BlogPostRecord } from "@/lib/cms/types";
 import { prisma, requireDb, withDb } from "@/lib/cms/db";
 import { isPersistedId } from "@/lib/cms/utils";
 import { stripEmDashes, stripEmDashesDeep } from "@/lib/content/strip-em-dashes";
+import { pickRelatedPosts } from "@/lib/pipeline/seo/related";
 import type { BlogPost as PrismaBlogPost } from "@prisma/client";
 
 function toRecord(row: PrismaBlogPost): BlogPostRecord {
@@ -34,6 +35,7 @@ function toRecord(row: PrismaBlogPost): BlogPostRecord {
     order: row.sortOrder,
     updatedAt: row.updatedAt.toISOString(),
     content: parseBody(body),
+    contentCluster: row.contentCluster || undefined,
   };
 }
 
@@ -47,6 +49,7 @@ function listingOf(post: BlogPost): BlogListing {
     category: post.category,
     tags: post.tags,
     readingTime: post.readingTime,
+    contentCluster: post.contentCluster,
   };
 }
 
@@ -108,8 +111,7 @@ export async function getRelatedPosts(slug: string, limit = 3): Promise<BlogList
   const current = await getBlogBySlug(slug);
   const all = (await getBlogListings()).filter((p) => p.slug !== slug);
   if (!current) return all.slice(0, limit);
-  const sameCategory = all.filter((p) => p.category === current.category);
-  return (sameCategory.length >= limit ? sameCategory : all).slice(0, limit);
+  return pickRelatedPosts(current, all, limit);
 }
 
 export async function listBlogPostsAdmin(): Promise<BlogPostRecord[]> {
@@ -178,6 +180,8 @@ export async function upsertBlogPost(
     criticScore?: number | null;
     briefId?: string | null;
     publishAt?: Date | null;
+    contentCluster?: string;
+    targetKeyword?: string;
   }
 ) {
   const db = requireDb();
@@ -205,6 +209,12 @@ export async function upsertBlogPost(
     ...(input.criticScore !== undefined ? { criticScore: input.criticScore } : {}),
     ...(input.briefId !== undefined ? { briefId: input.briefId } : {}),
     ...(input.publishAt !== undefined ? { publishAt: input.publishAt } : {}),
+    ...(input.contentCluster !== undefined
+      ? { contentCluster: stripEmDashes(input.contentCluster) }
+      : {}),
+    ...(input.targetKeyword !== undefined
+      ? { targetKeyword: stripEmDashes(input.targetKeyword) }
+      : {}),
   };
 
   if (isPersistedId(input.id)) {

@@ -2,6 +2,15 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { Brief } from "@prisma/client";
 import { BANNED_PHRASES } from "@/content/pipeline/banned-phrases";
+import type { DepthGuidance } from "@/lib/pipeline/seo/depth";
+import { formatDepthGuidanceForPrompt } from "@/lib/pipeline/seo/depth";
+import {
+  formatNewsGuidanceForPrompt,
+  formatVoicePolishForPrompt,
+} from "@/lib/pipeline/seo/editorial";
+import { formatRotationForPrompt } from "@/lib/pipeline/seo/formats";
+import type { RecommendedInternalLink } from "@/lib/pipeline/seo/types";
+import { formatLinkPlanForPrompt } from "@/lib/pipeline/seo/internal-links";
 
 export function readKb(name: string): string {
   const file = name.endsWith(".md") ? name : `${name}.md`;
@@ -19,10 +28,29 @@ function absoluteRules(): string {
     `   ${BANNED_PHRASES.join("; ")}`,
     "4. Voice: senior engineer talking to peers. Direct, practical, dry confidence.",
     "5. Near-zero emojis. Prefer none.",
+    "6. Never invent internal site URLs. Only link to URLs explicitly provided in the prompt.",
   ].join("\n");
 }
 
-export function buildBlogPrompt(brief: Brief): { system: string; user: string } {
+export type BlogPromptSeoContext = {
+  primaryKeyword?: string;
+  searchIntent?: string;
+  contentCluster?: string;
+  cannibalizationRisk?: number;
+  recommendedInternalLinks?: RecommendedInternalLink[];
+  /** Preformatted content-gap / commercial context block. */
+  gapContext?: string;
+  depth?: DepthGuidance;
+  sourceUrl?: string;
+  sourceExcerpt?: string;
+  additionalInstructions?: string;
+  formatOverride?: string;
+};
+
+export function buildBlogPrompt(
+  brief: Brief,
+  seo?: BlogPromptSeoContext
+): { system: string; user: string } {
   const voice = readKb("voice-guide");
   const pillars = readKb("content-pillars");
   const dontDo = readKb("dont-do");
@@ -39,15 +67,84 @@ export function buildBlogPrompt(brief: Brief): { system: string; user: string } 
     voice,
   ].join("\n");
 
+  const keyword = seo?.primaryKeyword || brief.targetKeyword || brief.topic;
+  const cluster =
+    seo?.contentCluster ||
+    brief.pillar.split("/")[1]?.trim() ||
+    brief.pillar;
+  const intent =
+    seo?.searchIntent ||
+    (brief.requiresLiveSource
+      ? "Explain what this news changes for engineers who ship, with verified facts only."
+      : "Help a peer engineer solve a concrete technical or business problem.");
+
+  const linkBlock = formatLinkPlanForPrompt(seo?.recommendedInternalLinks ?? []);
+  const depth = seo?.depth;
+  const depthBlock = depth ? formatDepthGuidanceForPrompt(depth) : "";
+  const formatBlock = depth ? formatRotationForPrompt(depth.format) : "";
+  const newsBlock = formatNewsGuidanceForPrompt({
+    requiresLiveSource: brief.requiresLiveSource,
+    evergreenLinks: seo?.recommendedInternalLinks ?? [],
+  });
+  const voiceBlock = formatVoicePolishForPrompt();
+
+  const sourceBlock =
+    seo?.sourceExcerpt && seo.sourceExcerpt.trim()
+      ? [
+          "SOURCE FACTS (verified excerpt - do not invent beyond this + brief):",
+          seo.sourceUrl ? `Source URL: ${seo.sourceUrl}` : "",
+          "Use these as the factual foundation. Add Ali/Twixr builder perspective and practical implications.",
+          "Do not rewrite the source as a press release.",
+          seo.sourceExcerpt.trim().slice(0, 10000),
+        ]
+          .filter(Boolean)
+          .join("\n")
+      : seo?.sourceUrl
+        ? `Source URL (cite in sources[]): ${seo.sourceUrl}`
+        : "";
+
+  const adminBlock =
+    seo?.additionalInstructions?.trim() ||
+    (brief as Brief & { extraInstructions?: string }).extraInstructions?.trim()
+      ? [
+          "ADDITIONAL ADMIN INSTRUCTIONS (honor when compatible with absolute rules):",
+          (
+            seo?.additionalInstructions?.trim() ||
+            (brief as Brief & { extraInstructions?: string }).extraInstructions ||
+            ""
+          ).trim(),
+        ].join("\n")
+      : "";
+
+  const angleNote = brief.angle
+    ? "Preserve the admin/editorial angle; SEO may refine keyword and cluster only."
+    : "";
+
   const user = [
     "Write today's blog post from this brief.",
     "",
     `Pillar: ${brief.pillar}`,
     `Topic: ${brief.topic}`,
-    `Target keyword: ${brief.targetKeyword || brief.topic}`,
+    `Target keyword: ${keyword}`,
+    `Content cluster: ${cluster}`,
+    `Search intent: ${intent}`,
+    seo?.cannibalizationRisk !== undefined
+      ? `Cannibalization risk (0-1, informational): ${seo.cannibalizationRisk.toFixed(2)}`
+      : "",
     `Angle: ${brief.angle || "(derive a sharp, practical angle)"}`,
+    angleNote,
     `Real example (use only if non-empty; never invent): ${brief.realExample || "(none)"}`,
     `Requires live source: ${brief.requiresLiveSource ? "yes - every fact-bearing claim must cite a URL in sources" : "no"}`,
+    "",
+    voiceBlock,
+    depthBlock,
+    formatBlock,
+    newsBlock,
+    sourceBlock,
+    adminBlock,
+    "",
+    linkBlock,
+    seo?.gapContext || "",
     "",
     "CONTENT PILLARS:",
     pillars,
@@ -71,9 +168,12 @@ export function buildBlogPrompt(brief: Brief): { system: string; user: string } 
     '  "readingTime": "e.g. 6 min read",',
     '  "body": "markdown with ## / ### headings; lists use - ; inline images as ![alt](__INLINE_n__) on their own line",',
     '  "faqs": [{"question":"...","answer":"..."}]  // 3-5',
-    '  "coverAlt": "string",',
+    '  "coverAlt": "descriptive alt, no keyword stuffing (e.g. Laravel queue worker and job flow)",',
     '  "inlineImagePrompts": [{"placeholder":"__INLINE_1__","prompt":"...","alt":"..."}],  // 2-3',
     '  "sources": ["https://..."]  // required non-empty when requiresLiveSource',
+    '  "primaryKeyword": "string",',
+    '  "searchIntent": "one sentence",',
+    '  "contentCluster": "short cluster label"',
     "}",
     "",
     "Body rules: markdown only. Prefer structured faqs (do not rely on a ## FAQ section).",
@@ -81,7 +181,10 @@ export function buildBlogPrompt(brief: Brief): { system: string; user: string } 
     "REQUIRED: include exactly 2 or 3 inline image placeholders in the body as their own lines,",
     "e.g. ![Diagram of the N+1 fix](__INLINE_1__), and matching inlineImagePrompts entries.",
     "Each inlineImagePrompts.prompt must describe a specific visual (diagram, before/after, code card, metaphor).",
-  ].join("\n");
+    "When using internal links, write them as markdown [anchor](absolute-url) using only allowed URLs.",
+  ]
+    .filter(Boolean)
+    .join("\n");
 
   return { system, user };
 }

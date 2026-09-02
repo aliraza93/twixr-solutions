@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import type { BlogListing, BlogPost } from "./blog-schema";
 import { parseBody, resolvePostFaqs } from "./blog-schema";
+import { pickRelatedPosts } from "@/lib/pipeline/seo/related";
 
 export type { BlogContentBlock, BlogListing, BlogPost } from "./blog-schema";
 export {
@@ -122,6 +123,5 @@ export function getRelatedPosts(slug: string, limit = 3): BlogListing[] {
   const current = getBlogBySlug(slug);
   const all = getBlogListings().filter((p) => p.slug !== slug);
   if (!current) return all.slice(0, limit);
-  const sameCategory = all.filter((p) => p.category === current.category);
-  return (sameCategory.length >= limit ? sameCategory : all).slice(0, limit);
+  return pickRelatedPosts(current, all, limit);
 }

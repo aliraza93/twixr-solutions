@@ -1,6 +1,12 @@
 import { BANNED_PHRASES } from "@/content/pipeline/banned-phrases";
 import { requireDb, withDb } from "@/lib/cms/db";
 import type { BlogDraft } from "@/lib/pipeline/generate-blog";
+import {
+  normalizeSiteUrl,
+  pathFromUrl,
+  toAbsoluteInventoryUrl,
+} from "@/lib/pipeline/seo/types";
+import { SITE_URL } from "@/lib/seo";
 import type { Brief } from "@prisma/client";
 
 export type ValidationResult = { ok: boolean; reasons: string[] };
@@ -119,6 +125,7 @@ export async function duplicateTopic(topic: string): Promise<string[]> {
 }
 
 const LINK_RE = /https?:\/\/[^\s)\]>"']+/gi;
+const MD_LINK_RE = /\[[^\]]*\]\(([^)\s]+)\)/g;
 
 export function extractUrls(...texts: string[]): string[] {
   const set = new Set<string>();
@@ -128,8 +135,54 @@ export function extractUrls(...texts: string[]): string[] {
       const cleaned = raw.replace(/[.,;:!?)]+$/, "");
       if (cleaned) set.add(cleaned);
     }
+    MD_LINK_RE.lastIndex = 0;
+    let m: RegExpExecArray | null;
+    while ((m = MD_LINK_RE.exec(text))) {
+      const href = (m[1] || "").trim();
+      if (/^https?:\/\//i.test(href)) {
+        set.add(href.replace(/[.,;:!?)]+$/, ""));
+      } else if (href.startsWith("/") && !href.startsWith("//")) {
+        set.add(href.split("#")[0] || href);
+      }
+    }
   }
   return [...set];
+}
+
+/** Flag site-absolute or root-relative links that are not in the allowlist. */
+export function unknownInternalLinks(
+  draftBody: string,
+  allowlist: Set<string>
+): string[] {
+  if (!allowlist.size) return [];
+
+  const reasons: string[] = [];
+  const urls = extractUrls(draftBody);
+  const siteHost = new URL(SITE_URL).hostname.replace(/^www\./, "");
+
+  for (const raw of urls) {
+    let absolute: string;
+    try {
+      absolute = toAbsoluteInventoryUrl(raw);
+    } catch {
+      continue;
+    }
+    let host = "";
+    try {
+      host = new URL(absolute).hostname.replace(/^www\./, "");
+    } catch {
+      continue;
+    }
+    if (host !== siteHost) continue; // external OK (sources)
+
+    const normalized = normalizeSiteUrl(absolute);
+    const path = pathFromUrl(normalized);
+    const pathAbs = toAbsoluteInventoryUrl(path);
+    if (!allowlist.has(normalized) && !allowlist.has(pathAbs)) {
+      reasons.push(`Invented or disallowed internal link: ${raw}`);
+    }
+  }
+  return reasons;
 }
 
 async function headOk(url: string, timeoutMs: number): Promise<boolean> {
@@ -197,7 +250,8 @@ export function sourcesRequired(
 
 export async function validateBlog(
   draft: BlogDraft,
-  brief: Pick<Brief, "requiresLiveSource" | "topic">
+  brief: Pick<Brief, "requiresLiveSource" | "topic">,
+  opts?: { internalAllowlist?: Set<string> }
 ): Promise<ValidationResult> {
   const combined = [
     draft.title,
@@ -217,8 +271,26 @@ export async function validateBlog(
     ...(await duplicateTopic(brief.topic)),
   ];
 
+  if (opts?.internalAllowlist?.size) {
+    reasons.push(...unknownInternalLinks(draft.body, opts.internalAllowlist));
+  }
+
   const urls = extractUrls(draft.body, ...(draft.sources ?? []));
-  reasons.push(...(await deadLinkCheck(urls)));
+  // Dead-link check only for external http(s) URLs (skip internal allowlisted)
+  const external = urls.filter((u) => {
+    if (!/^https?:\/\//i.test(u) && u.startsWith("/")) return false;
+    try {
+      const host = new URL(toAbsoluteInventoryUrl(u)).hostname.replace(
+        /^www\./,
+        ""
+      );
+      const siteHost = new URL(SITE_URL).hostname.replace(/^www\./, "");
+      return host !== siteHost;
+    } catch {
+      return true;
+    }
+  });
+  reasons.push(...(await deadLinkCheck(external)));
 
   return { ok: reasons.length === 0, reasons };
 }

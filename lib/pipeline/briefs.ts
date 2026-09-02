@@ -2,8 +2,20 @@ import { randomInt } from "node:crypto";
 import type { Brief } from "@prisma/client";
 import { requireDb, withDb } from "@/lib/cms/db";
 import { pipeline } from "@/lib/pipeline/config";
+import {
+  getTopQueuedOpportunity,
+  markOpportunityPromoted,
+  markOpportunityUsed,
+} from "@/lib/pipeline/seo/opportunity-store";
 
 export type BasePillar = "Build" | "Business" | "Timely" | "Code card";
+
+export type NextBriefResult = {
+  brief: Brief;
+  /** Set when this brief was promoted from a TopicOpportunity. */
+  opportunityId?: string;
+  opportunityPriority?: number;
+};
 
 const BASE_PILLARS: BasePillar[] = ["Build", "Business", "Timely", "Code card"];
 
@@ -63,10 +75,46 @@ async function recentBasePillars(limit: number): Promise<BasePillar[]> {
 }
 
 /**
- * Weighted random pillar (with anti-streak), then a due queued brief.
- * Build also rotates subsections so Laravel does not dominate.
+ * Promote a high-score TopicOpportunity into a Brief when prefer is enabled.
  */
-export async function takeNextBrief(): Promise<Brief | null> {
+async function tryPromoteOpportunity(): Promise<NextBriefResult | null> {
+  if (!pipeline.seoEnabled || !pipeline.seoOpportunityPrefer) return null;
+
+  const opp = await getTopQueuedOpportunity(pipeline.seoOpportunityMinPriority);
+  if (!opp) return null;
+
+  const pillar =
+    opp.pillar.trim() ||
+    (opp.cluster ? `Build/${opp.cluster}` : "Build");
+
+  const brief = await withDb(async () => {
+    const db = requireDb();
+    return db.brief.create({
+      data: {
+        pillar,
+        topic: opp.topic,
+        targetKeyword: opp.topic,
+        angle: opp.reason.slice(0, 280),
+        realExample: opp.parentTopic
+          ? `Follow-up from: ${opp.parentTopic}`
+          : "",
+        requiresLiveSource: false,
+        status: "queued",
+      },
+    });
+  }, null);
+
+  if (!brief) return null;
+
+  await markOpportunityPromoted(opp.id);
+  return {
+    brief,
+    opportunityId: opp.id,
+    opportunityPriority: opp.priority,
+  };
+}
+
+async function takeWeightedBankBrief(): Promise<Brief | null> {
   const db = requireDb();
   const now = new Date();
   const dueFilter = {
@@ -124,11 +172,31 @@ export async function takeNextBrief(): Promise<Brief | null> {
   return db.brief.findUnique({ where: { id: oldest.id } });
 }
 
+/**
+ * Prefer a high-score content-gap opportunity, else weighted topic-bank brief.
+ */
+export async function takeNextBrief(): Promise<NextBriefResult | null> {
+  const promoted = await tryPromoteOpportunity();
+  if (promoted) return promoted;
+
+  const brief = await takeWeightedBankBrief();
+  if (!brief) return null;
+  return { brief };
+}
+
 export async function markBriefUsed(id: string): Promise<void> {
   const db = requireDb();
   await db.brief.update({
     where: { id },
     data: { status: "used", usedAt: new Date() },
+  });
+}
+
+export async function markBriefSkipped(id: string): Promise<void> {
+  const db = requireDb();
+  await db.brief.update({
+    where: { id },
+    data: { status: "skipped", usedAt: new Date() },
   });
 }
 
@@ -138,3 +206,5 @@ export async function remainingBriefCount(): Promise<number> {
     return db.brief.count({ where: { status: "queued" } });
   }, 0);
 }
+
+export { markOpportunityUsed };

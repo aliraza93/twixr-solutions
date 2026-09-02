@@ -1,7 +1,7 @@
 /**
  * Seed Brief rows from content/pipeline/topic-bank.md.
  * Usage: npm run seed:briefs
- * Skips topics marked (USED ...) and topics already present in Brief.
+ * Skips topics marked (USED ...) or (MANUAL ...) and topics already present in Brief.
  */
 import { readFileSync } from "fs";
 import { join } from "path";
@@ -70,8 +70,10 @@ function parseTopicBank(md: string): ParsedTopic[] {
     if (!line.startsWith("- ")) continue;
     let topic = line.slice(2).trim();
     if (!topic) continue;
-    if (/\(USED\b/i.test(topic)) continue;
-    topic = topic.replace(/\s*\(USED[^)]*\)\s*/gi, "").trim();
+    if (/\((USED|MANUAL)\b/i.test(topic)) continue;
+    topic = topic
+      .replace(/\s*\((?:USED|MANUAL)[^)]*\)\s*/gi, "")
+      .trim();
     if (!topic) continue;
     out.push({ pillar, topic, requiresLiveSource });
   }

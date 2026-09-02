@@ -34,6 +34,73 @@ export async function notifyRunSummary(runId: string): Promise<{
   const remaining = await remainingBriefCount();
   const lowQueue = remaining < 7;
 
+  type SeoMeta = {
+    total?: number;
+    max?: number;
+    hardFails?: unknown;
+    warnings?: unknown;
+    orphanCount?: number;
+    brokenCount?: number;
+    overlinkedCount?: number;
+  };
+
+  const seoScoreLogs = logs.filter((log) => {
+    if (log.stage !== "seo" || !log.meta || typeof log.meta !== "object") {
+      return false;
+    }
+    const meta = log.meta as SeoMeta;
+    return typeof meta.total === "number" && typeof meta.max === "number";
+  });
+
+  const seoAuditLogs = logs.filter((log) => {
+    if (log.stage !== "seo" || !log.meta || typeof log.meta !== "object") {
+      return false;
+    }
+    const meta = log.meta as SeoMeta;
+    return typeof meta.orphanCount === "number";
+  });
+
+  const seoBannerHtml = [
+    ...seoScoreLogs.map((log) => {
+      const meta = log.meta as SeoMeta;
+      const total = meta.total as number;
+      const max = meta.max as number;
+      const hardFails = Array.isArray(meta.hardFails) ? meta.hardFails : [];
+      const warnings = Array.isArray(meta.warnings) ? meta.warnings : [];
+      const tone =
+        hardFails.length > 0
+          ? "#8B1A1A"
+          : total >= 70
+            ? "#0F5132"
+            : "#8A5A00";
+      return `<div style="margin:0 0 20px;padding:14px 16px;border:1px solid #E4E8E4;background:#F7FAF8;">
+        <p style="margin:0 0 4px;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#5A6360;">SEO report (soft score)</p>
+        <p style="margin:0;font-size:20px;font-weight:800;color:${tone};">${total}/${max}</p>
+        <p style="margin:8px 0 0;font-size:13px;color:#5A6360;white-space:pre-wrap;">${escapeHtml(log.message || "")}</p>
+        ${
+          hardFails.length
+            ? `<p style="margin:8px 0 0;font-size:13px;color:#8B1A1A;">Hard fails: ${escapeHtml(hardFails.map(String).join("; "))}</p>`
+            : ""
+        }
+        ${
+          warnings.length && !hardFails.length
+            ? `<p style="margin:8px 0 0;font-size:13px;color:#8A5A00;">Warnings: ${escapeHtml(warnings.slice(0, 3).map(String).join("; "))}</p>`
+            : ""
+        }
+      </div>`;
+    }),
+    ...seoAuditLogs.map((log) => {
+      const meta = log.meta as SeoMeta;
+      const broken = meta.brokenCount ?? 0;
+      const tone = broken > 0 ? "#8A5A00" : "#0F5132";
+      return `<div style="margin:0 0 20px;padding:14px 16px;border:1px solid #E4E8E4;background:#F7FAF8;">
+        <p style="margin:0 0 4px;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#5A6360;">SEO link audit (log only)</p>
+        <p style="margin:0;font-size:16px;font-weight:700;color:${tone};">orphans ${meta.orphanCount ?? 0} · broken ${broken} · overlinked ${meta.overlinkedCount ?? 0}</p>
+        <p style="margin:8px 0 0;font-size:13px;color:#5A6360;white-space:pre-wrap;">${escapeHtml(log.message || "")}</p>
+      </div>`;
+    }),
+  ].join("");
+
   const rowsHtml = logs
     .map((log) => {
       const meta =
@@ -52,6 +119,11 @@ export async function notifyRunSummary(runId: string): Promise<{
   const textLines = [
     `Pipeline run summary - ${runId}`,
     "",
+    ...seoScoreLogs.map((l) => {
+      const meta = l.meta as SeoMeta;
+      return `SEO score: ${meta.total}/${meta.max}\n${l.message || ""}`;
+    }),
+    seoScoreLogs.length ? "" : "",
     ...logs.map(
       (l) => `[${l.status}] ${l.stage}: ${l.message || "-"}`
     ),
@@ -62,11 +134,12 @@ export async function notifyRunSummary(runId: string): Promise<{
 
   const html = `<!DOCTYPE html>
 <html lang="en">
-  <body style="margin:0;padding:0;background:#ffffff;color:#0B0F0D;font-family:Inter,Helvetica,Arial,sans-serif;">
+  <body style="margin:0;padding:0;background:#ffffff;color:#0B0F0D;font-family:Helvetica,Arial,sans-serif;">
     <div style="max-width:720px;margin:0 auto;padding:32px 24px;">
       <p style="margin:0 0 8px;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:#0F5132;">Pipeline</p>
       <h1 style="margin:0 0 16px;font-size:22px;font-weight:800;">Daily content run</h1>
       <p style="margin:0 0 24px;color:#5A6360;">Run id: ${escapeHtml(runId)}</p>
+      ${seoBannerHtml}
       <table role="presentation" style="width:100%;border-collapse:collapse;font-size:14px;">
         <thead>
           <tr>

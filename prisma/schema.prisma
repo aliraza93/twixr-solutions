@@ -52,10 +52,14 @@ model BlogPost {
   socialPosts   SocialPost[] @relation("BlogToSocial")
   // when set and published=false, publish-due cron flips published at/after this time
   publishAt     DateTime?
+  // SEO Wave 4: topical cluster + keyword for related posts / graph
+  contentCluster String @default("")
+  targetKeyword  String @default("")
 
   @@index([published, sortOrder])
   @@index([reviewState])
   @@index([publishAt, published])
+  @@index([contentCluster])
   @@map("blog_posts")
 }
 
@@ -70,10 +74,16 @@ model Brief {
   status             String    @default("queued") // "queued" | "used" | "skipped"
   scheduledFor       DateTime?
   usedAt             DateTime?
+  // Manual generate / provenance
+  origin             String    @default("topic-bank") // topic-bank | opportunity | manual
+  sourceUrl          String    @default("")
+  formatHint         String    @default("")
+  extraInstructions  String    @default("")
   posts              BlogPost[]
   createdAt          DateTime  @default(now())
 
   @@index([status, scheduledFor])
+  @@index([origin])
   @@map("briefs")
 }
 
@@ -101,7 +111,7 @@ model SocialPost {
 model GenerationLog {
   id        String   @id @default(cuid())
   runId     String // groups all rows from one cron invocation
-  stage     String // "brief" | "blog" | "images" | "critic" | "validate" | "linkedin" | "publish" | "notify"
+  stage     String // "brief" | "blog" | "images" | "critic" | "validate" | "linkedin" | "publish" | "notify" | "seo"
   status    String // "ok" | "warn" | "fail" | "skip"
   refType   String   @default("") // "BlogPost" | "SocialPost" | "Brief"
   refId     String   @default("")
@@ -112,6 +122,30 @@ model GenerationLog {
   @@index([runId])
   @@index([stage, status])
   @@map("generation_logs")
+}
+
+/** SEO Wave 3: post-publish follow-up topics. Prefer high scores over topic-bank FIFO. */
+model TopicOpportunity {
+  id                    String   @id @default(cuid())
+  topic                 String
+  cluster               String   @default("")
+  type                  String   @default("supporting") // pillar | supporting | related | commercial | deep-dive | comparison | faq
+  pillar                String   @default("")
+  parentTopic           String   @default("")
+  parentSlug            String   @default("")
+  sourceBlogPostId      String   @default("")
+  reason                String   @default("")
+  priority              Int      @default(50)
+  commercialRelevance   Int      @default(0)
+  internalLinkPotential Int      @default(0)
+  cannibalizationRisk   Int      @default(0)
+  status                String   @default("queued") // queued | promoted | skipped | used
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([status, priority])
+  @@index([cluster])
+  @@map("topic_opportunities")
 }
 
 model Service {

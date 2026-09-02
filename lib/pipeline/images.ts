@@ -8,6 +8,7 @@ import {
 } from "@/lib/pipeline/brand-styles";
 import { pipeline } from "@/lib/pipeline/config";
 import type { BlogDraft } from "@/lib/pipeline/generate-blog";
+import { seoImageFilename } from "@/lib/pipeline/seo/image-hygiene";
 
 const MAX_INLINE = 3;
 const MIN_INLINE = 2;
@@ -165,14 +166,15 @@ export async function generateInlineImages(
   const prompts = prepared.inlineImagePrompts.slice(0, MAX_INLINE);
   const usedStyles: string[] = [];
 
-  for (const item of prompts) {
+  for (let i = 0; i < prompts.length; i++) {
+    const item = prompts[i];
     const style = nextStyle(usedStyles);
     usedStyles.push(style.id);
     styleIds.push(style.id);
     try {
       const url = await generateImage(item.prompt, {
         size: "1280x720",
-        filename: `inline-${item.placeholder.replace(/_/g, "").toLowerCase()}-${style.id}.png`,
+        filename: seoImageFilename(draft.slug, "inline", i + 1),
         style,
       });
       body = body.replaceAll(item.placeholder, url);
@@ -255,7 +257,14 @@ export async function linkedinImage(
 
   const url = await generateImage(prompt, {
     size: "1080x1080",
-    filename: `linkedin-${Date.now()}-${style.id}.png`,
+    filename: seoImageFilename(
+      headline
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "")
+        .slice(0, 40) || "post",
+      "linkedin"
+    ),
     style,
   });
   return { url, styleId: style.id };
@@ -279,7 +288,7 @@ export async function aiCoverImage(draft: BlogDraft): Promise<{
 
   const url = await generateImage(prompt, {
     size: "1200x630",
-    filename: `cover-${draft.slug || Date.now()}-${style.id}.png`,
+    filename: seoImageFilename(draft.slug || "post", "cover"),
     style,
   });
   return { url, styleId: style.id };

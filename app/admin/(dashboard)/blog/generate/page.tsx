@@ -1,16 +1,22 @@
+import Link from "next/link";
+import { PageContainer } from "@/components/admin/page-container";
+import { PageHeader } from "@/components/admin/page-header";
 import { GenerateBlogForm } from "@/components/admin/generate-blog-form";
+import { Button } from "@/components/ui/button";
 
 export default function AdminGenerateBlogPage() {
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Generate Blog</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Enter a topic signal. The same SEO-aware pipeline as the daily cron
-          handles planning, links, generation, and follow-up opportunities.
-        </p>
-      </div>
+    <PageContainer>
+      <PageHeader
+        title="Generate blog"
+        subtitle="Enter a topic signal. Uses the same SEO-aware pipeline as the daily cron."
+        actions={
+          <Button variant="outline" asChild>
+            <Link href="/admin/blog">Cancel</Link>
+          </Button>
+        }
+      />
       <GenerateBlogForm />
-    </div>
+    </PageContainer>
   );
 }

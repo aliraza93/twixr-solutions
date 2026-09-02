@@ -2,12 +2,19 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import { BLOG_FORMATS } from "@/lib/pipeline/seo/formats";
 import { MANUAL_PILLAR_OPTIONS } from "@/lib/pipeline/manual/normalize-topic";
+import { Field } from "@/components/admin/fields";
+import { SelectField, SwitchField } from "@/components/admin/select-field";
+import { FormActions, FormCard } from "@/components/admin/resource-form-layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { StatusBadge, type Status } from "@/components/admin/status-badge";
+
+const controlClass =
+  "border-input bg-background shadow-none placeholder:text-muted-foreground";
 
 type LogRow = {
   id: string;
@@ -45,6 +52,17 @@ type AnalyzePayload = {
   verificationError?: string;
 };
 
+const AUTO = "__auto__";
+
+function logStatus(status: string): { status: Status; label: string } {
+  if (status === "ok") return { status: "completed", label: "OK" };
+  if (status === "fail" || status === "error") {
+    return { status: "failed", label: "Failed" };
+  }
+  if (status === "skip") return { status: "pending", label: "Skipped" };
+  return { status: "processing", label: status || "Running" };
+}
+
 export function GenerateBlogForm() {
   const [topic, setTopic] = useState("");
   const [angle, setAngle] = useState("");
@@ -69,6 +87,23 @@ export function GenerateBlogForm() {
     slug?: string;
     title?: string;
   } | null>(null);
+
+  const pillarOptions = useMemo(
+    () =>
+      MANUAL_PILLAR_OPTIONS.map((o) => ({
+        value: o.value || AUTO,
+        label: o.label,
+      })),
+    []
+  );
+
+  const formatOptions = useMemo(
+    () => [
+      { value: AUTO, label: "Auto" },
+      ...BLOG_FORMATS.map((f) => ({ value: f, label: f })),
+    ],
+    []
+  );
 
   const payload = useMemo(
     () => ({
@@ -131,19 +166,23 @@ export function GenerateBlogForm() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.message || data.error || "Request failed");
+        const message = data.message || data.error || "Request failed";
+        setError(message);
+        toast.error(message);
         return;
       }
 
       if (data.status === "analyze") {
         setAnalyze(data.analyze);
         setBlocked(false);
+        toast.success("Topic checked");
         return;
       }
 
       if (data.status === "blocked") {
         setAnalyze(data.analyze);
         setBlocked(true);
+        toast.message("Similar content or verification needs a decision");
         return;
       }
 
@@ -160,197 +199,225 @@ export function GenerateBlogForm() {
         slug: data.result?.slug,
         title: data.result?.title,
       });
+      if (data.result?.status === "ok") {
+        toast.success("Blog generated");
+      } else {
+        toast.message(data.result?.message || "Generation finished");
+      }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Request failed");
+      const message = e instanceof Error ? e.message : "Request failed";
+      setError(message);
+      toast.error(message);
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-8">
-      <div className="space-y-4 rounded-lg border border-border bg-card p-6">
-        <div className="space-y-2">
-          <Label htmlFor="topic">Topic *</Label>
-          <Input
-            id="topic"
-            value={topic}
-            onChange={(e) => setTopic(e.target.value)}
-            placeholder="Laravel 13 released. What should developers actually care about?"
-            disabled={busy}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="angle">Angle (optional)</Label>
-          <Input
-            id="angle"
-            value={angle}
-            onChange={(e) => setAngle(e.target.value)}
-            placeholder="Practical developer impact instead of release-note summary"
-            disabled={busy}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="sourceUrl">Source URL (optional)</Label>
-          <Input
-            id="sourceUrl"
-            value={sourceUrl}
-            onChange={(e) => setSourceUrl(e.target.value)}
-            placeholder="https://..."
-            disabled={busy}
-          />
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="pillar">Pillar</Label>
-            <select
-              id="pillar"
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-              value={pillar}
-              onChange={(e) => setPillar(e.target.value)}
+    <div className="space-y-6">
+      <FormCard>
+        <div className="space-y-6">
+          <Field
+            label="Topic"
+            htmlFor="topic"
+            hint="Required. Treated as a topic signal, not a full brief."
+          >
+            <Input
+              id="topic"
+              value={topic}
+              onChange={(e) => setTopic(e.target.value)}
+              placeholder="Laravel 13 released. What should developers actually care about?"
               disabled={busy}
+              required
+              className={controlClass}
+            />
+          </Field>
+
+          <div className="grid gap-5 md:grid-cols-2">
+            <Field
+              label="Angle"
+              htmlFor="angle"
+              hint="Optional editorial preference"
             >
-              {MANUAL_PILLAR_OPTIONS.map((o) => (
-                <option key={o.value || "auto"} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="format">Format</Label>
-            <select
-              id="format"
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-              value={format}
-              onChange={(e) => setFormat(e.target.value)}
+              <Input
+                id="angle"
+                value={angle}
+                onChange={(e) => setAngle(e.target.value)}
+                placeholder="Practical developer impact instead of release-note summary"
+                disabled={busy}
+                className={controlClass}
+              />
+            </Field>
+            <Field
+              label="Source URL"
+              htmlFor="sourceUrl"
+              hint="Optional. Required for news/release claims."
+            >
+              <Input
+                id="sourceUrl"
+                value={sourceUrl}
+                onChange={(e) => setSourceUrl(e.target.value)}
+                placeholder="https://..."
+                disabled={busy}
+                className={controlClass}
+              />
+            </Field>
+            <SelectField
+              name="pillar"
+              label="Pillar"
+              placeholder="Auto"
+              value={pillar || AUTO}
+              onValueChange={(v) => setPillar(v === AUTO ? "" : v)}
+              options={pillarOptions}
               disabled={busy}
-            >
-              <option value="">Auto</option>
-              {BLOG_FORMATS.map((f) => (
-                <option key={f} value={f}>
-                  {f}
-                </option>
-              ))}
-            </select>
+            />
+            <SelectField
+              name="format"
+              label="Format"
+              placeholder="Auto"
+              value={format || AUTO}
+              onValueChange={(v) => setFormat(v === AUTO ? "" : v)}
+              options={formatOptions}
+              disabled={busy}
+            />
           </div>
-        </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="extra">Additional instructions</Label>
-          <Textarea
-            id="extra"
-            value={additionalInstructions}
-            onChange={(e) => setAdditionalInstructions(e.target.value)}
-            rows={3}
-            disabled={busy}
-          />
-        </div>
+          <Field label="Additional instructions" htmlFor="extra">
+            <Textarea
+              id="extra"
+              value={additionalInstructions}
+              onChange={(e) => setAdditionalInstructions(e.target.value)}
+              rows={4}
+              disabled={busy}
+              className={controlClass}
+            />
+          </Field>
 
-        <div className="space-y-2 text-sm">
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
+          <div className="space-y-3">
+            <SwitchField
+              name="generateImages"
+              label="Generate image"
+              description="Cover and inline images via the existing Gemini pipeline."
               checked={generateImages}
-              onChange={(e) => setGenerateImages(e.target.checked)}
+              onCheckedChange={setGenerateImages}
               disabled={busy}
             />
-            Generate image
-          </label>
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
+            <SwitchField
+              name="generateLinkedIn"
+              label="Generate LinkedIn post"
+              description="Creates a LinkedIn draft from the blog when generation succeeds."
               checked={generateLinkedIn}
-              onChange={(e) => setGenerateLinkedIn(e.target.checked)}
+              onCheckedChange={setGenerateLinkedIn}
               disabled={busy}
             />
-            Generate LinkedIn post
-          </label>
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
+            <SwitchField
+              name="publishAutomatically"
+              label="Publish automatically"
+              description="Off saves a draft for review. On publishes when SEO hard checks pass."
               checked={publishAutomatically}
-              onChange={(e) => setPublishAutomatically(e.target.checked)}
+              onCheckedChange={setPublishAutomatically}
               disabled={busy}
             />
-            Publish automatically
-          </label>
-        </div>
+          </div>
 
-        <div className="flex flex-wrap gap-2">
-          <Button
-            type="button"
-            disabled={busy || !topic.trim()}
-            onClick={() => void postGenerate({ mode: "analyze" })}
-            variant="outline"
-          >
-            Check topic
-          </Button>
-          <Button
-            type="button"
-            disabled={busy || !topic.trim()}
-            onClick={() => void postGenerate({ mode: "generate" })}
-          >
-            {busy ? "Working..." : "Generate Blog"}
-          </Button>
-        </div>
+          {error ? (
+            <p className="text-sm text-destructive" role="alert">
+              {error}
+            </p>
+          ) : null}
 
-        {error ? (
-          <p className="text-sm text-destructive">{error}</p>
-        ) : null}
-      </div>
+          <FormActions>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={busy || !topic.trim()}
+              onClick={() => void postGenerate({ mode: "analyze" })}
+            >
+              Check topic
+            </Button>
+            <Button
+              type="button"
+              disabled={busy || !topic.trim()}
+              onClick={() => void postGenerate({ mode: "generate" })}
+            >
+              {busy ? "Working..." : "Generate blog"}
+            </Button>
+          </FormActions>
+        </div>
+      </FormCard>
 
       {analyze ? (
-        <div className="space-y-3 rounded-lg border border-border bg-card p-6 text-sm">
-          <p className="font-medium">Topic analysis</p>
-          <p>
-            Normalized: <span className="font-medium">{analyze.normalized.topic}</span>
-          </p>
-          <p>
-            Pillar: {analyze.normalized.pillar}
-            {analyze.normalized.formatHint
-              ? ` · Format: ${analyze.normalized.formatHint}`
-              : ""}
-            {analyze.normalized.newsLike ? " · News-like" : ""}
-          </p>
-          <p>
-            Duplicate check: {analyze.duplicate.reason} (risk{" "}
-            {analyze.duplicate.risk.toFixed(2)})
-          </p>
+        <FormCard
+          title="Topic analysis"
+          description={analyze.duplicate.reason}
+        >
+          <div className="grid gap-3 text-sm md:grid-cols-2">
+            <div>
+              <p className="text-xs text-muted-foreground">Normalized topic</p>
+              <p className="font-medium text-foreground">
+                {analyze.normalized.topic}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Pillar / format</p>
+              <p className="font-medium text-foreground">
+                {analyze.normalized.pillar}
+                {analyze.normalized.formatHint
+                  ? ` / ${analyze.normalized.formatHint}`
+                  : ""}
+                {analyze.normalized.newsLike ? " (news-like)" : ""}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Duplicate risk</p>
+              <p className="font-medium tabular-nums text-foreground">
+                {analyze.duplicate.risk.toFixed(2)}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Verification</p>
+              <p className="font-medium text-foreground">
+                {analyze.verificationFailed
+                  ? analyze.verificationError || "Failed"
+                  : "OK"}
+              </p>
+            </div>
+          </div>
+
           {analyze.duplicate.matches?.length ? (
-            <ul className="list-disc space-y-1 pl-5">
+            <ul className="space-y-2 border-t border-border pt-4 text-sm">
               {analyze.duplicate.matches.map((m, i) => (
-                <li key={`${m.title}-${i}`}>
-                  [{m.kind}] {m.title}
-                  {m.url ? (
-                    <>
-                      {" "}
-                      <a
-                        className="text-primary underline"
-                        href={m.url}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        open
-                      </a>
-                    </>
-                  ) : null}{" "}
-                  - {m.reason} ({m.score})
+                <li
+                  key={`${m.title}-${i}`}
+                  className="flex flex-wrap items-baseline justify-between gap-2"
+                >
+                  <span>
+                    <span className="text-muted-foreground">[{m.kind}]</span>{" "}
+                    {m.title}
+                    {m.url ? (
+                      <>
+                        {" "}
+                        <a
+                          className="text-primary underline-offset-2 hover:underline"
+                          href={m.url}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          open
+                        </a>
+                      </>
+                    ) : null}
+                  </span>
+                  <span className="tabular-nums text-muted-foreground">
+                    {m.score}
+                  </span>
                 </li>
               ))}
             </ul>
           ) : null}
-          {analyze.verificationFailed ? (
-            <p className="text-amber-700 dark:text-amber-400">
-              Verification: {analyze.verificationError}
-            </p>
-          ) : null}
 
           {blocked ? (
-            <div className="flex flex-wrap gap-2 pt-2">
+            <FormActions>
               <Button
                 type="button"
                 variant="outline"
@@ -391,53 +458,80 @@ export function GenerateBlogForm() {
                   Generate supporting article
                 </Button>
               ) : null}
-            </div>
+            </FormActions>
           ) : null}
-        </div>
+        </FormCard>
       ) : null}
 
       {runId || logs.length ? (
-        <div className="space-y-3 rounded-lg border border-border bg-card p-6 text-sm">
-          <p className="font-medium">Progress {runId ? `(${runId.slice(0, 8)})` : ""}</p>
-          <ul className="space-y-2">
-            {logs.map((l) => (
-              <li key={l.id} className="flex gap-2">
-                <span className="w-16 shrink-0 uppercase text-muted-foreground">
-                  {l.status}
-                </span>
-                <span>
-                  <span className="font-medium">{l.stage}</span>: {l.message}
-                </span>
-              </li>
-            ))}
-            {!logs.length && busy ? <li>Starting...</li> : null}
+        <FormCard
+          title="Progress"
+          description={runId ? `Run ${runId.slice(0, 8)}` : undefined}
+        >
+          <ul className="space-y-3 text-sm">
+            {logs.map((l) => {
+              const badge = logStatus(l.status);
+              return (
+                <li key={l.id} className="flex items-start gap-3">
+                  <StatusBadge status={badge.status} label={badge.label} />
+                  <span className="min-w-0">
+                    <span className="font-medium text-foreground">
+                      {l.stage}
+                    </span>
+                    <span className="text-muted-foreground">
+                      {" "}
+                      - {l.message}
+                    </span>
+                  </span>
+                </li>
+              );
+            })}
+            {!logs.length && busy ? (
+              <li className="text-muted-foreground">Starting...</li>
+            ) : null}
           </ul>
-        </div>
+        </FormCard>
       ) : null}
 
       {result ? (
-        <div className="space-y-3 rounded-lg border border-border bg-card p-6 text-sm">
-          <p className="text-lg font-semibold">Blog ready</p>
-          <p>
-            Status: {result.status} - {result.message}
-          </p>
-          {result.title ? <p>Title: {result.title}</p> : null}
-          {result.slug ? <p>Slug: /blog/{result.slug}</p> : null}
-          <div className="flex flex-wrap gap-2">
+        <FormCard title="Result" description={result.message}>
+          <div className="grid gap-3 text-sm md:grid-cols-2">
+            <div>
+              <p className="text-xs text-muted-foreground">Status</p>
+              <p className="font-medium text-foreground">{result.status}</p>
+            </div>
+            {result.title ? (
+              <div>
+                <p className="text-xs text-muted-foreground">Title</p>
+                <p className="font-medium text-foreground">{result.title}</p>
+              </div>
+            ) : null}
+            {result.slug ? (
+              <div className="md:col-span-2">
+                <p className="text-xs text-muted-foreground">Slug</p>
+                <p className="font-medium text-foreground">
+                  /blog/{result.slug}
+                </p>
+              </div>
+            ) : null}
+          </div>
+          <FormActions>
             {result.blogPostId ? (
-              <Button asChild variant="outline">
-                <Link href={`/admin/blog/${result.blogPostId}`}>Open in admin</Link>
+              <Button variant="outline" asChild>
+                <Link href={`/admin/blog/${result.blogPostId}`}>
+                  Open in admin
+                </Link>
               </Button>
             ) : null}
             {result.slug ? (
-              <Button asChild variant="outline">
+              <Button variant="outline" asChild>
                 <Link href={`/blog/${result.slug}`} target="_blank">
                   View public URL
                 </Link>
               </Button>
             ) : null}
-          </div>
-        </div>
+          </FormActions>
+        </FormCard>
       ) : null}
     </div>
   );

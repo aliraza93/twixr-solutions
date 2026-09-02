@@ -18,6 +18,7 @@ const LABELS: Record<string, string> = {
   admin: "Studio",
   inquiries: "Inquiries",
   blog: "Blog",
+  generate: "Generate",
   content: "Site content",
   hero: "Hero",
   site: "Site settings",
@@ -26,6 +27,8 @@ const LABELS: Record<string, string> = {
   testimonials: "Testimonials",
   faqs: "FAQs",
   new: "New",
+  x: "X posts",
+  review: "Review",
 };
 
 function titleFor(segment: string, index: number, parts: string[]) {

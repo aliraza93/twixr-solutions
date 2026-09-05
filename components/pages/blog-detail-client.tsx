@@ -22,7 +22,7 @@ import {
 } from "@/components/motion/scroll-reveal";
 import { site } from "@/content/site";
 
-const CONTACT_EMAIL = "ali@twixrsolutions.com";
+const CONTACT_EMAIL = site.contact.email;
 
 type BlogDetailClientProps = {
   post: BlogPost;

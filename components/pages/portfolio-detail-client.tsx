@@ -15,8 +15,9 @@ import {
   ScrollStagger,
 } from "@/components/motion/scroll-reveal";
 import { PageCta } from "@/components/sections/page-cta";
+import { site } from "@/content/site";
 
-const CONTACT_EMAIL = "ali@twixrsolutions.com";
+const CONTACT_EMAIL = site.contact.email;
 
 type PortfolioDetailClientProps = {
   project: PortfolioCaseStudy;

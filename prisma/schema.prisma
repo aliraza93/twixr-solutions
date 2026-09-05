@@ -7,6 +7,18 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Subscriber {
+  id                 String    @id @default(cuid())
+  email              String    @unique
+  status             String    @default("active") // "active" | "unsubscribed"
+  unsubscribeToken   String    @unique
+  createdAt          DateTime  @default(now())
+  unsubscribedAt     DateTime?
+
+  @@index([status])
+  @@map("subscribers")
+}
+
 model Inquiry {
   id          String   @id @default(cuid())
   name        String
@@ -55,6 +67,8 @@ model BlogPost {
   // SEO Wave 4: topical cluster + keyword for related posts / graph
   contentCluster String @default("")
   targetKeyword  String @default("")
+  // Set after new-post mail is sent to the subscriber list (once per post).
+  newsletterSentAt DateTime?
 
   @@index([published, sortOrder])
   @@index([reviewState])

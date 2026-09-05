@@ -17,6 +17,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 const LABELS: Record<string, string> = {
   admin: "Studio",
   inquiries: "Inquiries",
+  subscribers: "Subscribers",
   blog: "Blog",
   generate: "Generate",
   content: "Site content",

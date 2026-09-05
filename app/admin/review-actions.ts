@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/cms/auth";
 import { requireDb } from "@/lib/cms/db";
+import { notifyIfNewlyPublished } from "@/lib/newsletter/notify";
 
 function revalidatePublic() {
   revalidatePath("/", "layout");
@@ -18,6 +19,10 @@ export async function approveBlog(formData: FormData) {
   const id = idFrom(formData);
   if (!id) return;
   const db = requireDb();
+  const existing = await db.blogPost.findUnique({
+    where: { id },
+    select: { published: true },
+  });
   await db.blogPost.update({
     where: { id },
     data: {
@@ -25,6 +30,11 @@ export async function approveBlog(formData: FormData) {
       reviewState: "approved",
       reviewReasons: [],
     },
+  });
+  await notifyIfNewlyPublished({
+    postId: id,
+    published: true,
+    wasPublished: Boolean(existing?.published),
   });
   revalidatePublic();
 }

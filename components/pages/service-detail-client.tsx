@@ -24,10 +24,11 @@ import {
 } from "@/components/motion/scroll-reveal";
 import { TestimonialMarquee } from "@/components/sections/testimonial-marquee";
 import { PageCta } from "@/components/sections/page-cta";
+import { site } from "@/content/site";
 
 import type { Testimonial } from "@/lib/cms/types";
 
-const CONTACT_EMAIL = "ali@twixrsolutions.com";
+const CONTACT_EMAIL = site.contact.email;
 
 type ServiceDetailClientProps = {
   service: ServiceDetail;

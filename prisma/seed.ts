@@ -7,7 +7,8 @@ import { hero } from "../content/hero";
 import { faqs } from "../content/faq";
 import { testimonials } from "../content/testimonials";
 import { services } from "../lib/data/services";
-import { portfolioCaseStudies } from "../lib/data/portfolio";
+import { portfolioCaseStudies, resolveCaseStudyBody } from "../lib/data/portfolio";
+import { caseStudyBodies } from "../content/case-studies";
 
 applyDatabaseUrlAlias();
 const prisma = new PrismaClient();
@@ -64,19 +65,25 @@ async function seed() {
   }
 
   for (const [index, project] of portfolioCaseStudies.entries()) {
+    const data = JSON.parse(
+      JSON.stringify({
+        ...project,
+        body: resolveCaseStudyBody(project, caseStudyBodies[project.slug] ?? ""),
+      })
+    );
     await prisma.portfolioProject.upsert({
       where: { slug: project.slug },
       create: {
         slug: project.slug,
         title: project.title,
         featured: Boolean(project.featured),
-        data: JSON.parse(JSON.stringify(project)),
+        data,
         sortOrder: index,
       },
       update: {
         title: project.title,
         featured: Boolean(project.featured),
-        data: JSON.parse(JSON.stringify(project)),
+        data,
         sortOrder: index,
       },
     });

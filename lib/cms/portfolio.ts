@@ -1,10 +1,13 @@
 import { cache } from "react";
 import type { Prisma } from "@prisma/client";
+import { caseStudyBodies } from "@/content/case-studies";
 import {
   getPortfolioBySlug as fileBySlug,
   getPortfolioProjects as fileProjects,
   getPortfolioSlugs as fileSlugs,
   portfolioCaseStudies,
+  resolveCaseStudyBody,
+  toPortfolioListing,
 } from "@/lib/data/portfolio";
 import type { PortfolioCaseStudy, PortfolioProject } from "@/lib/cms/types";
 import { prisma, requireDb, withDb } from "@/lib/cms/db";
@@ -12,28 +15,14 @@ import { isPersistedId } from "@/lib/cms/utils";
 import { stripEmDashesDeep } from "@/lib/content/strip-em-dashes";
 
 function listingOf(study: PortfolioCaseStudy): PortfolioProject {
-  const {
-    longDescription: _l,
-    gallery: _g,
-    challenge: _c,
-    solution: _s,
-    outcomes: _o,
-    deliverables: _d,
-    timeline: _t,
-    role: _r,
-    techStack: _tech,
-    ...project
-  } = study;
-  void _l;
-  void _g;
-  void _c;
-  void _s;
-  void _o;
-  void _d;
-  void _t;
-  void _r;
-  void _tech;
-  return project;
+  return toPortfolioListing(study);
+}
+
+function withResolvedBody<T extends PortfolioCaseStudy>(study: T): T {
+  return {
+    ...study,
+    body: resolveCaseStudyBody(study, caseStudyBodies[study.slug] ?? ""),
+  };
 }
 
 async function loadAll(): Promise<(PortfolioCaseStudy & { id: string; sort_order: number })[] | null> {
@@ -77,9 +66,10 @@ export const getPortfolioBySlug = cache(
     const rows = await loadAll();
     if (!rows) {
       const file = fileBySlug(slug);
-      return file ? stripEmDashesDeep(file) : undefined;
+      return file ? stripEmDashesDeep(withResolvedBody(file)) : undefined;
     }
-    return rows.find((row) => row.slug === slug);
+    const row = rows.find((item) => item.slug === slug);
+    return row ? stripEmDashesDeep(withResolvedBody(row)) : undefined;
   }
 );
 
@@ -98,10 +88,10 @@ export async function listPortfolioAdmin() {
     return portfolioCaseStudies.map((study, index) => ({
       id: study.slug,
       sort_order: index,
-      ...study,
+      ...withResolvedBody(study),
     }));
   }
-  return rows;
+  return rows.map((row) => withResolvedBody(row));
 }
 
 export async function upsertPortfolioProject(

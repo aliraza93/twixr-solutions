@@ -79,6 +79,8 @@ const PILL_MAP: Record<string, { status: Status; label: string }> = {
   read: { status: "pending", label: "Read" },
   replied: { status: "success", label: "Replied" },
   archived: { status: "revoked", label: "Archived" },
+  active: { status: "enabled", label: "Active" },
+  unsubscribed: { status: "revoked", label: "Unsubscribed" },
   published: { status: "enabled", label: "Published" },
   draft: { status: "disabled", label: "Draft" },
   ready: { status: "processing", label: "Ready" },

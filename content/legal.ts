@@ -1,6 +1,6 @@
 import { site } from "./site";
 
-export const LEGAL_UPDATED = "22 August 2026";
+export const LEGAL_UPDATED = "5 September 2026";
 
 export type LegalSlug = "privacy" | "terms" | "cookies";
 
@@ -36,7 +36,7 @@ export const legalPages: Record<LegalSlug, LegalPage> = {
     eyebrow: "Legal",
     emphasis: "Privacy",
     description:
-      "How Twixr Solutions handles the information you share when you visit this site, send a message, or book a call.",
+      "How Twixr Solutions handles the information you share when you visit this site, send a message, subscribe to new-post notices, or book a call.",
     seoTitle: "Privacy Policy",
     seoDescription:
       "How Twixr Solutions collects, uses, and stores contact details, inquiries, and technical data on twixrsolutions.com.",
@@ -56,6 +56,7 @@ export const legalPages: Record<LegalSlug, LegalPage> = {
         bullets: [
           `Contact form: name, email, company or website (optional), project type, and your message. A hidden honeypot field is used to filter spam and is never read as a real enquiry.`,
           "Inquiries are emailed to me (via Resend) and stored in the Studio database so I can follow up.",
+          "New-post notices: if you subscribe on a blog article, I store your email so I can send you a message when a post goes live. That list is not used for ads.",
           `Call booking on [/schedule](/schedule): Cal.com collects the details you enter on their form (typically name, email, and meeting notes). That processing is covered by [Cal.com’s privacy policy](https://cal.com/privacy).`,
           "Technical data: IP address (for spam / rate-limiting), browser type, and standard server logs from the host (Vercel).",
           "If you hire me, I may also hold project files, credentials you choose to share, invoices, and correspondence. Those stay in the tools we agree to use (email, Git, cloud consoles, Upwork, etc.).",
@@ -64,7 +65,7 @@ export const legalPages: Record<LegalSlug, LegalPage> = {
       {
         heading: "What I do not collect",
         bullets: [
-          "No advertising pixels, no marketing newsletter, and no sale of personal data.",
+          "No advertising pixels, and no sale of personal data.",
           "No payment card numbers on this website. Invoices go through the channel we agree (bank transfer, Upwork, or similar).",
           "Admin images uploaded in Studio (covers, logos) go to Cloudinary so they can appear on the public site. That is site content, not a visitor profiling system.",
         ],
@@ -73,6 +74,7 @@ export const legalPages: Record<LegalSlug, LegalPage> = {
         heading: "How I use it",
         bullets: [
           "Reply to enquiries and decide whether I can take the work.",
+          "Send a notice when I publish a new blog post, if you asked for that.",
           "Schedule and run calls.",
           "Deliver, invoice, and support projects.",
           "Keep the site reliable and stop spam or abuse.",
@@ -86,8 +88,8 @@ export const legalPages: Record<LegalSlug, LegalPage> = {
         ],
         bullets: [
           "Vercel - hosting, logs, and deployments.",
-          "Resend - transactional email for the contact form.",
-          "The database provider behind Studio - stored inquiries.",
+          "Resend - transactional email for the contact form and new-post notices.",
+          "The database provider behind Studio - stored inquiries and subscriber emails.",
           "Cloudinary - images published from Studio.",
           "Cal.com - if you book a call.",
           "Upwork or LinkedIn - if you contact me there instead of the form.",
@@ -96,7 +98,7 @@ export const legalPages: Record<LegalSlug, LegalPage> = {
       {
         heading: "Retention",
         paragraphs: [
-          "Enquiries stay until the conversation is finished or you ask me to delete them. Project records and invoices are kept as long as needed for delivery, support, and bookkeeping. Server logs are retained only as long as the host keeps them.",
+          "Enquiries stay until the conversation is finished or you ask me to delete them. Subscriber emails stay until you unsubscribe or ask me to delete them. Project records and invoices are kept as long as needed for delivery, support, and bookkeeping. Server logs are retained only as long as the host keeps them.",
         ],
       },
       {
@@ -108,7 +110,7 @@ export const legalPages: Record<LegalSlug, LegalPage> = {
       {
         heading: "Your choices",
         paragraphs: [
-          `Email [${email}](mailto:${email}) to access, correct, or delete an enquiry I hold, or to ask what I have on file. I will respond within a reasonable time. You can also stop using the site at any time. Unsubscribing from a newsletter does not apply - I do not run one.`,
+          `Email [${email}](mailto:${email}) to access, correct, or delete an enquiry or subscriber email I hold, or to ask what I have on file. I will respond within a reasonable time. You can also stop using the site at any time. New-post notices include an unsubscribe link.`,
         ],
       },
       {
@@ -232,7 +234,7 @@ export const legalPages: Record<LegalSlug, LegalPage> = {
       {
         heading: "The short version",
         paragraphs: [
-          "The public site does not use advertising cookies, analytics cookies, or a marketing pixel. A consent banner asks before the booking calendar (Cal.com) loads. If you only browse, read the blog, or send the contact form, I am not dropping a tracking profile on you.",
+          `The public site does not use advertising cookies, analytics cookies, or a marketing pixel. A consent banner asks before the booking calendar (Cal.com) loads. Subscribing to new-post notices stores your email on the server. It does not set a tracking cookie.`,
         ],
       },
       {
@@ -267,7 +269,7 @@ export const legalPages: Record<LegalSlug, LegalPage> = {
       {
         heading: "Updates",
         paragraphs: [
-          `If I add analytics or a newsletter later, this page will say so before those cookies go live. Last updated ${LEGAL_UPDATED}.`,
+          `I will update this page when practices change. Last updated ${LEGAL_UPDATED}.`,
           `Questions: [${email}](mailto:${email}). See also the [Privacy Policy](/privacy).`,
         ],
       },

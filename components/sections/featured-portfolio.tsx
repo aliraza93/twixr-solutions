@@ -108,7 +108,7 @@ function FeaturedProjectCard({ project }: { project: PortfolioProject }) {
         </ul>
         <Button variant="text" asChild className="mt-6 self-start">
           <Link href={`/portfolio/${project.slug}`}>
-            View case study
+            Read case study
             <span
               aria-hidden
               className="inline-block transition-transform duration-[var(--dur-fast)] ease-[var(--ease-out)] group-hover:translate-x-[3px]"

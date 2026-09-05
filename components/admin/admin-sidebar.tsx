@@ -13,6 +13,7 @@ import {
   Inbox,
   LayoutGrid,
   LogOut,
+  Mail,
   MessageSquareQuote,
   PanelsTopLeft,
   Settings,
@@ -44,6 +45,7 @@ const overviewItems: NavItem[] = [
 
 const inboxItems: NavItem[] = [
   { title: "Inquiries", href: "/admin/inquiries", icon: Inbox },
+  { title: "Subscribers", href: "/admin/subscribers", icon: Mail },
 ];
 
 const publishingItems: NavItem[] = [

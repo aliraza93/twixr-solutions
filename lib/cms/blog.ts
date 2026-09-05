@@ -11,6 +11,7 @@ import { prisma, requireDb, withDb } from "@/lib/cms/db";
 import { isPersistedId } from "@/lib/cms/utils";
 import { stripEmDashes, stripEmDashesDeep } from "@/lib/content/strip-em-dashes";
 import { pickRelatedPosts } from "@/lib/pipeline/seo/related";
+import { notifyIfNewlyPublished } from "@/lib/newsletter/notify";
 import type { BlogPost as PrismaBlogPost } from "@prisma/client";
 
 function toRecord(row: PrismaBlogPost): BlogPostRecord {
@@ -217,15 +218,34 @@ export async function upsertBlogPost(
       : {}),
   };
 
-  if (isPersistedId(input.id)) {
-    await db.blogPost.update({ where: { id: input.id }, data });
-    return input.id;
+  if (isPersistedId(input.id) && input.id) {
+    const postId = input.id;
+    const existing = await db.blogPost.findUnique({
+      where: { id: postId },
+      select: { published: true },
+    });
+    await db.blogPost.update({ where: { id: postId }, data });
+    await notifyIfNewlyPublished({
+      postId,
+      published: Boolean(input.published),
+      wasPublished: Boolean(existing?.published),
+    });
+    return postId;
   }
 
+  const existingBySlug = await db.blogPost.findUnique({
+    where: { slug: input.slug },
+    select: { published: true },
+  });
   const created = await db.blogPost.upsert({
     where: { slug: input.slug },
     create: data,
     update: data,
+  });
+  await notifyIfNewlyPublished({
+    postId: created.id,
+    published: Boolean(input.published),
+    wasPublished: Boolean(existingBySlug?.published),
   });
   return created.id;
 }

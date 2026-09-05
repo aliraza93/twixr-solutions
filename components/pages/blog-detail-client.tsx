@@ -7,11 +7,11 @@ import { ArrowLeft, Linkedin, Mail, Twitter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Chip } from "@/components/ui/chip";
-import { Input } from "@/components/ui/input";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { MarkdownContent } from "@/components/blog/markdown-content";
 import { BlogFaqAccordion } from "@/components/blog/faq-accordion";
 import { ReadingProgress } from "@/components/blog/reading-progress";
+import { SubscribeCard } from "@/components/blog/subscribe-card";
 import { cn } from "@/lib/utils";
 import type { BlogListing, BlogPost } from "@/lib/data/blog";
 import { getTableOfContents, resolvePostBody, resolvePostFaqs } from "@/lib/data/blog";
@@ -151,31 +151,7 @@ export function BlogDetailClient({ post, related }: BlogDetailClientProps) {
               ))}
             </ul>
 
-            <Card variant="feature" className="mt-10 band-dark px-6 py-8 sm:px-8">
-              <h3 className="font-sora text-[length:var(--fs-h2)] font-extrabold tracking-[-0.02em] text-d-text">
-                Enjoyed this <span className="text-lime">article</span>?
-              </h3>
-              <p className="mt-2 max-w-[46ch] text-[length:var(--fs-lead)] text-d-muted">
-                Get notified when I publish new posts on SaaS, Laravel, and remote engineering.
-              </p>
-              <form
-                className="mt-4 flex flex-col gap-2 sm:flex-row"
-                onSubmit={(e) => e.preventDefault()}
-              >
-                <Input
-                  type="email"
-                  placeholder="you@company.com"
-                  className="h-11 flex-1 border-d-hairline bg-surface text-d-text placeholder:text-d-muted focus-visible:ring-lime"
-                />
-                <Button
-                  type="submit"
-                  variant="primary"
-                  className="focus-visible:ring-offset-ink"
-                >
-                  Subscribe
-                </Button>
-              </form>
-            </Card>
+            <SubscribeCard />
           </article>
 
           <aside className="hidden lg:col-span-4 lg:block">

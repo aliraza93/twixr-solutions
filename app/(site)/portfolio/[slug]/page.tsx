@@ -13,6 +13,7 @@ import {
   breadcrumbNode,
   absoluteUrl,
 } from "@/lib/seo";
+import { estimateReadingTime } from "@/lib/data/portfolio";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -48,19 +49,24 @@ export default async function PortfolioDetailPage({ params }: PageProps) {
   }
 
   const related = await getRelatedProjects(slug, 3);
+  const shareUrl = absoluteUrl(`/portfolio/${project.slug}`);
+  const image = project.image?.startsWith("http")
+    ? project.image
+    : absoluteUrl(project.image);
 
   return (
     <>
       <JsonLd
         data={jsonLdGraph([
           {
-            "@type": "CreativeWork",
+            "@type": "Article",
+            headline: project.title,
             name: project.title,
             description: project.longDescription,
-            url: absoluteUrl(`/portfolio/${project.slug}`),
-            image: project.image?.startsWith("http")
-              ? project.image
-              : absoluteUrl(project.image),
+            articleSection: "Case Study",
+            url: shareUrl,
+            image,
+            author: { "@id": `${absoluteUrl("/")}#person` },
             creator: { "@id": `${absoluteUrl("/")}#person` },
           },
           breadcrumbNode([
@@ -70,7 +76,12 @@ export default async function PortfolioDetailPage({ params }: PageProps) {
           ]),
         ])}
       />
-      <PortfolioDetailClient project={project} related={related} />
+      <PortfolioDetailClient
+        project={project}
+        related={related}
+        readingTime={estimateReadingTime(project.body ?? "")}
+        shareUrl={shareUrl}
+      />
     </>
   );
 }

@@ -8,6 +8,7 @@ import {
 } from "@/lib/cms/blog";
 import { deleteFaq, upsertFaq } from "@/lib/cms/faqs";
 import { updateInquiryStatus } from "@/lib/cms/inquiries";
+import { unsubscribeById } from "@/lib/cms/subscribers";
 import { deletePortfolioProject, upsertPortfolioProject } from "@/lib/cms/portfolio";
 import { deleteService, upsertService } from "@/lib/cms/services";
 import { saveSiteSettings } from "@/lib/cms/site";
@@ -22,6 +23,12 @@ import type { Testimonial } from "@/content/testimonials";
 function revalidatePublic() {
   revalidatePath("/", "layout");
   revalidatePath("/admin", "layout");
+}
+
+export async function unsubscribeSubscriberAction(id: string) {
+  await requireUser();
+  await unsubscribeById(id);
+  revalidatePublic();
 }
 
 export async function saveInquiryStatusAction(id: string, status: InquiryStatus) {

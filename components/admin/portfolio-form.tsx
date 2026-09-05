@@ -68,6 +68,7 @@ export function PortfolioForm({ project }: { project?: Record }) {
           timeline: String(data.get("timeline") ?? ""),
           role: String(data.get("role") ?? ""),
           techStack: splitComma(String(data.get("techStack") ?? "")),
+          body: String(data.get("body") ?? ""),
           sort_order: Number(data.get("sort_order") ?? 0),
         };
         start(async () => {
@@ -114,6 +115,16 @@ export function PortfolioForm({ project }: { project?: Record }) {
         name="longDescription"
         label="Long description"
         defaultValue={project?.longDescription}
+        minHeight="min-h-[120px]"
+      />
+      <RichEditor
+        id="body"
+        name="body"
+        label="Full case study"
+        defaultValue={project?.body}
+        hint="Long-form article. Use H2 headings for sections (Context, Challenge, Approach). Leave blank to build from Challenge, Approach, and What shipped."
+        minHeight="min-h-[360px]"
+        placeholder="Write the full case study…"
       />
       <RichEditor
         id="challenge"

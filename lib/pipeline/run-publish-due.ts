@@ -4,6 +4,7 @@ import { pipeline } from "@/lib/pipeline/config";
 import { createRunId, logStage } from "@/lib/pipeline/log";
 import { notifyRunSummary } from "@/lib/pipeline/notify";
 import { runPublishLinkedin } from "@/lib/pipeline/run-publish-linkedin";
+import { notifySubscribersOfPost } from "@/lib/newsletter/notify";
 
 export type RunPublishDueOptions = {
   dryRun?: boolean;
@@ -86,6 +87,14 @@ export async function publishDueBlogs(options: {
   }, undefined);
 
   revalidatePublic();
+
+  for (const row of due) {
+    try {
+      await notifySubscribersOfPost(row.id);
+    } catch (error) {
+      console.error("Newsletter notify failed:", row.id, error);
+    }
+  }
 
   await logStage({
     runId: options.runId,

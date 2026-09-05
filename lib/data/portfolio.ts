@@ -29,7 +29,65 @@ export type PortfolioCaseStudy = PortfolioProject & {
   timeline: string;
   role: string;
   techStack: string[];
+  /** Optional long-form markdown. Empty falls back to file bodies, then structured fields. */
+  body?: string;
 };
+
+const CASE_STUDY_LISTING_OMIT = [
+  "longDescription",
+  "gallery",
+  "challenge",
+  "solution",
+  "outcomes",
+  "deliverables",
+  "timeline",
+  "role",
+  "techStack",
+  "body",
+] as const;
+
+export function toPortfolioListing(study: PortfolioCaseStudy): PortfolioProject {
+  const project = { ...study };
+  for (const key of CASE_STUDY_LISTING_OMIT) {
+    delete (project as Record<string, unknown>)[key];
+  }
+  return project;
+}
+
+export function composeCaseStudyBody(
+  project: Pick<PortfolioCaseStudy, "challenge" | "solution" | "deliverables">
+): string {
+  const sections: string[] = [];
+  if (project.challenge?.trim()) {
+    sections.push(`## The challenge\n\n${project.challenge.trim()}`);
+  }
+  if (project.solution?.trim()) {
+    sections.push(`## The approach\n\n${project.solution.trim()}`);
+  }
+  if (project.deliverables?.length) {
+    sections.push(
+      `## What shipped\n\n${project.deliverables.map((item) => `- ${item}`).join("\n")}`
+    );
+  }
+  return sections.join("\n\n");
+}
+
+export function resolveCaseStudyBody(
+  project: PortfolioCaseStudy,
+  fallbackBody = ""
+): string {
+  return project.body?.trim() || fallbackBody.trim() || composeCaseStudyBody(project);
+}
+
+export function estimateReadingTime(markdown: string): string {
+  const words = markdown
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/[#>*_`~\-\[\]()]/g, " ")
+    .split(/\s+/)
+    .filter(Boolean).length;
+  const minutes = Math.max(1, Math.round(words / 220));
+  return `${minutes} min read`;
+}
 
 export const portfolioCategories: {
   id: "all" | PortfolioCategoryId;
@@ -77,6 +135,7 @@ function buildCaseStudy(
       | "timeline"
       | "role"
       | "techStack"
+      | "body"
     >
   >
 ): PortfolioCaseStudy {
@@ -93,6 +152,7 @@ function buildCaseStudy(
     timeline: extras.timeline ?? `${project.year} · 8 - 12 weeks`,
     role: extras.role ?? "Lead Full Stack Engineer",
     techStack: extras.techStack ?? [...project.tags],
+    ...(extras.body?.trim() ? { body: extras.body.trim() } : {}),
   };
 }
 
@@ -354,10 +414,7 @@ export const portfolioCaseStudies: PortfolioCaseStudy[] = [
 ];
 
 export function getPortfolioProjects(): PortfolioProject[] {
-  return portfolioCaseStudies.map(
-    ({ longDescription, gallery, challenge, solution, outcomes, deliverables, timeline, role, techStack, ...project }) =>
-      project
-  );
+  return portfolioCaseStudies.map(toPortfolioListing);
 }
 
 export function getFeaturedProjects(): PortfolioProject[] {

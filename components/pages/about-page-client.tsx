@@ -17,10 +17,15 @@ import {
 } from "@/components/motion/scroll-reveal";
 import { footerData } from "@/lib/data";
 import { aboutBio, aboutHighlights } from "@/lib/data/about";
+import type { PortfolioProject } from "@/lib/data/portfolio";
 
 const CONTACT_EMAIL = aboutBio.email;
 
-export function AboutPageClient() {
+export function AboutPageClient({
+  featured,
+}: {
+  featured?: PortfolioProject[];
+}) {
   return (
     <main className="min-h-screen bg-canvas pt-[120px] lg:pt-[140px]">
       <PageHero
@@ -34,7 +39,7 @@ export function AboutPageClient() {
       <ScrollReveal>
         <TechStack />
       </ScrollReveal>
-      <FeaturedPortfolio limit={2} />
+      <FeaturedPortfolio projects={featured} limit={2} />
       <ScrollReveal>
         <Approach />
       </ScrollReveal>

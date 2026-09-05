@@ -3,6 +3,7 @@ import { AboutPageClient } from "@/components/pages/about-page-client";
 import { JsonLd } from "@/components/seo/json-ld";
 import { pageMetadata, jsonLdGraph, breadcrumbNode } from "@/lib/seo";
 import { site } from "@/content/site";
+import { getFeaturedProjects } from "@/lib/cms/portfolio";
 
 export const metadata: Metadata = pageMetadata({
   title: "About",
@@ -11,7 +12,8 @@ export const metadata: Metadata = pageMetadata({
   type: "profile",
 });
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const featured = await getFeaturedProjects();
   return (
     <>
       <JsonLd
@@ -22,7 +24,7 @@ export default function AboutPage() {
           ]),
         ])}
       />
-      <AboutPageClient />
+      <AboutPageClient featured={featured} />
     </>
   );
 }

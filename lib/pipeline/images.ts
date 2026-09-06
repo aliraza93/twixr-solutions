@@ -9,6 +9,8 @@ import {
 import { pipeline } from "@/lib/pipeline/config";
 import type { BlogDraft } from "@/lib/pipeline/generate-blog";
 import { seoImageFilename } from "@/lib/pipeline/seo/image-hygiene";
+import { renderLinkedInCard } from "@/lib/pipeline/og-cover";
+import sharp from "sharp";
 
 const MAX_INLINE = 3;
 const MIN_INLINE = 2;
@@ -89,10 +91,39 @@ function nextStyle(exclude: string[] = []): BrandStyle {
   return choices[randomInt(choices.length)];
 }
 
-export async function generateImage(
+/**
+ * Re-encode raw model output so the C2PA "Content Credentials" provenance
+ * manifest (and any EXIF/XMP metadata Gemini embeds) is dropped. sharp does not
+ * copy input metadata to the output unless withMetadata() is called, so a plain
+ * re-encode removes the AI-provenance tag that platforms like LinkedIn surface
+ * on the image. Falls back to the original bytes if sharp is unavailable, so it
+ * can never break a run.
+ */
+export async function stripImageMetadata(
+  bytes: Buffer,
+  mimeType: string
+): Promise<{ bytes: Buffer; mimeType: string }> {
+  try {
+    const isJpeg = mimeType.includes("jpeg") || mimeType.includes("jpg");
+    const base = sharp(bytes).rotate(); // bake in EXIF orientation, then drop it
+    const out = isJpeg
+      ? await base.jpeg({ quality: 90 }).toBuffer()
+      : await base.png({ compressionLevel: 9 }).toBuffer();
+    return { bytes: out, mimeType: isJpeg ? "image/jpeg" : "image/png" };
+  } catch (error) {
+    console.warn(
+      "stripImageMetadata failed, using original bytes:",
+      error instanceof Error ? error.message : String(error)
+    );
+    return { bytes, mimeType };
+  }
+}
+
+/** Generate raw (metadata-stripped) image bytes from the model, without uploading. */
+export async function renderImageBytes(
   prompt: string,
-  opts?: { size?: string; filename?: string; style?: BrandStyle }
-): Promise<string> {
+  opts?: { size?: string; style?: BrandStyle }
+): Promise<{ bytes: Buffer; mimeType: string }> {
   const style = opts?.style ?? pickBrandStyle();
   const ai = client();
   const sizeHint = opts?.size ? ` Target size about ${opts.size}.` : "";
@@ -112,11 +143,23 @@ export async function generateImage(
     );
   }
 
-  const ext = image.mimeType.includes("jpeg") ? "jpg" : "png";
+  return stripImageMetadata(image.bytes, image.mimeType);
+}
+
+export async function generateImage(
+  prompt: string,
+  opts?: { size?: string; filename?: string; style?: BrandStyle }
+): Promise<string> {
+  const { bytes, mimeType } = await renderImageBytes(prompt, {
+    size: opts?.size,
+    style: opts?.style,
+  });
+
+  const ext = mimeType.includes("jpeg") ? "jpg" : "png";
   const file = new File(
-    [new Uint8Array(image.bytes)],
+    [new Uint8Array(bytes)],
     opts?.filename ?? `pipeline-${Date.now()}.${ext}`,
-    { type: image.mimeType }
+    { type: mimeType }
   );
   const uploaded = await uploadToCloudinary(file);
   return uploaded.url;
@@ -201,19 +244,6 @@ export async function generateInlineImages(
   return { body, generated, failed, urls, styleIds, errors };
 }
 
-const LINKEDIN_LAYOUTS = [
-  "Centered metaphor object in the middle; short title across the top; twixrsolutions.com bottom-right.",
-  "Left third: large short title. Right two-thirds: one bold visual metaphor. twixrsolutions.com bottom-right.",
-  "One oversized abstract icon or metaphor filling most of the frame; tiny title strip at top; twixrsolutions.com on a thin footer bar.",
-  "Diagonal accent band from top-left to bottom-right; short title on the band; simple metaphor beside it; twixrsolutions.com bottom-right.",
-  "Quiet minimal field; short title centered; small metaphor mark above it; twixrsolutions.com centered on a footer bar.",
-  "Top title lockup; middle single metaphor; bottom corner badge with twixrsolutions.com only.",
-  "Split horizontal: soft upper wash with short title; lower half metaphor scene; twixrsolutions.com bottom-right.",
-  "Poster frame with generous margin; short title upper-left; metaphor lower-right; twixrsolutions.com bottom-right.",
-  "Circular spotlight glow behind one metaphor; short title below the glow; twixrsolutions.com bottom-right.",
-  "Editorial card look: short title, one supporting phrase max 4 words, one metaphor shape; twixrsolutions.com bottom-right.",
-] as const;
-
 function shortLinkedInTitle(title: string, maxWords = 7): string {
   const words = title.trim().split(/\s+/).filter(Boolean);
   if (words.length <= maxWords) return words.join(" ");
@@ -235,39 +265,59 @@ export async function linkedinImage(
   const title =
     typeof input === "string" ? input : input.title || input.topic;
   const topic = typeof input === "string" ? input : input.topic || input.title;
-  const category = typeof input === "string" ? undefined : input.category;
-  const headline = shortLinkedInTitle(title);
-  const layout = LINKEDIN_LAYOUTS[randomInt(LINKEDIN_LAYOUTS.length)];
+  const category =
+    typeof input === "string" ? undefined : input.category || undefined;
+  const headline = shortLinkedInTitle(title, 8);
   const style = pickBrandStyle();
+  const slug = seoImageFilename(
+    headline
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")
+      .slice(0, 40) || "post",
+    "linkedin"
+  );
 
-  const prompt = [
-    "Create a clean 1080x1080 LinkedIn post graphic for Twixr Solutions.",
-    "This is a branded social card, NOT an infographic.",
-    `Layout recipe: ${layout}`,
-    `Short title text to paint (exact words, large and readable): "${headline}"`,
-    `Topic metaphor (visual only, do not write a long caption): ${topic}.`,
-    category ? `Category mood: ${category}.` : "",
-    "Required branding: include the exact readable text twixrsolutions.com (website URL). Prefer bottom-right or a thin footer bar.",
-    "Hard bans: multi-column layouts, bullet lists, flowcharts, diagrams with many labels, tiny unreadable text, fake UI chrome, watermarks other than twixrsolutions.com, style names, palette names, hex codes.",
-    "At most one short title plus the domain. No paragraphs. No numbered lists on the image.",
-    "One clear visual metaphor. Premium, sparse, phone-readable.",
-  ]
-    .filter(Boolean)
-    .join("\n");
+  // 1. Generate a TEXT-FREE, brand-colored metaphor background. The model paints
+  //    no words at all, so there is nothing for it to misspell or cut off.
+  const bgPrompt = [
+    "Create a premium square (1080x1080) abstract background illustration for a LinkedIn brand card.",
+    `One single clear visual metaphor for this topic: ${topic}.`,
+    "Composition: one bold focal metaphor, generous negative space, soft atmospheric depth, instantly readable at phone size.",
+    "Keep the top third and the bottom strip visually calm and low-detail (darker or flatter) so a headline and footer can be overlaid on top afterwards.",
+    "ABSOLUTELY NO TEXT of any kind: no words, letters, numbers, captions, titles, labels, code, UI chrome, buttons, watermarks, logos, or signatures. If tempted to write text, draw a shape instead.",
+    "No people, no faces, no hands, no third-party brand logos, no fake app screenshots.",
+    "Modern technical-agency aesthetic. Clean and editorial, never busy or cluttered.",
+  ].join("\n");
 
-  const url = await generateImage(prompt, {
-    size: "1080x1080",
-    filename: seoImageFilename(
-      headline
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-|-$/g, "")
-        .slice(0, 40) || "post",
-      "linkedin"
-    ),
-    style,
-  });
-  return { url, styleId: style.id };
+  const bg = await renderImageBytes(bgPrompt, { size: "1080x1080", style });
+
+  // 2. Composite a crisp headline + domain over it with Satori (next/og), so the
+  //    text is always perfectly legible and correctly spelled.
+  try {
+    const bgDataUri = `data:${bg.mimeType};base64,${bg.bytes.toString("base64")}`;
+    const card = await renderLinkedInCard({
+      backgroundDataUri: bgDataUri,
+      title: headline,
+      category,
+      styleId: style.id,
+      slug,
+    });
+    return { url: card.url, styleId: style.id };
+  } catch (error) {
+    // Overlay failed: still ship the clean, tag-free, text-free background so a
+    // run never loses its image over a rendering hiccup.
+    console.warn(
+      "LinkedIn text overlay failed, uploading plain background:",
+      error instanceof Error ? error.message : String(error)
+    );
+    const ext = bg.mimeType.includes("jpeg") ? "jpg" : "png";
+    const file = new File([new Uint8Array(bg.bytes)], `${slug}.${ext}`, {
+      type: bg.mimeType,
+    });
+    const uploaded = await uploadToCloudinary(file);
+    return { url: uploaded.url, styleId: style.id };
+  }
 }
 
 export async function aiCoverImage(draft: BlogDraft): Promise<{

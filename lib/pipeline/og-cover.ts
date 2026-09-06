@@ -289,3 +289,179 @@ export async function renderOgCover(input: {
   const uploaded = await uploadToCloudinary(file);
   return { url: uploaded.url, styleId: active.id };
 }
+
+function hexToRgba(hex: string, alpha: number): string {
+  const clean = hex.replace("#", "");
+  const full =
+    clean.length === 3
+      ? clean
+          .split("")
+          .map((c) => c + c)
+          .join("")
+      : clean.padEnd(6, "0").slice(0, 6);
+  const r = parseInt(full.slice(0, 2), 16) || 0;
+  const g = parseInt(full.slice(2, 4), 16) || 0;
+  const b = parseInt(full.slice(4, 6), 16) || 0;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+/**
+ * Composite a crisp headline + domain lockup over a text-free AI background to
+ * produce a 1080x1080 LinkedIn card. Text is rendered by Satori (next/og), so it
+ * is always legible and correctly spelled - the image model paints no text.
+ */
+export async function renderLinkedInCard(input: {
+  backgroundDataUri: string;
+  title: string;
+  category?: string;
+  styleId?: string;
+  slug?: string;
+}): Promise<{ url: string; styleId: string }> {
+  const active = input.styleId
+    ? brandStyleById(input.styleId)
+    : pickBrandStyle();
+  const bg = active.og.background;
+  const title = input.title.slice(0, 90);
+  const category = (input.category || "Twixr Solutions").toUpperCase();
+  const fontSize = title.length > 42 ? 60 : title.length > 26 ? 72 : 86;
+
+  const root: ReactNode = createElement(
+    "div",
+    {
+      style: {
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        position: "relative",
+        overflow: "hidden",
+        background: bg,
+      },
+    },
+    createElement("img", {
+      src: input.backgroundDataUri,
+      width: 1080,
+      height: 1080,
+      style: {
+        position: "absolute",
+        top: 0,
+        left: 0,
+        width: 1080,
+        height: 1080,
+        objectFit: "cover",
+      },
+    }),
+    createElement("div", {
+      style: {
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        height: 640,
+        display: "flex",
+        background: `linear-gradient(180deg, ${hexToRgba(bg, 0.94)} 0%, ${hexToRgba(bg, 0.72)} 45%, ${hexToRgba(bg, 0)} 100%)`,
+      },
+    }),
+    createElement("div", {
+      style: {
+        position: "absolute",
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: 260,
+        display: "flex",
+        background: `linear-gradient(0deg, ${hexToRgba(bg, 0.94)} 0%, ${hexToRgba(bg, 0)} 100%)`,
+      },
+    }),
+    createElement(
+      "div",
+      {
+        style: {
+          position: "relative",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between",
+          width: "100%",
+          height: "100%",
+          padding: 76,
+        },
+      },
+      createElement(
+        "div",
+        { style: { display: "flex", flexDirection: "column", gap: 30 } },
+        mark(active),
+        createElement(
+          "div",
+          {
+            style: {
+              display: "flex",
+              fontSize: 24,
+              letterSpacing: "0.16em",
+              textTransform: "uppercase" as const,
+              color: active.og.accent,
+              fontWeight: 600,
+            },
+          },
+          category
+        )
+      ),
+      createElement(
+        "div",
+        {
+          style: {
+            display: "flex",
+            flexDirection: "column",
+            gap: 24,
+            maxWidth: 900,
+          },
+        },
+        createElement(
+          "div",
+          {
+            style: {
+              display: "flex",
+              fontSize,
+              lineHeight: 1.05,
+              fontWeight: 700,
+              color: active.og.ink,
+              letterSpacing: "-0.03em",
+            },
+          },
+          title
+        ),
+        createElement("div", {
+          style: {
+            width: 108,
+            height: 7,
+            background: active.og.accent,
+            borderRadius: 4,
+            display: "flex",
+          },
+        })
+      ),
+      createElement(
+        "div",
+        {
+          style: {
+            display: "flex",
+            alignItems: "center",
+            fontSize: 26,
+            color: active.og.ink,
+            letterSpacing: "0.04em",
+            fontWeight: 600,
+          },
+        },
+        "twixrsolutions.com"
+      )
+    )
+  );
+
+  const response = new ImageResponse(root, { width: 1080, height: 1080 });
+  const buffer = Buffer.from(await response.arrayBuffer());
+  const file = new File(
+    [new Uint8Array(buffer)],
+    `${input.slug || `li-${Date.now()}`}-${active.id}.png`,
+    { type: "image/png" }
+  );
+  const uploaded = await uploadToCloudinary(file);
+  return { url: uploaded.url, styleId: active.id };
+}

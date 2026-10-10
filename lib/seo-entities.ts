@@ -74,6 +74,28 @@ const DISPLAY: Record<string, string> = {
   devops: "DevOps",
   nestjs: "NestJS",
   graphql: "GraphQL",
+  // Anything whose canonical casing the title-case fallback would mangle.
+  typescript: "TypeScript",
+  javascript: "JavaScript",
+  mysql: "MySQL",
+  sqlite: "SQLite",
+  nginx: "nginx",
+  git: "Git",
+  docker: "Docker",
+  redis: "Redis",
+  react: "React",
+  laravel: "Laravel",
+  stripe: "Stripe",
+  twilio: "Twilio",
+  cloudflare: "Cloudflare",
+  vercel: "Vercel",
+  prisma: "Prisma",
+  kubernetes: "Kubernetes",
+  microservices: "Microservices",
+  "machine learning": "Machine learning",
+  "large language model": "Large language model",
+  "continuous integration": "Continuous integration",
+  "amazon web services": "Amazon Web Services",
 };
 
 function titleCase(value: string): string {

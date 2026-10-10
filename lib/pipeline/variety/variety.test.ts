@@ -18,6 +18,7 @@ import {
   TITLE_PATTERNS,
 } from "@/lib/pipeline/variety/banks";
 import { BRAND_STYLES } from "@/lib/pipeline/brand-styles";
+import { resolveEntities } from "@/lib/seo-entities";
 import {
   atLocalTime,
   drawPublishAt,
@@ -337,6 +338,43 @@ describe("clock", () => {
     for (const hour of [0, 6, 9, 14, 20, 23]) {
       const at = atLocalTime(from, 0, hour, 30);
       assert.equal(localHour(at), hour, `requested ${hour}`);
+    }
+  });
+});
+
+describe("entity resolution", () => {
+  it("uses canonical casing rather than a title-case guess", () => {
+    const got = resolveEntities(
+      ["typescript", "nodejs", "postgres", "aws", "mysql", "git"],
+      ""
+    );
+    const names = got.map((e) => e.name);
+    assert.ok(names.includes("TypeScript"), names.join(", "));
+    assert.ok(names.includes("Node.js"), names.join(", "));
+    assert.ok(names.includes("PostgreSQL"), names.join(", "));
+    assert.ok(names.includes("Amazon Web Services"), names.join(", "));
+    assert.ok(names.includes("MySQL"), names.join(", "));
+    assert.ok(names.includes("Git"), names.join(", "));
+  });
+
+  it("collapses aliases to one entity", () => {
+    const got = resolveEntities(["node.js", "nodejs"], "");
+    const nodes = got.filter((e) => e.sameAs.endsWith("Q756100"));
+    assert.equal(nodes.length, 1);
+  });
+
+  it("prefers the longest match", () => {
+    const got = resolveEntities(["tailwind css"], "");
+    assert.ok(got.some((e) => e.name === "Tailwind CSS"));
+  });
+
+  it("returns nothing for unrelated text", () => {
+    assert.deepEqual(resolveEntities(["knitting"], "a post about wool"), []);
+  });
+
+  it("emits only absolute wikidata URIs", () => {
+    for (const e of resolveEntities(["laravel", "redis", "aws"], "")) {
+      assert.match(e.sameAs, /^https:\/\/www\.wikidata\.org\/wiki\/Q\d+$/);
     }
   });
 });

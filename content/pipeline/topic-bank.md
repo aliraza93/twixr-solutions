@@ -4,8 +4,15 @@ Runtime selection is **weighted and random** in code (`takeNextBrief`): pillars
 are mixed (Build / Business / Timely / Code card), with anti-streak and random
 Build subsections. File order here is for humans - it is not publish order.
 
-The generator picks from here. Variety comes from **format x pillar**, not from a
+The generator picks from here. Variety comes from **combination**, not from a
 longer list alone - the same topic told three ways reads as three different posts.
+
+At run time `lib/pipeline/variety/plan.ts` crosses the chosen topic with an
+angle lens, an audience, a stake, an editorial format, a structure skeleton, and
+a stylebook (all in `lib/pipeline/variety/banks.ts`). That is why this file does
+not need to be exhaustive: a few hundred topics crossed with those banks does
+not repeat in practice. First-hand material comes from the `Receipt` table, not
+from here, and is the only source of personal claims.
 
 Rules for the generator:
 - Reach for the 2nd or 3rd idea in a section, never the obvious textbook one.
@@ -132,6 +139,92 @@ Rules for the generator:
 
 ---
 
+### Postgres deep
+- Vacuum and bloat: the numbers that tell you it is time
+- Index-only scans and why yours is not one
+- CTEs that stopped being optimization fences
+- Row-level locks vs advisory locks for job coordination
+- Logical replication for a zero-downtime move
+- `pg_stat_statements` as the first place to look
+- Materialized views and the refresh you forgot to schedule
+- Statement timeouts as a production safety net
+
+### Redis and caching
+- Cache stampede: three fixes and what each costs
+- TTL jitter and why uniform expiry hurts
+- Redis as a queue vs a cache vs a lock, and the mistake of mixing them
+- Eviction policies: picking one on purpose
+- What happens to your app when Redis restarts
+- Key naming that survives two years
+
+### Stripe and billing
+- Webhook idempotency when Stripe retries
+- Proration: what customers actually see on the invoice
+- Failed payments and the dunning flow nobody designs
+- Test clocks for subscription logic
+- Tax and the moment it becomes someone's job
+- Usage-based billing: metering without double counting
+
+### Integrations and webhooks
+- Signature verification done properly
+- Replay protection with a short-lived nonce store
+- Retry storms and the backoff that stops them
+- Twilio status callbacks and delivery truth
+- Zapier and n8n as glue: where it holds, where it snaps
+- Building an outbound webhook other people can rely on
+
+### Observability
+- Structured logs you can actually query
+- Trace, metric, log: picking one per question
+- Sampling that keeps the interesting requests
+- Alerting on symptoms, not causes
+- The dashboard nobody reads and why
+- Error grouping that does not drown you
+
+### Multi-tenancy
+- Shared schema vs schema per tenant vs database per tenant
+- Tenant scoping that cannot be forgotten
+- Noisy-neighbour throttling
+- Per-tenant migrations and the order problem
+- Tenant data export as a first-class feature
+
+### Next.js and the App Router
+- Server components and the data-fetching boundary
+- Caching layers: request, route, and data
+- Streaming and what the user sees first
+- Server actions vs an API route
+- Middleware: what belongs there and what does not
+- ISR and the stale page you cannot explain
+
+### AI agents and MCP
+- Writing an MCP server that another team can use
+- Tool descriptions as the real prompt
+- Agent loops: where to put the guardrail
+- Structured outputs over prompt-and-parse
+- Caching and cost control in an agent loop
+- Evaluating an agent change without vibes
+
+### Data migration and ETL
+- Backfilling a column on a live table
+- Idempotent importers and the resume problem
+- Reconciliation: proving the migration worked
+- Dual-write windows and how to end them
+- CSV at scale: streaming, not loading
+
+### Compliance and process
+- GDPR deletion when data is spread across six services
+- PCI scope and how to stay out of it
+- A security questionnaire as an engineering backlog
+- Audit logs that answer the question actually asked
+- Data retention as a product decision
+
+### Developer experience
+- A README that gets someone running in ten minutes
+- Local environments: Docker Compose vs the real thing
+- Seed data that resembles production
+- Pre-commit hooks people do not disable
+- The CI step that saves the most time
+
 ## TIMELY (Wed - VERIFY every claim this run)
 
 ### AI & industry news
@@ -203,6 +296,34 @@ Rules for the generator:
 - Reading someone else's code as the real senior skill
 
 ---
+
+### Pricing and proposals
+- Pricing a rebuild when the scope is genuinely unknown
+- The proposal section clients read first
+- Deposit structures that protect both sides
+- When to quote a range and when to refuse
+- Change orders without the awkward conversation
+
+### Hiring and team
+- Interviewing for judgement rather than recall
+- A take-home that respects the candidate's time
+- The first thirty days of a new engineer
+- Contractor vs employee for a small team
+- Writing a job post that filters correctly
+
+### Discovery and scoping
+- The discovery call that saves a bad project
+- Turning a vague brief into a testable scope
+- Charging for discovery and why clients accept
+- Spotting a project that will never finish
+- The handover that ends the engagement cleanly
+
+### Market notes (PK and UAE)
+- Billing international clients from Pakistan
+- UAE free-zone setup from an engineer's view
+- Remote contracts and the clauses that matter
+- Working across a six-hour time difference
+- Local hiring economics for a small agency
 
 ## CODE CARDS (short post + Before/After image)
 - Laravel `when()` for conditional queries (USED 2026-08-31)

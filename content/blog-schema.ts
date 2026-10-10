@@ -23,17 +23,22 @@ export type BlogListing = {
   readingTime: string;
   /** Optional topical cluster for related-post scoring (pipeline SEO). */
   contentCluster?: string;
+  /** Last edit, used for sitemap lastModified. */
+  updatedAt?: string;
 };
 
 export type BlogPost = BlogListing & {
   author: string;
   authorRole: string;
   authorImage: string;
+  /** Schema.org type for this article: BlogPosting | TechArticle | HowTo. */
+  schemaType?: string;
+  /** Visible "Updated on" date, set by the content refresh loop. */
+  lastReviewedAt?: string;
   /** Raw markdown body (preferred for rendering). */
   body?: string;
   /** Structured FAQs for accordion + FAQPage JSON-LD. */
   faqs: BlogFaq[];
-  updatedAt?: string;
   /** @deprecated Prefer `body` + MarkdownContent. Kept for transitional admin preview. */
   content: BlogContentBlock[];
 };

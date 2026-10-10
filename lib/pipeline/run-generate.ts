@@ -11,7 +11,7 @@ import {
 } from "@/lib/pipeline/briefs";
 import { pipeline } from "@/lib/pipeline/config";
 import { criticBlog, criticLinkedIn, type CriticResult } from "@/lib/pipeline/critic";
-import { generateBlog } from "@/lib/pipeline/generate-blog";
+import { generateBlog, reviseBlogDraft } from "@/lib/pipeline/generate-blog";
 import { generateLinkedIn } from "@/lib/pipeline/generate-linkedin";
 import { generateX } from "@/lib/pipeline/generate-x";
 import {
@@ -27,6 +27,18 @@ import {
   randomLinkedInScheduledFor,
   shouldGenerateToday,
 } from "@/lib/pipeline/schedule";
+import {
+  formatReceiptsForPrompt,
+  markReceiptsUsed,
+  receiptsForBrief,
+} from "@/lib/pipeline/receipts";
+import { buildVarietyPlan, summarizePlan } from "@/lib/pipeline/variety/plan";
+import { createRng } from "@/lib/pipeline/variety/rng";
+import {
+  attachChoicesToPost,
+  recordChoices,
+} from "@/lib/pipeline/variety/store";
+import { hourBucket, localWeekday } from "@/lib/pipeline/variety/clock";
 import { assessCannibalization } from "@/lib/pipeline/seo/cannibalization";
 import {
   imageAltWarnings,
@@ -101,14 +113,23 @@ function todayDate(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-async function pipelineBlogExistsForToday(): Promise<boolean> {
+/**
+ * Daily cap check.
+ *
+ * This used to block any second pipeline post on the same calendar date, which
+ * would have made burst weeks impossible: the day plan can open two slots, and
+ * a hard one-per-day guard silently cancels the second one. It now honours the
+ * configured cap instead, so it still protects against a runaway loop without
+ * flattening the cadence back into one post a day.
+ */
+async function pipelineDailyCapReached(): Promise<boolean> {
+  const cap = Math.max(1, pipeline.variety.maxPerDay);
   return withDb(async () => {
     const db = requireDb();
-    const existing = await db.blogPost.findFirst({
+    const count = await db.blogPost.count({
       where: { origin: "pipeline", date: todayDate() },
-      select: { id: true },
     });
-    return Boolean(existing);
+    return count >= cap;
   }, false);
 }
 
@@ -169,18 +190,18 @@ export async function runGenerate(
       });
     }
 
-    if (!skipTodayGuard && (await pipelineBlogExistsForToday())) {
+    if (!skipTodayGuard && (await pipelineDailyCapReached())) {
       await logStage({
         runId,
         stage: "brief",
         status: "skip",
-        message: `Pipeline blog already exists for ${todayDate()}`,
+        message: `Daily cap of ${pipeline.variety.maxPerDay} pipeline blog(s) reached for ${todayDate()}`,
       });
       if (shouldNotify) await notifyRunSummary(runId);
       return {
         runId,
         status: "skip",
-        message: "Already generated for today",
+        message: "Daily cap reached",
       };
     }
 
@@ -281,7 +302,7 @@ export async function runGenerateFromBrief(
   const opportunityId = options.opportunityId;
   const shouldNotify = options.notify !== false;
   const shouldGenerateImages = options.generateImages !== false;
-  const shouldGenerateLinkedIn = options.generateLinkedIn !== false;
+  const linkedInRequested = options.generateLinkedIn !== false;
   const shouldGenerateX =
     options.generateX !== undefined
       ? Boolean(options.generateX)
@@ -303,6 +324,42 @@ export async function runGenerateFromBrief(
     let gapContext = "";
     const depthGuidance: DepthGuidance = recommendArticleDepth(brief, {
       formatOverride,
+    });
+
+    // Every randomized decision for this run is drawn up front, in one place,
+    // from one seeded RNG, and logged. Reproduce a run by setting
+    // PIPELINE_VARIETY_SEED to its seed.
+    const { plan, choices } = await buildVarietyPlan({
+      brief,
+      runId,
+      formatOverride,
+    });
+    const rng = createRng(`${plan.seed}:schedule`);
+
+    // Receipts are the only first-hand material the model may use. Without
+    // them the post has no experience signals at all.
+    const receipts = await receiptsForBrief(
+      {
+        pillar: brief.pillar,
+        topic: brief.topic,
+        targetKeyword: brief.targetKeyword,
+      },
+      rng.bool(0.35) ? 2 : 1,
+      rng
+    );
+
+    await logStage({
+      runId,
+      stage: "variety",
+      status: "ok",
+      refType: "Brief",
+      refId: brief.id,
+      message: `${plan.structure.label} / ${plan.format} / ${plan.lengthBand} ~${plan.wordTarget}w / ${plan.images.inlineCount} image(s)`,
+      meta: {
+        ...summarizePlan(plan),
+        receipts: receipts.map((r) => r.id),
+        receiptCount: receipts.length,
+      },
     });
 
     if (pipeline.seoEnabled) {
@@ -444,35 +501,84 @@ export async function runGenerateFromBrief(
       }
     }
 
-    const draft = sanitizeDraftImageAlts(
-      await generateBlog(
-        brief,
-        pipeline.seoEnabled
-          ? {
-              primaryKeyword: brief.targetKeyword || brief.topic,
-              searchIntent: brief.requiresLiveSource
-                ? "Explain what this news changes for engineers who ship, with verified facts only."
-                : "Help a peer engineer solve a concrete technical or business problem.",
-              contentCluster:
-                brief.pillar.split("/")[1]?.trim() || brief.pillar,
-              cannibalizationRisk: cannibalRisk,
-              recommendedInternalLinks: recommendedLinks,
-              gapContext,
-              depth: depthGuidance,
-              sourceUrl: sourceUrl || undefined,
-              sourceExcerpt: sourceExcerpt || undefined,
-              additionalInstructions: additionalInstructions || undefined,
-              formatOverride,
-            }
-          : {
-              sourceUrl: sourceUrl || undefined,
-              sourceExcerpt: sourceExcerpt || undefined,
-              additionalInstructions: additionalInstructions || undefined,
-              formatOverride,
-              depth: depthGuidance,
-            }
-      )
+    const modelOpts = {
+      model: plan.model,
+      temperature: plan.temperature,
+      effort: plan.effort,
+    };
+    const receiptsBlock = formatReceiptsForPrompt(receipts);
+
+    // The SEO context is the same in both branches now except for the SEO
+    // fields, so build it once instead of duplicating the plan wiring.
+    const seoContext = {
+      ...(pipeline.seoEnabled
+        ? {
+            primaryKeyword: brief.targetKeyword || brief.topic,
+            searchIntent: brief.requiresLiveSource
+              ? "Explain what this news changes for engineers who ship, with verified facts only."
+              : "Help a peer engineer solve a concrete technical or business problem.",
+            contentCluster:
+              brief.pillar.split("/")[1]?.trim() || brief.pillar,
+            cannibalizationRisk: cannibalRisk,
+            recommendedInternalLinks: recommendedLinks,
+            gapContext,
+            depth: depthGuidance,
+          }
+        : {}),
+      sourceUrl: sourceUrl || undefined,
+      sourceExcerpt: sourceExcerpt || undefined,
+      additionalInstructions: additionalInstructions || undefined,
+      formatOverride,
+      plan,
+      receipts: receiptsBlock,
+    };
+
+    let draft = sanitizeDraftImageAlts(
+      await generateBlog(brief, seoContext, modelOpts)
     );
+
+    // The tightening pass runs on a drawn fraction of posts. It is one of the
+    // strongest texture levers: a first draft from a fixed prompt has a
+    // recognisable cadence, an edited one does not.
+    if (plan.secondPass && !dryRun) {
+      try {
+        const revised = sanitizeDraftImageAlts(
+          await reviseBlogDraft(brief, draft, seoContext, modelOpts)
+        );
+        const before = draft.body.trim().split(/\s+/).filter(Boolean).length;
+        const after = revised.body.trim().split(/\s+/).filter(Boolean).length;
+        // Only accept the edit if it kept the substance. A pass that returns a
+        // stub or balloons the piece is a failed edit, not an improvement.
+        if (revised.body.trim().length > 0 && after >= before * 0.6) {
+          draft = revised;
+          await logStage({
+            runId,
+            stage: "blog",
+            status: "ok",
+            message: `Second pass applied (${before} -> ${after} words)`,
+            meta: { before, after, model: plan.model },
+          });
+        } else {
+          await logStage({
+            runId,
+            stage: "blog",
+            status: "warn",
+            message: `Second pass rejected (${before} -> ${after} words), keeping first draft`,
+            meta: { before, after },
+          });
+        }
+      } catch (error) {
+        await logStage({
+          runId,
+          stage: "blog",
+          status: "warn",
+          message:
+            error instanceof Error
+              ? `Second pass failed: ${error.message}`
+              : "Second pass failed",
+        });
+      }
+    }
     await logStage({
       runId,
       stage: "blog",
@@ -480,7 +586,9 @@ export async function runGenerateFromBrief(
       message: draft.title,
       meta: {
         slug: draft.slug,
-        model: pipeline.models.blog,
+        model: plan.model,
+        temperature: plan.temperature,
+        effort: plan.effort,
         primaryKeyword: draft.primaryKeyword,
         contentCluster: draft.contentCluster,
         searchIntent: draft.searchIntent,
@@ -498,10 +606,16 @@ export async function runGenerateFromBrief(
       });
     }
     try {
+      // Cover mode is drawn per post, so some posts get the AI metaphor cover
+      // and some get the typographic Satori card. COVER_IMAGE_MODE still wins
+      // when it is set explicitly.
+      const coverMode = process.env.COVER_IMAGE_MODE
+        ? pipeline.coverMode
+        : plan.images.coverMode;
       if (!shouldGenerateImages) {
         // skip cover
-      } else if (pipeline.coverMode === "ai") {
-        const cover = await aiCoverImage(draft);
+      } else if (coverMode === "ai") {
+        const cover = await aiCoverImage(draft, plan);
         coverUrl = cover.url;
         coverStyleId = cover.styleId;
       } else {
@@ -509,6 +623,8 @@ export async function runGenerateFromBrief(
           title: draft.title,
           category: draft.category,
           slug: draft.slug,
+          styleId: plan.images.coverPalette.id,
+          layout: plan.images.ogLayout,
         });
         coverUrl = cover.url;
         coverStyleId = cover.styleId;
@@ -517,8 +633,14 @@ export async function runGenerateFromBrief(
         runId,
         stage: "images",
         status: "ok",
-        message: `Cover via ${pipeline.coverMode} (${coverStyleId})`,
-        meta: { coverUrl, coverStyleId },
+        message: `Cover via ${coverMode} (${coverStyleId} / ${plan.images.coverModifier.id})`,
+        meta: {
+          coverUrl,
+          coverStyleId,
+          coverMode,
+          modifier: plan.images.coverModifier.id,
+          ogLayout: plan.images.ogLayout.id,
+        },
       });
     } catch (error) {
       await logStage({
@@ -531,7 +653,7 @@ export async function runGenerateFromBrief(
     }
 
     const inline = shouldGenerateImages
-      ? await generateInlineImages(draft)
+      ? await generateInlineImages(draft, plan)
       : {
           body: draft.body,
           generated: 0,
@@ -544,7 +666,10 @@ export async function runGenerateFromBrief(
       await logStage({
         runId,
         stage: "images",
-        status: inline.generated >= 2 && !inline.failed ? "ok" : "warn",
+        status:
+          inline.generated >= plan.images.inlineCount && !inline.failed
+            ? "ok"
+            : "warn",
         message: `Inline images generated=${inline.generated} failed=${inline.failed}`,
         meta: {
           urls: inline.urls,
@@ -557,10 +682,13 @@ export async function runGenerateFromBrief(
 
     const imageReasons: string[] = [];
     if (shouldGenerateImages) {
+      // The cover is a quality floor and is never randomized away.
       if (!coverUrl) imageReasons.push("Cover image missing");
-      if (inline.generated < 2) {
+      // The inline count is drawn, so zero is a valid plan. Only flag a
+      // shortfall against what this post actually asked for.
+      if (inline.generated < plan.images.inlineCount) {
         imageReasons.push(
-          `Need at least 2 inline images, got ${inline.generated}`
+          `Planned ${plan.images.inlineCount} inline image(s), got ${inline.generated}`
         );
       }
     }
@@ -726,7 +854,7 @@ export async function runGenerateFromBrief(
         publishNow = true;
       } else {
         approved = pipeline.autoPublish || blogOk;
-        blogPublishAt = approved ? randomBlogPublishAt() : null;
+        blogPublishAt = approved ? randomBlogPublishAt(new Date(), rng) : null;
         publishNow =
           approved &&
           blogPublishAt !== null &&
@@ -765,7 +893,26 @@ export async function runGenerateFromBrief(
       publishAt: blogPublishAt,
       contentCluster: clusterLabel,
       targetKeyword: keywordLabel,
+      schemaType: plan.schemaType,
     });
+
+    // Persist the dice rolls. This is what the no-repeat window reads on the
+    // next run and what the variety audit measures, so a plan that is never
+    // recorded is a plan that will repeat itself.
+    if (!dryRun) {
+      const timingChoices = blogPublishAt
+        ? [
+            { dimension: "publishHour", value: hourBucket(blogPublishAt) },
+            {
+              dimension: "weekday",
+              value: String(localWeekday(blogPublishAt)),
+            },
+          ]
+        : [];
+      await recordChoices(runId, [...choices, ...timingChoices], blogPostId);
+      if (blogPostId) await attachChoicesToPost(runId, blogPostId);
+      await markReceiptsUsed(receipts.map((r) => r.id));
+    }
 
     if (pipeline.seoEnabled && !dryRun && blogPostId) {
       try {
@@ -830,6 +977,13 @@ export async function runGenerateFromBrief(
     let xPostId: string | undefined;
     let sharedSocialImageUrl = "";
 
+    // A real person does not post to LinkedIn about every single article.
+    // Admin runs that explicitly asked for LinkedIn always get it; automated
+    // runs honour the drawn attach decision.
+    const shouldGenerateLinkedIn =
+      linkedInRequested &&
+      (options.generateLinkedIn === true || plan.social.attachLinkedIn);
+
     if (approved && blogPublishAt && shouldGenerateLinkedIn) {
       try {
         const li = await generateLinkedIn({
@@ -839,24 +993,44 @@ export async function runGenerateFromBrief(
           category: draft.category,
           blogUrl: absoluteUrl(`/blog/${draft.slug}`),
           topic: brief.topic,
-          realExample: brief.realExample,
+          // Prefer a real receipt over the brief's (usually empty) field, so
+          // the personal angle is grounded in something that happened.
+          realExample:
+            brief.realExample ||
+            (receipts[0]
+              ? [receipts[0].summary, receipts[0].detail, receipts[0].outcome]
+                  .filter(Boolean)
+                  .join(" ")
+              : ""),
+          plan,
         });
 
         await logStage({
           runId,
           stage: "linkedin",
           status: "ok",
-          message: "LinkedIn draft generated",
-          meta: { altHooks: li.altHooks, hashtags: li.hashtags },
+          message: `LinkedIn draft generated (${plan.social.shape.id}, ${plan.social.lengthBand.id}, ${plan.social.hashtagCount} tags)`,
+          meta: {
+            altHooks: li.altHooks,
+            hashtags: li.hashtags,
+            shape: plan.social.shape.id,
+            lengthBand: plan.social.lengthBand.id,
+            plannedHashtags: plan.social.hashtagCount,
+          },
         });
 
         try {
-          const liImg = await linkedinImage({
-            title: draft.title,
-            topic: brief.topic,
-            category: draft.category,
-          });
-          sharedSocialImageUrl = liImg.url;
+          // Text-only posts happen on purpose: an account that attaches an
+          // image to every single post reads as scheduled output.
+          if (plan.social.withImage && shouldGenerateImages) {
+            const liImg = await linkedinImage({
+              title: draft.title,
+              topic: brief.topic,
+              category: draft.category,
+              style: plan.images.coverPalette,
+            });
+            sharedSocialImageUrl = liImg.url;
+          }
         } catch (error) {
           await logStage({
             runId,
@@ -869,7 +1043,9 @@ export async function runGenerateFromBrief(
           });
         }
 
-        const vLi = await validateLinkedIn(li.text);
+        const vLi = await validateLinkedIn(li.text, {
+          expectedHashtags: plan.social.hashtagCount,
+        });
         let cLi: CriticResult = {
           score: 0,
           verdict: "revise",
@@ -900,7 +1076,7 @@ export async function runGenerateFromBrief(
         ];
 
         const scheduleLinkedIn = pipeline.autoPublish || liOk;
-        const scheduledFor = randomLinkedInScheduledFor(blogPublishAt);
+        const scheduledFor = randomLinkedInScheduledFor(blogPublishAt, rng);
 
         socialPostId = await withDb(async () => {
           const db = requireDb();
@@ -954,8 +1130,10 @@ export async function runGenerateFromBrief(
         runId,
         stage: "linkedin",
         status: "skip",
-        message: !shouldGenerateLinkedIn
+        message: !linkedInRequested
           ? "LinkedIn generation disabled for this run"
+          : !shouldGenerateLinkedIn
+            ? "Skipped by plan: this post does not get a LinkedIn companion"
           : "Skipped because blog did not pass gate",
         meta: { reasons: reviewReasons, autoPublish: pipeline.autoPublish },
       });
@@ -971,6 +1149,7 @@ export async function runGenerateFromBrief(
           category: draft.category,
           blogUrl,
           topic: brief.topic,
+          plan,
         });
 
         let xImageUrl = sharedSocialImageUrl;

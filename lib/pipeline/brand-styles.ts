@@ -14,7 +14,19 @@ export type BrandStyleId =
   | "stone-teal"
   | "midnight-rose"
   | "fog-indigo"
-  | "sand-ink";
+  | "sand-ink"
+  | "obsidian-mint"
+  | "clay-plum"
+  | "arctic-steel"
+  | "olive-bone"
+  | "ink-marigold"
+  | "sea-glass"
+  | "graphite-cyan"
+  | "terracotta-slate"
+  | "porcelain-cobalt"
+  | "basalt-chartreuse"
+  | "mauve-ochre"
+  | "deep-sea-coral";
 
 export type BrandStyle = {
   id: BrandStyleId;
@@ -206,6 +218,198 @@ export const BRAND_STYLES: BrandStyle[] = [
       muted: "#6B7280",
       accent: "#4338CA",
       panel: "#E0E5EE",
+      pattern: "dots",
+      titleAlign: "left",
+      showMark: true,
+    },
+  },
+  {
+    id: "obsidian-mint",
+    label: "Obsidian mint",
+    aiPrompt:
+      "Obsidian black (#0A0C0B) ground with cool mint (#6EE7B7) accents and pale type, precise technical diagram energy. No third-party logos, no stock people.",
+    og: {
+      background: "#0A0C0B",
+      ink: "#ECFDF5",
+      muted: "#94A3A0",
+      accent: "#6EE7B7",
+      panel: "#141917",
+      pattern: "dots",
+      titleAlign: "left",
+      showMark: true,
+    },
+  },
+  {
+    id: "clay-plum",
+    label: "Clay plum",
+    aiPrompt:
+      "Warm clay (#EFE2D8) canvas, deep plum (#5B21B6) accent forms, dark ink type, calm print-studio composition. Generous whitespace, no clutter.",
+    og: {
+      background: "#EFE2D8",
+      ink: "#1F1420",
+      muted: "#6F6269",
+      accent: "#5B21B6",
+      panel: "#E2D2C5",
+      pattern: "none",
+      titleAlign: "left",
+      showMark: true,
+    },
+  },
+  {
+    id: "arctic-steel",
+    label: "Arctic steel",
+    aiPrompt:
+      "Pale arctic blue-gray (#E6EDF3) field, steel blue (#1E5F8C) accents, charcoal type, crisp instrument-panel clarity. Readable at phone size.",
+    og: {
+      background: "#E6EDF3",
+      ink: "#0F1B24",
+      muted: "#5B6B78",
+      accent: "#1E5F8C",
+      panel: "#D5E0E9",
+      pattern: "lines",
+      titleAlign: "left",
+      showMark: true,
+    },
+  },
+  {
+    id: "olive-bone",
+    label: "Olive bone",
+    aiPrompt:
+      "Deep olive (#2E3A20) ground with bone (#F2EDE0) type and soft wheat (#D9C57A) accents, field-manual aesthetic. No people, no logos.",
+    og: {
+      background: "#2E3A20",
+      ink: "#F2EDE0",
+      muted: "#AEB59C",
+      accent: "#D9C57A",
+      panel: "#3C4A2A",
+      pattern: "none",
+      titleAlign: "left",
+      showMark: true,
+    },
+  },
+  {
+    id: "ink-marigold",
+    label: "Ink marigold",
+    aiPrompt:
+      "Near-black ink (#0E1013) with marigold (#F2A93B) accent blocks and white type, bold editorial poster. Large shapes, short labels only.",
+    og: {
+      background: "#0E1013",
+      ink: "#FFFFFF",
+      muted: "#9BA1A8",
+      accent: "#F2A93B",
+      panel: "#191D22",
+      pattern: "mesh",
+      titleAlign: "left",
+      showMark: true,
+    },
+  },
+  {
+    id: "sea-glass",
+    label: "Sea glass",
+    aiPrompt:
+      "Pale sea glass (#DDEDE8) background, deep teal-navy (#14464F) forms, warm coral (#F2715E) highlight, airy and calm. No stock photography.",
+    og: {
+      background: "#DDEDE8",
+      ink: "#0D2B30",
+      muted: "#5F7A7C",
+      accent: "#F2715E",
+      panel: "#CBE0DA",
+      pattern: "dots",
+      titleAlign: "left",
+      showMark: true,
+    },
+  },
+  {
+    id: "graphite-cyan",
+    label: "Graphite cyan",
+    aiPrompt:
+      "Graphite (#1A1D21) base with electric cyan (#22D3EE) accents, thin precise lines, instrumentation and telemetry mood. No fake tiny text.",
+    og: {
+      background: "#1A1D21",
+      ink: "#F0FDFF",
+      muted: "#8C969E",
+      accent: "#22D3EE",
+      panel: "#24282E",
+      pattern: "lines",
+      titleAlign: "left",
+      showMark: true,
+    },
+  },
+  {
+    id: "terracotta-slate",
+    label: "Terracotta slate",
+    aiPrompt:
+      "Terracotta (#B4502E) accent on cool slate (#2B3139) ground with warm off-white type, architectural and solid. One focal metaphor.",
+    og: {
+      background: "#2B3139",
+      ink: "#F6F1EA",
+      muted: "#9BA3AC",
+      accent: "#B4502E",
+      panel: "#373E48",
+      pattern: "none",
+      titleAlign: "center",
+      showMark: true,
+    },
+  },
+  {
+    id: "porcelain-cobalt",
+    label: "Porcelain cobalt",
+    aiPrompt:
+      "Porcelain white (#FAFAF8) canvas, cobalt (#1D4ED8) geometric accents, near-black type, swiss-poster restraint. Very generous whitespace.",
+    og: {
+      background: "#FAFAF8",
+      ink: "#0B0F19",
+      muted: "#6C727F",
+      accent: "#1D4ED8",
+      panel: "#EDEDE9",
+      pattern: "none",
+      titleAlign: "left",
+      showMark: true,
+    },
+  },
+  {
+    id: "basalt-chartreuse",
+    label: "Basalt chartreuse",
+    aiPrompt:
+      "Basalt gray-black (#17191A) with chartreuse (#D4E157) hairlines and large white type, brutalist technical poster. Sharp edges.",
+    og: {
+      background: "#17191A",
+      ink: "#FFFFFF",
+      muted: "#8F9496",
+      accent: "#D4E157",
+      panel: "#202324",
+      pattern: "lines",
+      titleAlign: "left",
+      showMark: true,
+    },
+  },
+  {
+    id: "mauve-ochre",
+    label: "Mauve ochre",
+    aiPrompt:
+      "Deep mauve (#2D1E2F) atmosphere with ochre (#D08C34) light and soft lilac mist, cinematic and quiet. One clear focal shape.",
+    og: {
+      background: "#2D1E2F",
+      ink: "#F7EFF5",
+      muted: "#AE9FB0",
+      accent: "#D08C34",
+      panel: "#3A2A3C",
+      pattern: "mesh",
+      titleAlign: "left",
+      showMark: true,
+    },
+  },
+  {
+    id: "deep-sea-coral",
+    label: "Deep sea coral",
+    aiPrompt:
+      "Deep sea blue (#0B2340) field, coral (#FF6B5A) accent forms, pale blue type, high contrast and modern. No third-party brands.",
+    og: {
+      background: "#0B2340",
+      ink: "#EAF2FF",
+      muted: "#8EA3BE",
+      accent: "#FF6B5A",
+      panel: "#143152",
       pattern: "dots",
       titleAlign: "left",
       showMark: true,

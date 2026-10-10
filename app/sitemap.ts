@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { SITE_URL } from "@/lib/seo";
+import { SITE_URL, slugifyCluster } from "@/lib/seo";
 import { getBlogListings } from "@/lib/cms/blog";
 import { getPortfolioSlugs } from "@/lib/cms/portfolio";
 import { getServiceSlugs } from "@/lib/cms/services";
@@ -12,6 +12,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/portfolio`, changeFrequency: "weekly", priority: 0.9 },
     { url: `${SITE_URL}/blog`, changeFrequency: "weekly", priority: 0.7 },
     { url: `${SITE_URL}/testimonials`, changeFrequency: "monthly", priority: 0.6 },
+    { url: `${SITE_URL}/editorial-policy`, changeFrequency: "yearly", priority: 0.4 },
     { url: `${SITE_URL}/contact`, changeFrequency: "yearly", priority: 0.6 },
     { url: `${SITE_URL}/schedule`, changeFrequency: "yearly", priority: 0.6 },
     { url: `${SITE_URL}/privacy`, changeFrequency: "yearly", priority: 0.3 },
@@ -37,12 +38,40 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  const blog: MetadataRoute.Sitemap = posts.map((post) => ({
-    url: `${SITE_URL}/blog/${post.slug}`,
-    lastModified: post.date ? new Date(post.date) : undefined,
-    changeFrequency: "yearly",
-    priority: 0.6,
+  // lastModified should track the real last edit, not the publish date, so the
+  // content refresh loop actually signals freshness. changeFrequency is a hint
+  // only, but "yearly" on a blog that gets revisited is the wrong hint.
+  const blog: MetadataRoute.Sitemap = posts.map((post) => {
+    const modified = post.updatedAt
+      ? new Date(post.updatedAt)
+      : post.date
+        ? new Date(post.date)
+        : undefined;
+    const ageDays = modified
+      ? (Date.now() - modified.getTime()) / 86_400_000
+      : Number.POSITIVE_INFINITY;
+    return {
+      url: `${SITE_URL}/blog/${post.slug}`,
+      lastModified: modified,
+      changeFrequency: ageDays < 365 ? ("monthly" as const) : ("yearly" as const),
+      priority: 0.6,
+    };
+  });
+
+  // Cluster hubs: the spokes already link up through isPartOf, so the hubs
+  // belong in the sitemap too.
+  const clusters = [
+    ...new Set(
+      posts
+        .map((p) => p.contentCluster?.trim())
+        .filter((c): c is string => Boolean(c))
+    ),
+  ];
+  const hubs: MetadataRoute.Sitemap = clusters.map((cluster) => ({
+    url: `${SITE_URL}/blog/topics/${slugifyCluster(cluster)}`,
+    changeFrequency: "weekly",
+    priority: 0.65,
   }));
 
-  return [...staticRoutes, ...services, ...portfolio, ...blog];
+  return [...staticRoutes, ...services, ...portfolio, ...hubs, ...blog];
 }

@@ -60,6 +60,11 @@ export default async function BlogDetailPage({ params }: PageProps) {
             ...post,
             tags: post.tags,
             updatedAt: post.updatedAt,
+            // Body feeds wordCount and entity resolution; schemaType varies
+            // the @type with the article's actual shape.
+            body: post.body,
+            contentCluster: post.contentCluster,
+            schemaType: post.schemaType,
           }),
           breadcrumbNode([
             { name: "Home", path: "/" },

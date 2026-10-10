@@ -8,12 +8,12 @@ datasource db {
 }
 
 model Subscriber {
-  id                 String    @id @default(cuid())
-  email              String    @unique
-  status             String    @default("active") // "active" | "unsubscribed"
-  unsubscribeToken   String    @unique
-  createdAt          DateTime  @default(now())
-  unsubscribedAt     DateTime?
+  id               String    @id @default(cuid())
+  email            String    @unique
+  status           String    @default("active") // "active" | "unsubscribed"
+  unsubscribeToken String    @unique
+  createdAt        DateTime  @default(now())
+  unsubscribedAt   DateTime?
 
   @@index([status])
   @@map("subscribers")
@@ -55,20 +55,26 @@ model BlogPost {
   updatedAt   DateTime @updatedAt
 
   // pipeline bookkeeping (optional/defaulted so CMS editor stays unchanged)
-  origin        String   @default("manual") // "manual" | "pipeline"
-  reviewState   String   @default("none") // "none" | "needs_review" | "approved"
-  reviewReasons Json     @default("[]") // string[] of failed checks
-  criticScore   Int?
-  briefId       String?
-  brief         Brief?   @relation(fields: [briefId], references: [id])
-  socialPosts   SocialPost[] @relation("BlogToSocial")
+  origin           String       @default("manual") // "manual" | "pipeline"
+  reviewState      String       @default("none") // "none" | "needs_review" | "approved"
+  reviewReasons    Json         @default("[]") // string[] of failed checks
+  criticScore      Int?
+  briefId          String?
+  brief            Brief?       @relation(fields: [briefId], references: [id])
+  socialPosts      SocialPost[] @relation("BlogToSocial")
   // when set and published=false, publish-due cron flips published at/after this time
-  publishAt     DateTime?
+  publishAt        DateTime?
   // SEO Wave 4: topical cluster + keyword for related posts / graph
-  contentCluster String @default("")
-  targetKeyword  String @default("")
+  contentCluster   String       @default("")
+  targetKeyword    String       @default("")
   // Set after new-post mail is sent to the subscriber list (once per post).
   newsletterSentAt DateTime?
+  // Drawn per post by the variety plan: BlogPosting | TechArticle | HowTo.
+  // Varying the schema type is both more accurate per article shape and one
+  // less thing that is identical across every post on the site.
+  schemaType       String       @default("BlogPosting")
+  // Visible "Updated on" date, set by the content refresh loop.
+  lastReviewedAt   DateTime?
 
   @@index([published, sortOrder])
   @@index([reviewState])
@@ -78,23 +84,23 @@ model BlogPost {
 }
 
 model Brief {
-  id                 String    @id @default(cuid())
+  id                 String     @id @default(cuid())
   pillar             String // "Build/Laravel", "Timely", "Business/Upwork", ...
   topic              String // short specific phrase
-  targetKeyword      String    @default("")
-  angle              String    @default("")
-  realExample        String    @default("") // optional real, verified detail. Never fabricated.
-  requiresLiveSource Boolean   @default(false) // true for Timely/news briefs -> forces web verification
-  status             String    @default("queued") // "queued" | "used" | "skipped"
+  targetKeyword      String     @default("")
+  angle              String     @default("")
+  realExample        String     @default("") // optional real, verified detail. Never fabricated.
+  requiresLiveSource Boolean    @default(false) // true for Timely/news briefs -> forces web verification
+  status             String     @default("queued") // "queued" | "used" | "skipped"
   scheduledFor       DateTime?
   usedAt             DateTime?
   // Manual generate / provenance
-  origin             String    @default("topic-bank") // topic-bank | opportunity | manual
-  sourceUrl          String    @default("")
-  formatHint         String    @default("")
-  extraInstructions  String    @default("")
+  origin             String     @default("topic-bank") // topic-bank | opportunity | manual
+  sourceUrl          String     @default("")
+  formatHint         String     @default("")
+  extraInstructions  String     @default("")
   posts              BlogPost[]
-  createdAt          DateTime  @default(now())
+  createdAt          DateTime   @default(now())
 
   @@index([status, scheduledFor])
   @@index([origin])
@@ -138,7 +144,9 @@ model GenerationLog {
   @@map("generation_logs")
 }
 
-/** SEO Wave 3: post-publish follow-up topics. Prefer high scores over topic-bank FIFO. */
+/**
+ * SEO Wave 3: post-publish follow-up topics. Prefer high scores over topic-bank FIFO.
+ */
 model TopicOpportunity {
   id                    String   @id @default(cuid())
   topic                 String
@@ -160,6 +168,83 @@ model TopicOpportunity {
   @@index([status, priority])
   @@index([cluster])
   @@map("topic_opportunities")
+}
+
+/**
+ * Every randomized decision from a pipeline run. Powers the no-repeat window
+ * in lib/pipeline/variety/sampler.ts and the variety audit.
+ */
+model VarietyChoice {
+  id         String   @id @default(cuid())
+  runId      String
+  dimension  String // "publishHour" | "structure" | "palette" | "lengthBand" | ...
+  value      String
+  blogPostId String   @default("")
+  createdAt  DateTime @default(now())
+
+  @@index([dimension, createdAt])
+  @@index([runId])
+  @@map("variety_choices")
+}
+
+/**
+ * Per-ISO-week cadence draw. Stable inside the week (a row, not a hash) so
+ * every run that week agrees, but not predictable across weeks.
+ */
+model PipelineWeek {
+  id            String   @id @default(cuid())
+  weekStart     DateTime @unique // Monday 00:00 UTC
+  targetPosts   Int
+  mode          String   @default("normal") // "quiet" | "normal" | "burst"
+  pillarWeights Json     @default("{}")
+  refreshesDone Int      @default(0)
+  createdAt     DateTime @default(now())
+
+  @@map("pipeline_weeks")
+}
+
+/**
+ * Real, verified, anonymized material from Ali's actual work. The generator
+ * may only cite first-hand experience that exists in here. Never fabricated.
+ */
+/**
+ * The day's generation decision, drawn once and stored. The cron tick runs
+ * every 10 minutes; without this the daily probability would be re-rolled 144
+ * times a day and would always fire.
+ */
+model PipelineDay {
+  id    String  @id @default(cuid())
+  day   String  @unique // local YYYY-MM-DD in pipeline.timezone
+  go    Boolean @default(false)
+  // How many posts today may produce. 2 only on burst weeks, so a second
+  // same-day post is possible without it ever becoming the pattern.
+  slots Int     @default(1)
+
+  generateAt     DateTime? // when the first run may start
+  secondAt       DateTime? // when a second run may start, if slots is 2
+  generatedCount Int       @default(0)
+  reason         String    @default("")
+  generatedAt    DateTime? // first claim, kept for reporting
+  createdAt      DateTime  @default(now())
+
+  @@map("pipeline_days")
+}
+
+model Receipt {
+  id         String    @id @default(cuid())
+  cluster    String    @default("") // "Laravel", "AWS", "Databases", "Upwork", ...
+  kind       String    @default("incident") // incident | number | decision | artifact | client
+  summary    String // one line, what happened
+  detail     String    @default("") // the specifics: numbers, log lines, query plans
+  outcome    String    @default("") // what changed after
+  usedCount  Int       @default(0)
+  lastUsedAt DateTime?
+  active     Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([active, cluster])
+  @@map("receipts")
 }
 
 model Service {

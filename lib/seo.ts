@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { site } from "@/content/site";
+import { resolveEntities } from "@/lib/seo-entities";
 
 /** Single canonical host for the whole site. Matches the live deployment. */
 export const SITE_URL = "https://www.twixrsolutions.com";
@@ -158,6 +159,7 @@ export function personNode(): Node {
     "@id": PERSON_ID,
     name: site.name,
     url: absoluteUrl("/about"),
+    image: absoluteUrl("/ali-raza.jpg"),
     jobTitle: site.role,
     description: site.tagline,
     worksFor: { "@id": ORG_ID },
@@ -226,6 +228,21 @@ export function breadcrumbNode(
   };
 }
 
+/** Schema type varies with the article's shape, drawn per post by the pipeline. */
+export type ArticleSchemaType = "BlogPosting" | "TechArticle" | "HowTo";
+
+const ARTICLE_SCHEMA_TYPES: ArticleSchemaType[] = [
+  "BlogPosting",
+  "TechArticle",
+  "HowTo",
+];
+
+/** Narrow a stored string to a known type, never emitting an invalid @type. */
+export function asArticleSchemaType(value?: string): ArticleSchemaType {
+  const hit = ARTICLE_SCHEMA_TYPES.find((t) => t === value);
+  return hit ?? "BlogPosting";
+}
+
 export function articleNode(post: {
   slug: string;
   title: string;
@@ -235,6 +252,11 @@ export function articleNode(post: {
   author?: string;
   tags?: readonly string[];
   updatedAt?: string;
+  /** Markdown body, used for wordCount and entity resolution. */
+  body?: string;
+  contentCluster?: string;
+  /** Drawn by the variety plan; anything unrecognized falls back to BlogPosting. */
+  schemaType?: string;
 }): Node {
   const url = absoluteUrl(`/blog/${post.slug}`);
   const imageUrl = socialImage(
@@ -242,8 +264,25 @@ export function articleNode(post: {
       ? post.image
       : absoluteUrl(post.image || DEFAULT_OG)
   );
+
+  const body = post.body ?? "";
+  const wordCount = body
+    ? body.trim().split(/\s+/).filter(Boolean).length
+    : undefined;
+
+  // Entity linking: tells a generative engine which "Laravel" this is about,
+  // rather than leaving it to infer from the surrounding prose.
+  const entities = resolveEntities(post.tags ?? [], `${post.title} ${body}`);
+  const entityNodes = entities.map((e) => ({
+    "@type": "Thing",
+    name: e.name,
+    sameAs: e.sameAs,
+  }));
+
+  const cluster = post.contentCluster?.trim();
+
   return {
-    "@type": "BlogPosting",
+    "@type": asArticleSchemaType(post.schemaType),
     headline: post.title,
     description: post.excerpt,
     image: imageUrl,
@@ -254,10 +293,32 @@ export function articleNode(post: {
     author: { "@id": PERSON_ID, name: post.author ?? site.name },
     publisher: { "@id": ORG_ID },
     inLanguage: "en",
+    ...(wordCount ? { wordCount } : {}),
+    ...(entityNodes.length
+      ? { about: entityNodes.slice(0, 3), mentions: entityNodes }
+      : {}),
+    ...(cluster
+      ? {
+          isPartOf: {
+            "@type": "CollectionPage",
+            name: cluster,
+            url: absoluteUrl(`/blog/topics/${slugifyCluster(cluster)}`),
+          },
+        }
+      : {}),
     ...(post.tags?.length
       ? { keywords: post.tags.join(", "), articleSection: post.tags[0] }
       : {}),
   };
+}
+
+/** Shared cluster-to-path rule, used by schema and the hub routes. */
+export function slugifyCluster(cluster: string): string {
+  return cluster
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
 }
 
 export function serviceNode(service: {

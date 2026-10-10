@@ -53,6 +53,7 @@ const publishingItems: NavItem[] = [
   { title: "Generate", href: "/admin/blog/generate", icon: Sparkles },
   { title: "X posts", href: "/admin/x", icon: AtSign },
   { title: "Review", href: "/admin/review", icon: ClipboardCheck },
+  { title: "Receipts", href: "/admin/receipts", icon: FileText },
 ];
 
 const catalogueItems: NavItem[] = [

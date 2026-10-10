@@ -5,11 +5,24 @@ import { createRunId, logStage } from "@/lib/pipeline/log";
 import { notifyRunSummary } from "@/lib/pipeline/notify";
 import { runPublishLinkedin } from "@/lib/pipeline/run-publish-linkedin";
 import { notifySubscribersOfPost } from "@/lib/newsletter/notify";
+import { runRefresh } from "@/lib/pipeline/refresh";
+import { submitToIndexNow } from "@/lib/seo-indexnow";
+import { absoluteUrl } from "@/lib/seo";
+import { auditShape, auditVariety, formatAuditText } from "@/lib/pipeline/variety/audit";
 
 export type RunPublishDueOptions = {
   dryRun?: boolean;
-  /** Max LinkedIn posts to attempt this run (Hobby cron is once/day). */
+  /** Max LinkedIn posts to attempt in one run. */
   maxLinkedIn?: number;
+  /** Set false on the high-frequency tick to skip the weekly refresh check. */
+  withRefresh?: boolean;
+  /** Set false to skip the variety audit. */
+  withAudit?: boolean;
+  /**
+   * Suppress "nothing to do" logging. Set on the 10-minute tick: without it
+   * the GenerationLog grows by ~288 empty rows a day.
+   */
+  quiet?: boolean;
 };
 
 export type RunPublishDueResult = {
@@ -37,6 +50,7 @@ function revalidatePublic() {
 export async function publishDueBlogs(options: {
   dryRun?: boolean;
   runId: string;
+  quiet?: boolean;
 }): Promise<number> {
   const due = await withDb(async () => {
     const db = requireDb();
@@ -55,12 +69,14 @@ export async function publishDueBlogs(options: {
   }, []);
 
   if (due.length === 0) {
-    await logStage({
-      runId: options.runId,
-      stage: "publish",
-      status: "skip",
-      message: "No due blogs",
-    });
+    if (!options.quiet) {
+      await logStage({
+        runId: options.runId,
+        stage: "publish",
+        status: "skip",
+        message: "No due blogs",
+      });
+    }
     return 0;
   }
 
@@ -88,6 +104,12 @@ export async function publishDueBlogs(options: {
 
   revalidatePublic();
 
+  // Push the new URLs to IndexNow so Bing (and the LLM search tools reading
+  // its index) pick them up now instead of on the next crawl.
+  const indexNow = await submitToIndexNow(
+    due.map((row) => absoluteUrl(`/blog/${row.slug}`))
+  );
+
   for (const row of due) {
     try {
       await notifySubscribersOfPost(row.id);
@@ -104,6 +126,7 @@ export async function publishDueBlogs(options: {
     meta: {
       ids: due.map((b) => b.id),
       slugs: due.map((b) => b.slug),
+      indexNow,
     },
   });
 
@@ -133,10 +156,11 @@ export async function runPublishDue(
       };
     }
 
-    const blogsPublished = await publishDueBlogs({ dryRun, runId });
+    const quiet = Boolean(options.quiet);
+    const blogsPublished = await publishDueBlogs({ dryRun, runId, quiet });
 
     for (let i = 0; i < maxLinkedIn; i++) {
-      const result = await runPublishLinkedin({ dryRun });
+      const result = await runPublishLinkedin({ dryRun, quiet });
       linkedIn.push({
         status: result.status,
         message: result.message,
@@ -145,10 +169,49 @@ export async function runPublishDue(
       if (result.status === "skip") break;
     }
 
+    // The weekly refresh rides along here: it is cheap to check (one indexed
+    // query) and it keeps the archive from aging silently.
+    let refresh: Awaited<ReturnType<typeof runRefresh>> | null = null;
+    if (!dryRun && options.withRefresh !== false) {
+      refresh = await runRefresh({ dryRun });
+      if (refresh.status !== "skip") {
+        await logStage({
+          runId,
+          stage: "refresh",
+          status: refresh.status === "ok" ? "ok" : "warn",
+          message: refresh.message,
+        });
+      }
+    }
+
+    // Variety audit: randomization that is never measured is trusted on faith.
+    if (options.withAudit !== false) {
+      try {
+        const [variety, shape] = await Promise.all([
+          auditVariety(20),
+          auditShape(20),
+        ]);
+        await logStage({
+          runId,
+          stage: "variety",
+          status: variety.healthy ? "ok" : "warn",
+          message: formatAuditText(variety, shape),
+          meta: { variety, shape },
+        });
+      } catch (error) {
+        console.error("Variety audit failed:", error);
+      }
+    }
+
     const liOk = linkedIn.filter((r) => r.status === "ok").length;
     const liFail = linkedIn.filter((r) => r.status === "fail").length;
 
-    if (blogsPublished === 0 && liOk === 0 && liFail === 0) {
+    if (
+      blogsPublished === 0 &&
+      liOk === 0 &&
+      liFail === 0 &&
+      (!refresh || refresh.status === "skip")
+    ) {
       return {
         runId,
         status: "skip",
@@ -162,6 +225,7 @@ export async function runPublishDue(
       blogsPublished ? `${blogsPublished} blog(s)` : null,
       liOk ? `${liOk} LinkedIn` : null,
       liFail ? `${liFail} LinkedIn failed` : null,
+      refresh && refresh.status === "ok" ? `refreshed ${refresh.slug}` : null,
     ]
       .filter(Boolean)
       .join(", ");

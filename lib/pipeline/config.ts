@@ -38,18 +38,62 @@ export const pipeline = {
   notifyTo: process.env.PIPELINE_NOTIFY_TO ?? process.env.CONTACT_TO_EMAIL ?? "",
   models: {
     blog: process.env.ANTHROPIC_BLOG_MODEL ?? "claude-sonnet-4-6",
+    /**
+     * Rotation slots. Different models produce genuinely different prose
+     * texture, which no amount of prompt variation reproduces. Weighted in
+     * pipeline.variety.modelWeights (default 70 blog / 20 deep / 10 fast).
+     * Note the API shapes differ per model - see lib/pipeline/model-capabilities.ts.
+     */
+    blogDeep: process.env.ANTHROPIC_BLOG_DEEP_MODEL ?? "claude-opus-5-5",
+    blogFast: process.env.ANTHROPIC_BLOG_FAST_MODEL ?? "claude-haiku-5-5",
     social: process.env.ANTHROPIC_SOCIAL_MODEL ?? "claude-haiku-4-5",
     image: process.env.GEMINI_IMAGE_MODEL ?? "gemini-3.1-flash-image",
     critic: process.env.GEMINI_CRITIC_MODEL ?? "gemini-3.6-flash",
   },
+  /** Author timezone. All human-shaped publish hours are drawn in this zone. */
+  timezone: process.env.PIPELINE_TIMEZONE ?? "Asia/Karachi",
+  /** Pin to reproduce a past run's variety plan. Empty means fresh entropy. */
+  varietySeed: process.env.PIPELINE_VARIETY_SEED ?? "",
+  /** How many recent posts a dimension must differ from. */
+  varietyWindow: Number(process.env.PIPELINE_VARIETY_WINDOW ?? 5),
+  variety: {
+    /** Week mode weights: quiet | normal | burst. */
+    weekModes: process.env.PIPELINE_WEEK_MODE_WEIGHTS ?? "",
+    /** Min hours between two pipeline blogs going live. */
+    minGapHoursMin: Number(process.env.PIPELINE_MIN_GAP_HOURS_MIN ?? 5),
+    minGapHoursMax: Number(process.env.PIPELINE_MIN_GAP_HOURS_MAX ?? 30),
+    maxPerDay: Number(process.env.PIPELINE_MAX_PER_DAY ?? 2),
+    /** Never allow a silence longer than this, whatever the dice say. */
+    maxSilentDays: Number(process.env.PIPELINE_MAX_SILENT_DAYS ?? 6),
+    lengthBands: process.env.PIPELINE_LENGTH_BANDS ?? "",
+    imageCounts: process.env.PIPELINE_IMAGE_COUNT_WEIGHTS ?? "",
+    coverModes: process.env.PIPELINE_COVER_MODE_WEIGHTS ?? "",
+    modelWeights: process.env.PIPELINE_MODEL_WEIGHTS ?? "",
+    tempMin: Number(process.env.PIPELINE_TEMP_MIN ?? 0.75),
+    tempMax: Number(process.env.PIPELINE_TEMP_MAX ?? 1.0),
+    secondPassProb: Number(process.env.PIPELINE_SECOND_PASS_PROB ?? 0.25),
+    linkedinAttachProb: Number(
+      process.env.PIPELINE_LINKEDIN_ATTACH_PROB ?? 0.78
+    ),
+    /** Posts older than this are eligible for the refresh loop. */
+    refreshMinAgeDays: Number(process.env.PIPELINE_REFRESH_MIN_AGE_DAYS ?? 90),
+    refreshPerWeek: Number(process.env.PIPELINE_REFRESH_PER_WEEK ?? 2),
+  },
+  /** IndexNow key file in public/. Empty disables submission. */
+  indexNowKey: process.env.INDEXNOW_KEY ?? "",
   linkedin: {
     token: process.env.LINKEDIN_ACCESS_TOKEN ?? "",
     person: process.env.LINKEDIN_PERSON_URN ?? "",
     version: process.env.LINKEDIN_API_VERSION ?? "202601",
   },
   defaults: {
-    author: "Twixr Solutions",
-    authorRole: "Senior Full Stack Engineer",
-    authorImage: "https://api.dicebear.com/7.x/avataaars/svg?seed=Ali",
+    // A named human with a real photo. Google cross-checks the visible byline
+    // against the Person node in lib/seo.ts, and a generated cartoon avatar is
+    // the clearest machine-authorship signal a blog can carry.
+    author: process.env.PIPELINE_AUTHOR_NAME ?? "Ali Raza",
+    authorRole:
+      process.env.PIPELINE_AUTHOR_ROLE ??
+      "Senior Full Stack Engineer, Twixr Solutions",
+    authorImage: process.env.PIPELINE_AUTHOR_IMAGE ?? "/ali-raza.jpg",
   },
 };

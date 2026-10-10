@@ -1,8 +1,10 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { Brief } from "@prisma/client";
 import { pipeline } from "@/lib/pipeline/config";
+import { capsFor } from "@/lib/pipeline/model-capabilities";
 import {
   buildBlogPrompt,
+  buildSecondPassPrompt,
   type BlogPromptSeoContext,
 } from "@/lib/pipeline/prompt";
 
@@ -84,34 +86,117 @@ const BLOG_DRAFT_TOOL = {
   },
 };
 
-export async function generateBlog(
-  brief: Brief,
-  seo?: BlogPromptSeoContext
-): Promise<BlogDraft> {
+export type BlogModelOptions = {
+  /** Drawn by the variety plan. Falls back to the configured blog model. */
+  model?: string;
+  /** Null or undefined when the model rejects a non-default temperature. */
+  temperature?: number | null;
+  /** Null or undefined when the model rejects output_config.effort. */
+  effort?: "low" | "medium" | "high" | null;
+};
+
+function client(): Anthropic {
   const apiKey = process.env.ANTHROPIC_API_KEY?.trim();
   if (!apiKey) {
     throw new Error("ANTHROPIC_API_KEY is not set");
   }
+  return new Anthropic({ apiKey });
+}
 
-  const { system, user } = buildBlogPrompt(brief, seo);
-  const client = new Anthropic({ apiKey });
-  const response = await client.messages.create({
-    model: pipeline.models.blog,
-    max_tokens: 8192,
+/**
+ * One blog-draft call, shaped for whatever model was drawn.
+ *
+ * Opus 5.5 and Sonnet 5.5 reject forced tool_choice, so those models get
+ * `auto` plus the explicit instruction already in the system prompt, and one
+ * corrective retry if they answer in prose anyway.
+ */
+async function callDraftTool(
+  system: string,
+  messages: Anthropic.MessageParam[],
+  opts: BlogModelOptions
+): Promise<BlogDraft> {
+  const model = opts.model?.trim() || pipeline.models.blog;
+  const caps = capsFor(model);
+
+  const params: Anthropic.MessageCreateParamsNonStreaming = {
+    model,
+    // Generous, because a deep-dive draft plus adaptive thinking on the
+    // current-generation models can run long, and a truncated tool call is a
+    // lost run.
+    max_tokens: 16000,
     system,
     tools: [BLOG_DRAFT_TOOL],
-    tool_choice: { type: "tool", name: "submit_blog_draft" },
-    messages: [{ role: "user", content: user }],
-  });
+    tool_choice: caps.forcedToolChoice
+      ? { type: "tool", name: "submit_blog_draft" }
+      : { type: "auto" },
+    messages,
+  };
+  if (caps.temperature && typeof opts.temperature === "number") {
+    params.temperature = opts.temperature;
+  }
+  if (caps.effort && opts.effort) {
+    params.output_config = { effort: opts.effort };
+  }
 
-  const toolBlock = response.content.find(
+  const api = client();
+  let response = await api.messages.create(params);
+  let toolBlock = response.content.find(
     (block) => block.type === "tool_use" && block.name === "submit_blog_draft"
   );
+
+  if (!toolBlock && !caps.forcedToolChoice) {
+    // The model answered in prose. Ask once more, naming the tool.
+    response = await api.messages.create({
+      ...params,
+      messages: [
+        ...messages,
+        { role: "assistant", content: response.content },
+        {
+          role: "user",
+          content:
+            "You replied with prose. Call the submit_blog_draft tool now with the finished draft. Do not reply with text.",
+        },
+      ],
+    });
+    toolBlock = response.content.find(
+      (block) => block.type === "tool_use" && block.name === "submit_blog_draft"
+    );
+  }
+
   if (!toolBlock || toolBlock.type !== "tool_use") {
-    throw new Error("Model did not return a blog draft tool payload");
+    throw new Error(
+      `Model did not return a blog draft tool payload (model=${model}, stop_reason=${response.stop_reason})`
+    );
   }
 
   return normalizeDraft(toolBlock.input as BlogDraft);
+}
+
+export async function generateBlog(
+  brief: Brief,
+  seo?: BlogPromptSeoContext,
+  opts: BlogModelOptions = {}
+): Promise<BlogDraft> {
+  const { system, user } = buildBlogPrompt(brief, seo);
+  return callDraftTool(system, [{ role: "user", content: user }], opts);
+}
+
+/**
+ * Optional second pass: hand the draft back and ask for a tightening edit.
+ *
+ * This is one of the strongest texture levers available. A first draft from a
+ * fixed prompt has a recognisable rhythm; a draft that has been cut by 15
+ * percent and had its opening rewritten does not. Runs on a drawn fraction of
+ * posts, so the feed contains both.
+ */
+export async function reviseBlogDraft(
+  brief: Brief,
+  draft: BlogDraft,
+  seo?: BlogPromptSeoContext,
+  opts: BlogModelOptions = {}
+): Promise<BlogDraft> {
+  const { system, user } = buildSecondPassPrompt(brief, draft, seo);
+  return callDraftTool(system, [{ role: "user", content: user }], opts);
 }
 
 function normalizeDraft(raw: BlogDraft): BlogDraft {
@@ -147,7 +232,7 @@ function normalizeDraft(raw: BlogDraft): BlogDraft {
             alt: String(p?.alt ?? "").trim(),
           }))
           .filter((p) => p.prompt)
-          .slice(0, 3)
+          .slice(0, 4)
       : [],
     sources: Array.isArray(raw.sources)
       ? raw.sources.map((s) => String(s).trim()).filter(Boolean)

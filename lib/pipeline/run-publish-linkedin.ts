@@ -7,6 +7,11 @@ import { validateLinkedIn } from "@/lib/pipeline/validators";
 
 export type RunPublishOptions = {
   dryRun?: boolean;
+  /**
+   * Suppress "nothing to do" logging. The publish tick runs every 10 minutes,
+   * so logging each no-op would write ~144 rows a day for no information.
+   */
+  quiet?: boolean;
 };
 
 export type RunPublishResult = {
@@ -48,12 +53,14 @@ export async function runPublishLinkedin(
     }, null);
 
     if (!post) {
-      await logStage({
-        runId,
-        stage: "publish",
-        status: "skip",
-        message: "No due LinkedIn posts",
-      });
+      if (!options.quiet) {
+        await logStage({
+          runId,
+          stage: "publish",
+          status: "skip",
+          message: "No due LinkedIn posts",
+        });
+      }
       return { runId, status: "skip", message: "Nothing due" };
     }
 

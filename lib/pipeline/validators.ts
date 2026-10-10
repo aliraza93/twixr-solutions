@@ -36,16 +36,39 @@ export function dashCheck(text: string): string[] {
   return reasons;
 }
 
-export function hashtagCheck(text: string): string[] {
+/**
+ * Hashtag count check.
+ *
+ * The count is drawn per post now (0 to 5), so a fixed 4-to-6 rule would fail
+ * the pipeline's own output. When an expected count is supplied, allow a drift
+ * of one either way; with no expectation, fall back to a permissive 0-to-6.
+ */
+export function hashtagCheck(text: string, expected?: number): string[] {
   const lines = text
     .split("\n")
     .map((l) => l.trim())
     .filter(Boolean);
   const last = lines[lines.length - 1] ?? "";
   const tags = last.match(/#[\w]+/g) ?? [];
-  if (tags.length < 4 || tags.length > 6) {
+
+  if (expected === undefined) {
+    if (tags.length > 6) {
+      return [`Too many hashtags (found ${tags.length}, max 6)`];
+    }
+    return [];
+  }
+
+  if (expected === 0) {
+    return tags.length === 0
+      ? []
+      : [`Plan asked for no hashtags but found ${tags.length}`];
+  }
+
+  const min = Math.max(1, expected - 1);
+  const max = Math.min(6, expected + 1);
+  if (tags.length < min || tags.length > max) {
     return [
-      `Hashtag line must have 4-6 tags (found ${tags.length}): "${last.slice(0, 80)}"`,
+      `Hashtag count ${tags.length} outside planned ${min}-${max}: "${last.slice(0, 80)}"`,
     ];
   }
   return [];
@@ -63,8 +86,10 @@ export function lengthCheck(
     return [];
   }
   const words = text.trim().split(/\s+/).filter(Boolean).length;
-  if (words < 500) {
-    return [`Blog body too short (${words} words, need >= 500)`];
+  // The length band is drawn per post and the shortest band starts at ~420
+  // words, so the hard floor sits below it. Depth fit is a soft warning.
+  if (words < 380) {
+    return [`Blog body too short (${words} words, need >= 380)`];
   }
   return [];
 }
@@ -295,11 +320,14 @@ export async function validateBlog(
   return { ok: reasons.length === 0, reasons };
 }
 
-export async function validateLinkedIn(text: string): Promise<ValidationResult> {
+export async function validateLinkedIn(
+  text: string,
+  opts?: { expectedHashtags?: number }
+): Promise<ValidationResult> {
   const reasons: string[] = [
     ...bannedPhrases(text),
     ...dashCheck(text),
-    ...hashtagCheck(text),
+    ...hashtagCheck(text, opts?.expectedHashtags),
     ...lengthCheck(text, "linkedin"),
   ];
   return { ok: reasons.length === 0, reasons };

@@ -39,17 +39,27 @@ describe("dashCheck", () => {
 });
 
 describe("hashtagCheck", () => {
-  it("requires 4-6 hashtags on the last non-empty line", () => {
-    const tooFew = "Hook\n\nBody\n\n#Laravel #WebDev";
-    assert.ok(hashtagCheck(tooFew).length > 0);
+  // The count is drawn per post now, so with no expectation the check only
+  // guards the upper bound; the planned count is what gets enforced.
+  it("without an expectation, allows any count up to 6", () => {
+    assert.deepEqual(hashtagCheck("Hook\n\nBody\n\n#Laravel #WebDev"), []);
+    assert.deepEqual(
+      hashtagCheck("Hook\n\nBody text here\n\n#Laravel #NestJS #AWS #WebDev #Upwork"),
+      []
+    );
+    assert.ok(hashtagCheck("Hook\n\nBody\n\n#A #B #C #D #E #F #G").length > 0);
+  });
 
-    const tooMany =
-      "Hook\n\nBody\n\n#A #B #C #D #E #F #G";
-    assert.ok(hashtagCheck(tooMany).length > 0);
+  it("enforces the planned count within a drift of one", () => {
+    const four = "Hook\n\nBody\n\n#A #B #C #D";
+    assert.deepEqual(hashtagCheck(four, 4), []);
+    assert.deepEqual(hashtagCheck(four, 5), []);
+    assert.ok(hashtagCheck(four, 2).length > 0);
+  });
 
-    const ok =
-      "Hook\n\nBody text here\n\n#Laravel #NestJS #AWS #WebDev #Upwork";
-    assert.deepEqual(hashtagCheck(ok), []);
+  it("requires a bare post when the plan asked for no hashtags", () => {
+    assert.deepEqual(hashtagCheck("Hook\n\nBody with no tags", 0), []);
+    assert.ok(hashtagCheck("Hook\n\nBody\n\n#Laravel", 0).length > 0);
   });
 });
 

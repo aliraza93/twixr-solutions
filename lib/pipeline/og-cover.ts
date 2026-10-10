@@ -133,20 +133,53 @@ function mark(style: BrandStyle): ReactNode {
   );
 }
 
+export type OgLayout = {
+  id: string;
+  titlePosition: "top" | "center" | "bottom";
+  showCategory: boolean;
+  showRule: boolean;
+  typeScale: "large" | "regular";
+};
+
+const DEFAULT_OG_LAYOUT: OgLayout = {
+  id: "top-chip-rule",
+  titlePosition: "top",
+  showCategory: true,
+  showRule: true,
+  typeScale: "regular",
+};
+
 export async function renderOgCover(input: {
   title: string;
   category: string;
   slug?: string;
   /** Force a style; otherwise pick randomly each run */
   styleId?: string;
+  /** Drawn layout, so the typographic covers are not all the same card. */
+  layout?: OgLayout;
 }): Promise<{ url: string; styleId: string }> {
   const active = input.styleId
     ? brandStyleById(input.styleId)
     : pickBrandStyle();
+  const layout = input.layout ?? DEFAULT_OG_LAYOUT;
 
   const title = input.title.slice(0, 110);
   const category = (input.category || "Insights").toUpperCase();
   const align = active.og.titleAlign;
+  const titleSize =
+    layout.typeScale === "large"
+      ? title.length > 70
+        ? 58
+        : 72
+      : title.length > 70
+        ? 48
+        : 58;
+  const verticalAlign =
+    layout.titlePosition === "top"
+      ? "flex-start"
+      : layout.titlePosition === "center"
+        ? "center"
+        : "flex-end";
 
   const root: ReactNode = createElement(
     "div",
@@ -190,20 +223,22 @@ export async function renderOgCover(input: {
         },
       },
       active.og.showMark ? mark(active) : null,
-      createElement(
-        "div",
-        {
-          style: {
-            display: "flex",
-            fontSize: 22,
-            letterSpacing: "0.16em",
-            textTransform: "uppercase" as const,
-            color: active.og.accent,
-            fontWeight: 600,
-          },
-        },
-        category
-      )
+      layout.showCategory
+        ? createElement(
+            "div",
+            {
+              style: {
+                display: "flex",
+                fontSize: 22,
+                letterSpacing: "0.16em",
+                textTransform: "uppercase" as const,
+                color: active.og.accent,
+                fontWeight: 600,
+              },
+            },
+            category
+          )
+        : null
     ),
     createElement(
       "div",
@@ -213,6 +248,8 @@ export async function renderOgCover(input: {
           flexDirection: "column",
           gap: 20,
           position: "relative",
+          flexGrow: 1,
+          justifyContent: verticalAlign,
           alignItems: align === "center" ? "center" : "flex-start",
           textAlign: align,
           maxWidth: align === "center" ? 980 : 920,
@@ -224,7 +261,7 @@ export async function renderOgCover(input: {
         {
           style: {
             display: "flex",
-            fontSize: title.length > 70 ? 48 : 58,
+            fontSize: titleSize,
             lineHeight: 1.08,
             fontWeight: 700,
             color: active.og.ink,
@@ -233,14 +270,16 @@ export async function renderOgCover(input: {
         },
         title
       ),
-      createElement("div", {
-        style: {
-          width: 96,
-          height: 6,
-          background: active.og.accent,
-          borderRadius: 4,
-        },
-      })
+      layout.showRule
+        ? createElement("div", {
+            style: {
+              width: 96,
+              height: 6,
+              background: active.og.accent,
+              borderRadius: 4,
+            },
+          })
+        : null
     ),
     createElement(
       "div",
@@ -263,19 +302,24 @@ export async function renderOgCover(input: {
         },
         "twixrsolutions.com"
       ),
-      createElement(
-        "div",
-        {
-          style: {
-            fontSize: 16,
-            color: active.og.accent,
-            letterSpacing: "0.12em",
-            textTransform: "uppercase" as const,
-            fontWeight: 600,
-          },
-        },
-        active.label
-      )
+      // Never print the palette name: it is an internal label, it leaks the
+      // generator, and it repeats on every cover. Show the category here only
+      // when the header chip is off.
+      layout.showCategory
+        ? null
+        : createElement(
+            "div",
+            {
+              style: {
+                fontSize: 16,
+                color: active.og.accent,
+                letterSpacing: "0.12em",
+                textTransform: "uppercase" as const,
+                fontWeight: 600,
+              },
+            },
+            category
+          )
     )
   );
 

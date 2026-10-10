@@ -10,18 +10,14 @@ import { pipeline } from "@/lib/pipeline/config";
 import type { BlogDraft } from "@/lib/pipeline/generate-blog";
 import { seoImageFilename } from "@/lib/pipeline/seo/image-hygiene";
 import { renderLinkedInCard } from "@/lib/pipeline/og-cover";
+import { INLINE_IMAGE_KINDS, RENDER_MODIFIERS } from "@/lib/pipeline/variety/banks";
+import type { VarietyPlan } from "@/lib/pipeline/variety/plan";
 import sharp from "sharp";
 
-const MAX_INLINE = 3;
-const MIN_INLINE = 2;
+/** Hard ceiling. The per-run count is drawn by the variety plan. */
+const MAX_INLINE = 4;
 
-const INLINE_KINDS = [
-  "architecture or data-flow diagram with clear labeled boxes and arrows",
-  "before/after comparison panel (two panels, minimal labels)",
-  "abstract technical metaphor illustration (no people, no logos)",
-  "clean checklist or decision-tree visual",
-  "code-window style graphic with large readable snippets (6-10 lines max)",
-] as const;
+const INLINE_KINDS = INLINE_IMAGE_KINDS.map((k) => k.prompt);
 
 function client(): GoogleGenAI {
   const apiKey = process.env.GOOGLE_AI_API_KEY?.trim();
@@ -72,17 +68,31 @@ function extractImageBytes(response: unknown): {
   return null;
 }
 
-function withBrandStyle(prompt: string, style: BrandStyle): string {
+/**
+ * Palette crossed with a render modifier.
+ *
+ * 24 palettes on their own repeat visibly within a couple of months. Crossing
+ * them with 10 rendering styles gives 240 distinct looks from two small banks,
+ * so a reader scrolling the archive does not see one house style.
+ */
+function withBrandStyle(
+  prompt: string,
+  style: BrandStyle,
+  modifier?: { id: string; prompt: string }
+): string {
   const { background, accent, ink, muted, panel } = style.og;
   return [
     prompt.trim(),
     "",
     `Visual direction: ${style.aiPrompt}`,
+    modifier ? `Rendering style: ${modifier.prompt}` : "",
     `Colors for this image only: background ${background}, accent ${accent}, ink ${ink}, muted ${muted}, panel ${panel}.`,
     "Match these hexes. Do not use other palettes.",
     "Never paint style names, palette names, hex codes, or the words Brand style onto the image.",
     "No third-party logos. No stock-photo people.",
-  ].join("\n");
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 function nextStyle(exclude: string[] = []): BrandStyle {
@@ -122,14 +132,18 @@ export async function stripImageMetadata(
 /** Generate raw (metadata-stripped) image bytes from the model, without uploading. */
 export async function renderImageBytes(
   prompt: string,
-  opts?: { size?: string; style?: BrandStyle }
+  opts?: {
+    size?: string;
+    style?: BrandStyle;
+    modifier?: { id: string; prompt: string };
+  }
 ): Promise<{ bytes: Buffer; mimeType: string }> {
   const style = opts?.style ?? pickBrandStyle();
   const ai = client();
   const sizeHint = opts?.size ? ` Target size about ${opts.size}.` : "";
   const response = await ai.models.generateContent({
     model: pipeline.models.image,
-    contents: `${withBrandStyle(prompt, style)}${sizeHint}`,
+    contents: `${withBrandStyle(prompt, style, opts?.modifier)}${sizeHint}`,
     config: {
       responseModalities: [Modality.IMAGE, Modality.TEXT],
     },
@@ -148,11 +162,17 @@ export async function renderImageBytes(
 
 export async function generateImage(
   prompt: string,
-  opts?: { size?: string; filename?: string; style?: BrandStyle }
+  opts?: {
+    size?: string;
+    filename?: string;
+    style?: BrandStyle;
+    modifier?: { id: string; prompt: string };
+  }
 ): Promise<string> {
   const { bytes, mimeType } = await renderImageBytes(prompt, {
     size: opts?.size,
     style: opts?.style,
+    modifier: opts?.modifier,
   });
 
   const ext = mimeType.includes("jpeg") ? "jpg" : "png";
@@ -174,11 +194,25 @@ export type InlineImageResult = {
   errors: string[];
 };
 
-function ensureInlinePlaceholders(draft: BlogDraft): BlogDraft {
-  const prompts = [...draft.inlineImagePrompts];
-  while (prompts.length < MIN_INLINE) {
+/**
+ * Reconcile the draft's placeholders with the drawn image count.
+ *
+ * The count comes from the variety plan, so a post can legitimately have zero
+ * inline images. When the model returned fewer placeholders than were asked
+ * for, the missing ones are synthesized from the planned visual kinds; when it
+ * returned more, the extras are dropped along with their body references.
+ */
+function ensureInlinePlaceholders(
+  draft: BlogDraft,
+  target: number,
+  kinds: string[]
+): BlogDraft {
+  const capped = Math.max(0, Math.min(target, MAX_INLINE));
+  const prompts = draft.inlineImagePrompts.slice(0, capped);
+
+  while (prompts.length < capped) {
     const n = prompts.length + 1;
-    const kind = INLINE_KINDS[(n - 1) % INLINE_KINDS.length];
+    const kind = kinds[n - 1] ?? INLINE_KINDS[(n - 1) % INLINE_KINDS.length];
     prompts.push({
       placeholder: `__INLINE_${n}__`,
       prompt: `${kind} about: ${draft.title}. ${draft.coverAlt || draft.excerpt}`,
@@ -187,38 +221,61 @@ function ensureInlinePlaceholders(draft: BlogDraft): BlogDraft {
   }
 
   let body = draft.body;
-  for (const item of prompts.slice(0, MAX_INLINE)) {
+
+  // Drop any placeholder the plan no longer wants, so no literal __INLINE_n__
+  // can survive into the published body.
+  const keep = new Set(prompts.map((p) => p.placeholder));
+  body = body
+    .split("\n")
+    .filter((line) => {
+      const hit = line.match(/__INLINE_\d+__/);
+      return !hit || keep.has(hit[0]);
+    })
+    .join("\n");
+
+  for (const item of prompts) {
     if (!body.includes(item.placeholder)) {
       body = `${body.trim()}\n\n![${item.alt}](${item.placeholder})\n`;
     }
   }
 
-  return { ...draft, body, inlineImagePrompts: prompts.slice(0, MAX_INLINE) };
+  return { ...draft, body, inlineImagePrompts: prompts };
 }
 
 export async function generateInlineImages(
-  draft: BlogDraft
+  draft: BlogDraft,
+  plan?: VarietyPlan
 ): Promise<InlineImageResult> {
-  const prepared = ensureInlinePlaceholders(draft);
+  const target = plan ? plan.images.inlineCount : 2;
+  const plannedKinds = plan
+    ? plan.images.kinds.map((k) => k.prompt)
+    : INLINE_KINDS.slice();
+  const prepared = ensureInlinePlaceholders(draft, target, plannedKinds);
+
   let body = prepared.body;
   let generated = 0;
   let failed = 0;
   const urls: string[] = [];
   const styleIds: string[] = [];
   const errors: string[] = [];
-  const prompts = prepared.inlineImagePrompts.slice(0, MAX_INLINE);
+  const prompts = prepared.inlineImagePrompts;
   const usedStyles: string[] = [];
 
   for (let i = 0; i < prompts.length; i++) {
     const item = prompts[i];
-    const style = nextStyle(usedStyles);
+    const style = plan?.images.inlinePalettes[i] ?? nextStyle(usedStyles);
+    const modifier =
+      plan?.images.inlineModifiers[i] ??
+      RENDER_MODIFIERS[randomInt(RENDER_MODIFIERS.length)];
+    const size = plan?.images.aspects[i]?.size ?? "1280x720";
     usedStyles.push(style.id);
     styleIds.push(style.id);
     try {
       const url = await generateImage(item.prompt, {
-        size: "1280x720",
+        size,
         filename: seoImageFilename(draft.slug, "inline", i + 1),
         style,
+        modifier,
       });
       body = body.replaceAll(item.placeholder, url);
       const escaped = item.placeholder.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -254,6 +311,8 @@ export type LinkedInImageInput = {
   title: string;
   topic: string;
   category?: string;
+  /** Drawn palette, so the social card matches the run's visual plan. */
+  style?: BrandStyle;
 };
 
 export async function linkedinImage(
@@ -268,7 +327,8 @@ export async function linkedinImage(
   const category =
     typeof input === "string" ? undefined : input.category || undefined;
   const headline = shortLinkedInTitle(title, 8);
-  const style = pickBrandStyle();
+  const style =
+    typeof input === "string" ? pickBrandStyle() : input.style ?? pickBrandStyle();
   const slug = seoImageFilename(
     headline
       .toLowerCase()
@@ -320,11 +380,15 @@ export async function linkedinImage(
   }
 }
 
-export async function aiCoverImage(draft: BlogDraft): Promise<{
+export async function aiCoverImage(
+  draft: BlogDraft,
+  plan?: VarietyPlan
+): Promise<{
   url: string;
   styleId: string;
 }> {
-  const style = pickBrandStyle();
+  const style = plan?.images.coverPalette ?? pickBrandStyle();
+  const modifier = plan?.images.coverModifier;
   const prompt = [
     "Editorial blog cover image, wide 16:9, premium technical publication quality.",
     `Title concept: ${draft.title}.`,
@@ -340,6 +404,7 @@ export async function aiCoverImage(draft: BlogDraft): Promise<{
     size: "1200x630",
     filename: seoImageFilename(draft.slug || "post", "cover"),
     style,
+    modifier,
   });
   return { url, styleId: style.id };
 }

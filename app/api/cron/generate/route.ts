@@ -15,10 +15,14 @@ export async function GET(req: Request) {
   const dryRun = url.searchParams.get("dryRun") === "1";
   const force = url.searchParams.get("force") === "1";
 
-  // Flush anything whose random publishAt / scheduledFor is already due
-  // (Hobby only has ~2 cron windows/day; morning cron catches overnight slots).
+  // Daily safety net behind the 10-minute tick: flush anything due, run the
+  // weekly content refresh, and run the variety audit. Generation itself is
+  // normally driven by the tick at the day plan's drawn hour; this path only
+  // generates when explicitly forced, so the two do not race.
   const due = await runPublishDue({ dryRun });
-  const generate = await runGenerate({ dryRun, force });
+  const generate = force
+    ? await runGenerate({ dryRun, force })
+    : { status: "skip", message: "Generation is driven by /api/cron/tick" };
 
   return NextResponse.json({ due, generate });
 }

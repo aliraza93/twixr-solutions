@@ -38,6 +38,16 @@ export function BlogDetailClient({ post, related }: BlogDetailClientProps) {
     () => resolvePostBody(post.body ?? "", faqs),
     [post.body, faqs]
   );
+  // Only show an update stamp when the post was genuinely revisited, not on
+  // every row touch - updatedAt changes for unrelated reasons.
+  const reviewedOn = post.lastReviewedAt
+    ? new Date(post.lastReviewedAt).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      })
+    : null;
+
   const toc = useMemo(
     () => getTableOfContents(body, { includeFaq: faqs.length > 0 }),
     [body, faqs.length]
@@ -113,7 +123,15 @@ export function BlogDetailClient({ post, related }: BlogDetailClientProps) {
               <span aria-hidden> · </span>
               {post.readingTime}
               <span aria-hidden> · </span>
-              {post.author}
+              <Link href="/about" className="hover:text-pine">
+                {post.author}
+              </Link>
+              {reviewedOn && (
+                <>
+                  <span aria-hidden> · </span>
+                  <span>Updated {reviewedOn}</span>
+                </>
+              )}
             </p>
           </header>
         </ScrollReveal>
@@ -223,7 +241,12 @@ export function BlogDetailClient({ post, related }: BlogDetailClientProps) {
                     className="h-12 w-12 rounded-full border border-hairline object-cover"
                   />
                   <div>
-                    <p className="font-sora text-sm font-semibold text-ink">{post.author}</p>
+                    <Link
+                      href="/about"
+                      className="font-sora text-sm font-semibold text-ink hover:text-pine"
+                    >
+                      {post.author}
+                    </Link>
                     <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-muted">
                       {post.authorRole}
                     </p>
@@ -244,6 +267,16 @@ export function BlogDetailClient({ post, related }: BlogDetailClientProps) {
                 >
                   GitHub profile
                 </a>
+                {site.contact.upwork && !site.contact.upwork.includes("REPLACE_ME") && (
+                  <a
+                    href={site.contact.upwork}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-1 flex w-full items-center justify-center gap-2 py-2 text-xs font-medium text-muted transition-colors hover:text-pine"
+                  >
+                    Top Rated Plus on Upwork
+                  </a>
+                )}
               </Card>
             </div>
           </aside>

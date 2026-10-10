@@ -37,6 +37,8 @@ function toRecord(row: PrismaBlogPost): BlogPostRecord {
     updatedAt: row.updatedAt.toISOString(),
     content: parseBody(body),
     contentCluster: row.contentCluster || undefined,
+    schemaType: row.schemaType || undefined,
+    lastReviewedAt: row.lastReviewedAt?.toISOString(),
   };
 }
 
@@ -51,6 +53,7 @@ function listingOf(post: BlogPost): BlogListing {
     tags: post.tags,
     readingTime: post.readingTime,
     contentCluster: post.contentCluster,
+    updatedAt: post.updatedAt,
   };
 }
 
@@ -183,6 +186,8 @@ export async function upsertBlogPost(
     publishAt?: Date | null;
     contentCluster?: string;
     targetKeyword?: string;
+    schemaType?: string;
+    lastReviewedAt?: Date | null;
   }
 ) {
   const db = requireDb();
@@ -215,6 +220,10 @@ export async function upsertBlogPost(
       : {}),
     ...(input.targetKeyword !== undefined
       ? { targetKeyword: stripEmDashes(input.targetKeyword) }
+      : {}),
+    ...(input.schemaType !== undefined ? { schemaType: input.schemaType } : {}),
+    ...(input.lastReviewedAt !== undefined
+      ? { lastReviewedAt: input.lastReviewedAt }
       : {}),
   };
 

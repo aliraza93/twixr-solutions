@@ -59,12 +59,40 @@ if (!row) {
 }
 
 const current = row.hero ?? {};
+const rating = { score: "4.7", count: "40 reviews" };
+
+const bento = {
+  photo: {
+    src: "/ali-raza.jpg",
+    alt: "Ali Raza, founder and engineer at Twixr Solutions",
+    caption: "Ali Raza \u00b7 Lahore",
+  },
+  proof: { badge: "Upwork", title: "Top Rated Plus", note: "100% job success" },
+  metric: {
+    value: "2,600+",
+    label: "hours delivered",
+    note: "49 jobs, 8+ years",
+  },
+  code: {
+    file: "reliability.ts",
+    lines: [
+      "// keep the job alive,",
+      "// not the incident",
+      "tries: 5,",
+      "backoff: [10, 30, 90],",
+      'onFail: page("oncall"),',
+    ],
+  },
+};
+
 const next = {
   ...current,
   stableHeading,
   headingLines,
   subheading,
   stats,
+  rating,
+  bento,
   // The rotating word is retired; an empty list keeps older readers happy.
   rotatingWords: [],
 };
@@ -77,5 +105,6 @@ await prisma.siteSettings.update({
 console.log("Stored hero updated.");
 console.log("  heading:", stableHeading);
 console.log("  stats:  ", stats.map((s) => `${s.value}${s.unit} ${s.label}`).join(" | "));
+console.log("  bento:  ", [bento.photo.caption, bento.proof.title, bento.metric.value, bento.code.file].join(" | "));
 
 await prisma.$disconnect();

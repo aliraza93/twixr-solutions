@@ -758,6 +758,28 @@
     }
   }
 
+  /* The bento cluster: one shared perspective so the tiles tilt together as
+     a single object rather than four independent cards. */
+  .hero-bento {
+    perspective: 1200px;
+    transform-style: preserve-3d;
+  }
+
+  .hero-tile {
+    transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+    transition: transform var(--dur) var(--ease-out);
+    will-change: transform;
+  }
+
+  .hero-tile--float {
+    animation: hero-float 5.5s var(--ease-inout) infinite;
+  }
+
+  .hero-tile--float-slow {
+    animation: hero-float 7s var(--ease-inout) infinite;
+    animation-delay: -2.5s;
+  }
+
   .hero-float {
     animation: hero-float 4.5s var(--ease-inout) infinite;
   }
@@ -1825,6 +1847,8 @@
 
   @media (prefers-reduced-motion: reduce) {
     .hero-word,
+    .hero-tile--float,
+    .hero-tile--float-slow,
     .hero-float,
     .hero-caret,
     .hero-scroll-line,

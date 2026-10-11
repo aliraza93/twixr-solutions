@@ -31,6 +31,42 @@ export const hero = {
     { label: "Jobs shipped", value: "49", unit: "" },
     { label: "Years in", value: "8", unit: "+" },
   ],
+  /** Inline social proof, as the reference puts it beside the CTA. Real figures. */
+  rating: { score: "4.7", count: "40 reviews" },
+  /**
+   * The bento cluster. Every tile carries material that is actually true:
+   * a real photo, the real Upwork standing, real delivered hours. There is
+   * no stock photography here on purpose - all seven portfolio images are
+   * generic Unsplash, and filling a tile with one would rebuild the template
+   * look the hero was just rescued from.
+   */
+  bento: {
+    photo: {
+      src: "/ali-raza.jpg",
+      alt: "Ali Raza, founder and engineer at Twixr Solutions",
+      caption: "Ali Raza · Lahore",
+    },
+    proof: {
+      badge: "Upwork",
+      title: "Top Rated Plus",
+      note: "100% job success",
+    },
+    metric: {
+      value: "2,600+",
+      label: "hours delivered",
+      note: "49 jobs, 8+ years",
+    },
+    code: {
+      file: "reliability.ts",
+      lines: [
+        "// keep the job alive,",
+        "// not the incident",
+        "tries: 5,",
+        "backoff: [10, 30, 90],",
+        "onFail: page(\"oncall\"),",
+      ],
+    },
+  },
   primaryCta: site.primaryCta,
   secondaryCta: { label: "View Portfolio", href: "/portfolio" },
   logosCaption: "Powering solutions with",

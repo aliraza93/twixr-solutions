@@ -82,9 +82,18 @@ export type HeroContent = {
   logosCaption: string;
   techLogos: HeroLogo[];
   moreLogos: HeroLogo[];
-  /** Hero proof ledger. Optional so stored CMS rows written before this
+  /** Hero proof figures. Optional so stored CMS rows written before this
    *  existed still parse; falls back to the dashboard stats. */
   stats?: HeroStat[];
+  /** The four bento tiles beside the headline. Optional for the same reason. */
+  bento?: {
+    photo: { src: string; alt: string; caption: string };
+    proof: { badge: string; title: string; note: string };
+    metric: { value: string; label: string; note: string };
+    code: { file: string; lines: string[] };
+  };
+  /** Inline social proof on the action row. */
+  rating?: { score: string; count: string };
   dashboard: {
     url: string;
     kicker: string;

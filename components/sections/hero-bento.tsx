@@ -1,29 +1,44 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { ArrowRight, Check } from "lucide-react";
+import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { HeroContent } from "@/lib/cms/types";
 
 /**
  * The hero's bento cluster.
  *
- * Structure from the OpenBank shot by Dipa Inhouse: a pinwheel where the
- * column widths swap between rows, and two shape families in contrast -
- * rectangles with a large radius against stadiums. Everything else is ours.
+ * Pinwheel structure from the OpenBank shot by Dipa Inhouse; everything else
+ * is this site's own vocabulary, turned up.
  *
- * Two deliberate departures from the earlier pass:
+ * The one decisive move is an interlock. The proof node is not laid on top of
+ * the result card, it is set INTO it: the card is genuinely masked away where
+ * the node sits (.hero-bite), so the two shapes occupy one another's space
+ * instead of stacking. The bite and the node derive from the same three CSS
+ * variables, so they cannot drift apart at any viewport.
  *
- * - It is a CSS grid with explicit spans, not two flex rows. The rows used to
- *   size independently, so the pinwheel never sat in register.
- * - There is one motion, not three. Per-tile float loops on different
- *   durations meant the tiles drifted apart from each other at rest, which
- *   read as broken alignment. The cluster now tilts as a single object.
+ * The second half of the move is that the tiles stopped being boxes with text
+ * in them. Each one is a small instrument: the query collapse is drawn as a
+ * dense field of bars resolving into six, the cloud cost as a falling line.
+ * Strip the copy out and the cluster still says "a lot became a little" and
+ * "this went down", which is the test a bold section has to pass.
  *
- * Every tile states a result a client gets. None of them is about the founder.
+ * Everything else is deliberately quieted so the move stays legible.
  */
 
 const MAX_TILT = 5;
+
+/**
+ * Fixed bar heights. Deterministic on purpose: a random field would differ
+ * between the server and client render and break hydration.
+ */
+const DENSE_BARS = [
+  38, 52, 31, 64, 45, 72, 29, 58, 41, 67, 35, 49, 61, 33, 55, 43, 69, 37, 51,
+  27, 59, 47,
+] as const;
+const RESOLVED_BARS = [74, 88, 62, 95, 70, 83] as const;
+
+const COST_LINE = "M2,30 L16,26 L30,31 L44,22 L58,24 L72,14 L86,16 L100,6";
 
 function canTilt() {
   return (
@@ -35,8 +50,8 @@ function canTilt() {
 
 type Bento = NonNullable<HeroContent["bento"]>;
 
-const tileBase =
-  "hero-tile relative flex flex-col justify-between overflow-hidden transition-[transform,box-shadow] duration-[var(--dur)] ease-[var(--ease-out)]";
+const tile =
+  "hero-tile relative flex flex-col transition-[transform,box-shadow] duration-[var(--dur)] ease-[var(--ease-out)] hover:-translate-y-0.5";
 
 export function HeroBento({ bento }: { bento: Bento }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -74,86 +89,126 @@ export function HeroBento({ bento }: { bento: Bento }) {
   return (
     <div
       ref={ref}
-      className="hero-bento grid w-full grid-cols-5 gap-3 [grid-auto-rows:clamp(158px,20vw,236px)] sm:gap-4"
+      className="hero-bento flex w-full flex-col gap-[var(--bgap)]"
       style={{ "--rx": "0deg", "--ry": "0deg" } as React.CSSProperties}
     >
-      {/* The result. Largest tile, because it is the only thing on this
-          screen that proves anything. */}
+      <div className="flex h-[var(--row)] gap-[var(--bgap)]">
+      {/* The result, as an instrument. A dense field of queries resolving
+          into six, with the card cut away where the proof node sits. */}
       <div
         className={cn(
-          tileBase,
-          "col-span-3 rounded-[var(--r-xl)] bg-ink p-5 sm:p-6",
-          "hover:-translate-y-0.5"
+          tile,
+          "hero-bite min-w-0 flex-1 justify-between rounded-[var(--r-xl)] bg-ink p-5 sm:p-6"
         )}
       >
         <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-d-lime">
           {bento.result.eyebrow}
         </span>
-        <div className="flex items-baseline gap-2 sm:gap-3">
-          <span className="font-sora text-[length:clamp(2rem,4.4vw,3.25rem)] font-extrabold leading-none tracking-[-0.04em] text-d-muted tabular-nums line-through decoration-[0.06em] decoration-d-muted/50">
+
+        <div
+          className="flex h-[38%] items-end gap-[3px] pr-[18%] sm:gap-1"
+          aria-hidden
+        >
+          {DENSE_BARS.map((h, i) => (
+            <span
+              key={`d${i}`}
+              className="hero-bar w-[2px] shrink-0 rounded-[1px] bg-d-lime/25"
+              style={{ height: `${h}%`, "--b": i } as React.CSSProperties}
+            />
+          ))}
+          <span className="mx-1 h-px w-3 shrink-0 self-center bg-d-muted/40 sm:mx-1.5" />
+          {RESOLVED_BARS.map((h, i) => (
+            <span
+              key={`r${i}`}
+              className="hero-bar w-[5px] shrink-0 rounded-[2px] bg-d-lime sm:w-[7px]"
+              style={
+                {
+                  height: `${h}%`,
+                  "--b": DENSE_BARS.length + i + 2,
+                } as React.CSSProperties
+              }
+            />
+          ))}
+        </div>
+
+        <p className="text-sm leading-snug text-d-muted">
+          <span className="font-sora text-base font-bold text-d-muted line-through decoration-d-muted/50 tabular-nums">
             {bento.result.from}
-          </span>
-          <ArrowRight
-            className="h-5 w-5 shrink-0 text-d-lime sm:h-6 sm:w-6"
-            strokeWidth={2.5}
-            aria-hidden
-          />
-          <span className="font-sora text-[length:clamp(2.6rem,5.8vw,4.25rem)] font-extrabold leading-none tracking-[-0.04em] text-d-text tabular-nums">
+          </span>{" "}
+          <span className="font-sora text-lg font-extrabold text-d-text tabular-nums">
             {bento.result.to}
+          </span>{" "}
+          {bento.result.caption}
+        </p>
+      </div>
+
+      {/* The node sits IN the cut, not on top of it. */}
+        <div className="relative w-[var(--track)] shrink-0">
+        <span
+          className="hero-junction rounded-full bg-lime"
+          aria-hidden
+        />
+        <div className="hero-node flex flex-col items-center justify-center gap-1 rounded-full border border-hairline bg-accent-tint text-center">
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-pine">
+            <Check className="h-3.5 w-3.5 text-white" strokeWidth={3} aria-hidden />
+          </span>
+          <span className="font-sora text-[length:clamp(1.5rem,2.8vw,2rem)] font-extrabold leading-none tracking-[-0.03em] text-ink tabular-nums">
+            {bento.proof.value}
+          </span>
+          <span className="font-mono text-[9px] uppercase tracking-[0.16em] text-muted">
+            {bento.proof.label}
+          </span>
+          <span className="px-[22%] text-[11px] leading-snug text-muted">
+            {bento.proof.note}
           </span>
         </div>
-        <span className="text-sm leading-snug text-d-muted">
-          {bento.result.caption}
-        </span>
       </div>
 
-      {/* Upwork record, framed as delivery rather than as a rating. */}
-      <div
-        className={cn(
-          tileBase,
-          "col-span-2 items-center justify-center gap-1.5 rounded-[999px] border border-hairline bg-accent-tint px-4 py-6 text-center",
-          "hover:-translate-y-0.5"
-        )}
-      >
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-pine">
-          <Check className="h-4 w-4 text-white" strokeWidth={3} aria-hidden />
-        </span>
-        <span className="font-sora text-[length:clamp(1.6rem,3vw,2.1rem)] font-extrabold leading-none tracking-[-0.03em] text-ink tabular-nums">
-          {bento.proof.value}
-        </span>
-        <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted">
-          {bento.proof.label}
-        </span>
-        <span className="text-xs leading-snug text-muted">
-          {bento.proof.note}
-        </span>
       </div>
 
-      {/* Row two: the widths swap. That alternation is the whole point of a
-          pinwheel - a plain 2x2 reads as a table. */}
-      <div
-        className={cn(
-          tileBase,
-          "col-span-2 items-center justify-center gap-1.5 rounded-[999px] border border-hairline bg-surface px-5 py-6 text-center",
-          "hover:-translate-y-0.5"
-        )}
-      >
+      <div className="flex h-[var(--row)] gap-[var(--bgap)]">
+        {/* Cost, as a falling line. Same track width as the node above it. */}
+        <div
+          className={cn(
+            tile,
+            "w-[var(--track)] shrink-0 items-center justify-center gap-2 rounded-full border border-hairline bg-surface px-5 py-6 text-center"
+          )}
+        >
         <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted">
           {bento.cost.eyebrow}
         </span>
-        <span className="font-sora text-[length:clamp(0.95rem,1.5vw,1.1rem)] font-bold leading-tight tracking-[-0.02em] text-ink">
+        <svg
+          viewBox="0 0 102 36"
+          className="h-8 w-[72%]"
+          fill="none"
+          aria-hidden
+          preserveAspectRatio="none"
+        >
+          <path
+            d={COST_LINE}
+            className="hero-spark"
+            stroke="var(--pine)"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            pathLength={1}
+          />
+          <circle cx="100" cy="6" r="3.5" fill="var(--lime-deep)" />
+        </svg>
+        <span className="font-sora text-[length:clamp(0.9rem,1.35vw,1.05rem)] font-bold leading-tight tracking-[-0.02em] text-ink">
           {bento.cost.title}
         </span>
-        <span className="text-xs leading-snug text-muted">
+        <span className="text-[11px] leading-snug text-muted">
           {bento.cost.note}
         </span>
       </div>
 
+      {/* Quieted on purpose: with two instruments running, a third loud tile
+          would flatten the whole cluster again. */}
       <div
         className={cn(
-          tileBase,
-          "col-span-3 rounded-[var(--r-xl)] border border-hairline bg-canvas",
-          "hover:-translate-y-0.5"
+          tile,
+          "min-w-0 flex-1 rounded-[var(--r-xl)] border border-hairline bg-canvas"
         )}
       >
         <div className="flex items-center gap-1.5 border-b border-hairline bg-surface px-3 py-2">
@@ -164,7 +219,7 @@ export function HeroBento({ bento }: { bento: Bento }) {
             {bento.code.file}
           </span>
         </div>
-        <pre className="flex flex-1 flex-col justify-center overflow-hidden px-4 py-3 font-mono text-[11px] leading-[1.8] text-ink-soft sm:text-[12.5px]">
+        <pre className="flex flex-1 flex-col justify-center overflow-hidden px-4 py-3 font-mono text-[11px] leading-[1.85] text-ink-soft sm:text-[12.5px]">
           <code>
             {bento.code.lines.map((line) => (
               <span
@@ -178,6 +233,7 @@ export function HeroBento({ bento }: { bento: Bento }) {
             ))}
           </code>
         </pre>
+        </div>
       </div>
     </div>
   );

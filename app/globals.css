@@ -764,10 +764,100 @@
   }
 
   /* The bento cluster: one shared perspective so the tiles tilt together as
-     a single object rather than four independent cards. */
+     a single object rather than four independent cards.
+
+     Every measurement the interlock needs comes from these three variables,
+     so the bite in the card and the node that sits in it are derived from
+     the same numbers and cannot drift apart at any viewport. */
   .hero-bento {
+    --bgap: 0.75rem;
+    --row: clamp(158px, 20vw, 236px);
+    --node: calc(var(--row) * 0.95);
+    --overlap: clamp(16px, 2vw, 34px);
+    /* The one shared track width: exactly the node's visible width, so the
+       node, the cost stadium under it, and the cluster's right edge all land
+       on the same line. */
+    --track: calc(var(--node) - var(--overlap));
     perspective: 1200px;
     transform-style: preserve-3d;
+  }
+
+  @media (min-width: 640px) {
+    .hero-bento {
+      --bgap: 1rem;
+    }
+  }
+
+  /* A real bite, not a drawn one: the card is masked away where the node
+     sits, so the node is genuinely set into it rather than floating over
+     it. The radius carries a few px of breathing room so the cut reads as
+     a deliberate gap rather than a collision. */
+  .hero-bite {
+    --bite-x: calc(100% + var(--bgap) - var(--overlap) + var(--node) / 2);
+    --bite-r: calc(var(--node) / 2 + 9px);
+    -webkit-mask-image: radial-gradient(
+      circle var(--bite-r) at var(--bite-x) 50%,
+      transparent 99.5%,
+      #000 100%
+    );
+    mask-image: radial-gradient(
+      circle var(--bite-r) at var(--bite-x) 50%,
+      transparent 99.5%,
+      #000 100%
+    );
+  }
+
+  .hero-node {
+    position: absolute;
+    top: 50%;
+    left: calc(-1 * var(--overlap));
+    width: var(--node);
+    height: var(--node);
+    transform: translateY(-50%) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+    transition: transform var(--dur) var(--ease-out);
+    will-change: transform;
+  }
+
+  /* The lime junction dot, sitting in the cut. The site's travelling-dot
+     motif, held still: one accent, not a light show. */
+  .hero-junction {
+    position: absolute;
+    top: 50%;
+    left: calc(-1 * var(--overlap) - var(--bgap) / 2 - 3px);
+    width: 6px;
+    height: 6px;
+    transform: translateY(-50%);
+  }
+
+  /* Instruments draw themselves in on entry, left to right, so the collapse
+     reads as something that happened rather than a static chart. */
+  .hero-bar {
+    transform-origin: bottom;
+    animation: hero-bar-in 0.55s var(--ease-out) both;
+    animation-delay: calc(var(--b, 0) * 26ms + 220ms);
+  }
+
+  @keyframes hero-bar-in {
+    from {
+      transform: scaleY(0.08);
+      opacity: 0;
+    }
+    to {
+      transform: scaleY(1);
+      opacity: 1;
+    }
+  }
+
+  .hero-spark {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: hero-spark-draw 1.1s var(--ease-out) 0.35s both;
+  }
+
+  @keyframes hero-spark-draw {
+    to {
+      stroke-dashoffset: 0;
+    }
   }
 
   .hero-tile {
@@ -1843,11 +1933,17 @@
 
   @media (prefers-reduced-motion: reduce) {
     .hero-word,
+    .hero-bar,
+    .hero-spark,
     .hero-float,
     .hero-caret,
     .hero-scroll-line,
     .hero-cycle__word.is-stagger .hero-cycle__char {
       animation: none;
+    }
+
+    .hero-spark {
+      stroke-dashoffset: 0;
     }
 
     .hero-cycle,

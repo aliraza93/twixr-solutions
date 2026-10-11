@@ -657,6 +657,15 @@
     animation-delay: calc(var(--i, 0) * 70ms);
   }
 
+  /* Same entrance, no display of its own. .hero-word forces inline-block for
+     the heading's per-word stagger, which silently overrides the display on
+     any layout container it is put on - a flex row wearing it shrink-wraps
+     and stacks its children. Containers use this instead. */
+  .hero-rise {
+    animation: hero-word-in var(--dur-slow) var(--ease-out) both;
+    animation-delay: calc(var(--i, 0) * 70ms);
+  }
+
   .hero-cycle {
     position: relative;
     display: inline-flex;
@@ -793,7 +802,6 @@
      it. The radius carries a few px of breathing room so the cut reads as
      a deliberate gap rather than a collision. */
   .hero-bite {
-    --bite-x: calc(100% + var(--bgap) - var(--overlap) + var(--node) / 2);
     --bite-r: calc(var(--node) / 2 + 9px);
     -webkit-mask-image: radial-gradient(
       circle var(--bite-r) at var(--bite-x) 50%,
@@ -807,6 +815,16 @@
     );
   }
 
+  /* Row one cuts on the right, row two cuts on the left, so the pinwheel
+     turns rather than repeating itself. */
+  .hero-bite--right {
+    --bite-x: calc(100% + var(--bgap) - var(--overlap) + var(--node) / 2);
+  }
+
+  .hero-bite--left {
+    --bite-x: calc(-1 * var(--bgap) + var(--overlap) - var(--node) / 2);
+  }
+
   .hero-node {
     position: absolute;
     top: 50%;
@@ -818,6 +836,11 @@
     will-change: transform;
   }
 
+  .hero-node--right {
+    left: auto;
+    right: calc(-1 * var(--overlap));
+  }
+
   /* The lime junction dot, sitting in the cut. The site's travelling-dot
      motif, held still: one accent, not a light show. */
   .hero-junction {
@@ -827,6 +850,11 @@
     width: 6px;
     height: 6px;
     transform: translateY(-50%);
+  }
+
+  .hero-junction--right {
+    left: auto;
+    right: calc(-1 * var(--overlap) - var(--bgap) / 2 - 3px);
   }
 
   /* Instruments draw themselves in on entry, left to right, so the collapse
@@ -1933,6 +1961,7 @@
 
   @media (prefers-reduced-motion: reduce) {
     .hero-word,
+    .hero-rise,
     .hero-bar,
     .hero-spark,
     .hero-float,

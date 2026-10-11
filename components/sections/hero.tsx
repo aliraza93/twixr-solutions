@@ -79,7 +79,7 @@ export function Hero({ content }: { content?: HeroContent }) {
       {Particles ? <Particles /> : null}
 
       <div className="ds-container relative z-10 flex flex-1 flex-col justify-center pb-12 pt-[clamp(104px,15vh,184px)]">
-        <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1fr)] lg:gap-14">
+        <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-[minmax(0,1.02fr)_minmax(0,1fr)] lg:gap-12">
           <div className="min-w-0">
             <Eyebrow>{hero.eyebrow}</Eyebrow>
 
@@ -104,7 +104,7 @@ export function Hero({ content }: { content?: HeroContent }) {
             </h1>
 
             <p
-              className="hero-word mt-5 max-w-[52ch] text-[length:var(--fs-lead)] leading-relaxed text-muted"
+              className="hero-rise mt-5 max-w-[52ch] text-[length:var(--fs-lead)] leading-relaxed text-muted"
               style={{ "--i": after } as CSSProperties}
             >
               {hero.subheading}
@@ -112,10 +112,10 @@ export function Hero({ content }: { content?: HeroContent }) {
 
             {/* Actions and proof on one line, as the reference does. */}
             <div
-              className="hero-word mt-8 flex flex-wrap items-center gap-x-5 gap-y-4"
+              className="hero-rise mt-8 flex flex-wrap items-center gap-x-4 gap-y-3"
               style={{ "--i": after + 1 } as CSSProperties}
             >
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-3">
                 <Button variant="primary" asChild>
                   <Link href={hero.primaryCta.href}>
                     {hero.primaryCta.label}
@@ -135,20 +135,18 @@ export function Hero({ content }: { content?: HeroContent }) {
               </div>
 
               {rating ? (
-                <div className="flex items-center gap-2.5">
-                  <span className="flex items-center gap-0.5" aria-hidden>
+                <div className="flex shrink-0 items-center gap-2 whitespace-nowrap">
+                  <span className="flex items-center gap-px" aria-hidden>
                     {[0, 1, 2, 3, 4].map((i) => (
-                      <Star
-                        key={i}
-                        className="h-4 w-4 fill-star text-star"
-                      />
+                      <Star key={i} className="h-3.5 w-3.5 fill-star text-star" />
                     ))}
                   </span>
-                  <span className="text-sm text-muted">
+                  <span className="text-[13px] text-muted">
                     <strong className="font-semibold text-ink">
                       {rating.score}
-                    </strong>{" "}
-                    from {rating.count}
+                    </strong>
+                    <span aria-hidden> · </span>
+                    {rating.count}
                   </span>
                 </div>
               ) : null}
@@ -157,7 +155,7 @@ export function Hero({ content }: { content?: HeroContent }) {
 
           {bento ? (
             <div
-              className="hero-word min-w-0"
+              className="hero-rise min-w-0"
               style={{ "--i": after + 2 } as CSSProperties}
             >
               <HeroBento bento={bento} />
@@ -167,7 +165,7 @@ export function Hero({ content }: { content?: HeroContent }) {
       </div>
 
       <div
-        className="hero-word relative z-10 border-t border-hairline"
+        className="hero-rise relative z-10 border-t border-hairline"
         style={{ "--i": after + 3 } as CSSProperties}
       >
         <div className="ds-container flex flex-wrap items-center gap-x-6 gap-y-3 py-5">

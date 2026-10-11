@@ -38,7 +38,10 @@ const DENSE_BARS = [
 ] as const;
 const RESOLVED_BARS = [74, 88, 62, 95, 70, 83] as const;
 
-const COST_LINE = "M2,30 L16,26 L30,31 L44,22 L58,24 L72,14 L86,16 L100,6";
+const COST_LINE = "M2,5 L16,9 L30,6 L44,15 L58,13 L72,23 L86,21 L100,30";
+
+/** The backoff schedule from the snippet, drawn to scale. */
+const BACKOFF = [10, 30, 90] as const;
 
 function canTilt() {
   return (
@@ -98,7 +101,7 @@ export function HeroBento({ bento }: { bento: Bento }) {
       <div
         className={cn(
           tile,
-          "hero-bite min-w-0 flex-1 justify-between rounded-[var(--r-xl)] bg-ink p-5 sm:p-6"
+          "hero-bite hero-bite--right min-w-0 flex-1 justify-between rounded-[var(--r-xl)] bg-ink p-5 sm:p-6"
         )}
       >
         <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-d-lime">
@@ -167,13 +170,11 @@ export function HeroBento({ bento }: { bento: Bento }) {
       </div>
 
       <div className="flex h-[var(--row)] gap-[var(--bgap)]">
-        {/* Cost, as a falling line. Same track width as the node above it. */}
-        <div
-          className={cn(
-            tile,
-            "w-[var(--track)] shrink-0 items-center justify-center gap-2 rounded-full border border-hairline bg-surface px-5 py-6 text-center"
-          )}
-        >
+        {/* Cost, as a falling line, set into the card beside it - the mirror
+            of row one, so the pinwheel turns instead of repeating. */}
+        <div className="relative w-[var(--track)] shrink-0">
+        <span className="hero-junction hero-junction--right rounded-full bg-lime" aria-hidden />
+        <div className="hero-node hero-node--right flex flex-col items-center justify-center gap-2 rounded-full border border-hairline bg-surface px-[14%] text-center">
         <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted">
           {bento.cost.eyebrow}
         </span>
@@ -193,7 +194,7 @@ export function HeroBento({ bento }: { bento: Bento }) {
             strokeLinejoin="round"
             pathLength={1}
           />
-          <circle cx="100" cy="6" r="3.5" fill="var(--lime-deep)" />
+          <circle cx="100" cy="30" r="3.5" fill="var(--lime-deep)" />
         </svg>
         <span className="font-sora text-[length:clamp(0.9rem,1.35vw,1.05rem)] font-bold leading-tight tracking-[-0.02em] text-ink">
           {bento.cost.title}
@@ -201,14 +202,15 @@ export function HeroBento({ bento }: { bento: Bento }) {
         <span className="text-[11px] leading-snug text-muted">
           {bento.cost.note}
         </span>
-      </div>
+        </div>
+        </div>
 
       {/* Quieted on purpose: with two instruments running, a third loud tile
           would flatten the whole cluster again. */}
       <div
         className={cn(
           tile,
-          "min-w-0 flex-1 rounded-[var(--r-xl)] border border-hairline bg-canvas"
+          "hero-bite hero-bite--left min-w-0 flex-1 rounded-[var(--r-xl)] border border-hairline bg-canvas"
         )}
       >
         <div className="flex items-center gap-1.5 border-b border-hairline bg-surface px-3 py-2">
@@ -219,20 +221,54 @@ export function HeroBento({ bento }: { bento: Bento }) {
             {bento.code.file}
           </span>
         </div>
-        <pre className="flex flex-1 flex-col justify-center overflow-hidden px-4 py-3 font-mono text-[11px] leading-[1.85] text-ink-soft sm:text-[12.5px]">
+        {/* The left padding clears the cut: the mask removes content as well
+            as background, so a line set under the bite would simply vanish. */}
+        <pre className="flex flex-1 flex-col justify-center overflow-hidden py-2 pr-4 font-mono text-[11px] leading-[1.75] text-ink-soft [padding-left:calc(var(--overlap)+22px)] sm:text-[12px]">
           <code>
-            {bento.code.lines.map((line) => (
-              <span
-                key={line}
-                className={
-                  line.trim().startsWith("//") ? "block text-muted" : "block"
-                }
-              >
-                {line}
+            {bento.code.lines.map((line, i) => (
+              <span key={line} className="flex gap-3">
+                <span
+                  className="w-3 shrink-0 select-none text-right text-muted-2 tabular-nums"
+                  aria-hidden
+                >
+                  {i + 1}
+                </span>
+                <span
+                  className={
+                    line.trim().startsWith("//") ? "text-muted" : undefined
+                  }
+                >
+                  {line}
+                </span>
               </span>
             ))}
           </code>
         </pre>
+
+        {/* The backoff schedule above, drawn to scale. The card stops being a
+            quote of some code and starts showing what the code does. */}
+        <div className="flex items-center gap-3 border-t border-hairline px-4 py-2.5">
+          <span className="font-mono text-[9px] uppercase tracking-[0.16em] text-muted">
+            Backoff
+          </span>
+          <span className="flex flex-1 items-center gap-1.5" aria-hidden>
+            {BACKOFF.map((seconds, i) => (
+              <span
+                key={seconds}
+                className="hero-bar h-1.5 rounded-full bg-pine/70"
+                style={
+                  {
+                    width: `${(seconds / 90) * 100}%`,
+                    "--b": 30 + i * 2,
+                  } as React.CSSProperties
+                }
+              />
+            ))}
+          </span>
+          <span className="font-mono text-[10px] text-muted tabular-nums">
+            {BACKOFF.join("s · ")}s
+          </span>
+        </div>
         </div>
       </div>
     </div>

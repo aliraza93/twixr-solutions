@@ -10,8 +10,16 @@ import { Card } from "@/components/ui/card";
 import { ScrollReveal, ScrollRevealItem, ScrollStagger } from "@/components/motion/scroll-reveal";
 import { cn } from "@/lib/utils";
 
-export function BlogPosts({ posts }: { posts: BlogListing[] }) {
-  const [featured, ...rest] = posts;
+export function BlogPosts({
+  posts,
+  limit = 3,
+}: {
+  posts: BlogListing[];
+  /** Total posts shown, featured included. The homepage gets the newest few,
+   *  not the whole archive - /blog is where the full list lives. */
+  limit?: number;
+}) {
+  const [featured, ...rest] = posts.slice(0, Math.max(1, limit));
 
   return (
     <section
@@ -51,7 +59,14 @@ export function BlogPosts({ posts }: { posts: BlogListing[] }) {
               <InsightCard post={featured} featured />
             </ScrollRevealItem>
           )}
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8 lg:grid-cols-3">
+          <div
+            className={cn(
+              "grid grid-cols-1 gap-6 md:gap-8",
+              rest.length >= 3
+                ? "md:grid-cols-2 lg:grid-cols-3"
+                : "md:grid-cols-2"
+            )}
+          >
             {rest.map((post) => (
               <ScrollRevealItem key={post.slug} className="h-full">
                 <InsightCard post={post} />

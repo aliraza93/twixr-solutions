@@ -2,28 +2,35 @@ import { site } from "./site";
 
 export const hero = {
   eyebrow: "Full-stack engineering · SaaS · Cloud & DevOps",
-  stableHeading: "Build Scalable, Reliable Web Apps with a Top 3% Engineer",
-  rotatingWords: ["Reliable", "Secure", "Fast", "Scalable", "Maintainable"] as const,
+  stableHeading: "Shipping is the easy part. Staying up is mine.",
+  // Kept for type compatibility with stored CMS rows; the hero no longer
+  // cycles a word - a statement with a full stop outperforms a slot machine.
+  rotatingWords: [] as const,
+  // One logical line; the heading finds its own rag from the measure.
+  // Edit this from /admin/content/site as plain text with **emphasis**.
   headingLines: [
     [
-      { text: "Build", kind: "plain" as const },
-      { text: "Scalable,", kind: "plain" as const },
+      { text: "Shipping", kind: "plain" as const },
+      { text: "is", kind: "plain" as const },
+      { text: "the", kind: "plain" as const },
+      { text: "easy", kind: "plain" as const },
+      { text: "part.", kind: "plain" as const },
+      { text: "Staying", kind: "emphasis" as const },
+      { text: "up", kind: "emphasis" as const },
+      { text: "is", kind: "emphasis" as const },
+      { text: "mine.", kind: "emphasis" as const },
     ],
-    [
-      { kind: "cycle" as const },
-      { text: "Web", kind: "plain" as const },
-      { text: "Apps", kind: "plain" as const },
-    ],
-    [
-      { text: "with", kind: "plain" as const },
-      { text: "a", kind: "plain" as const },
-      { text: "Top", kind: "emphasis" as const },
-      { text: "3%", kind: "emphasis" as const },
-    ],
-    [{ text: "Engineer", kind: "emphasis" as const }],
   ],
-  subheading: `Senior full-stack engineer (${site.yearsExperience} years) specializing in Laravel, Node.js, Next.js & Vue, multi-tenant SaaS, and cloud/DevOps on AWS. I turn complex technical challenges into products that ship and scale - with AI automation when it adds real value.`,
+  subheading: `Senior full-stack engineer, ${site.yearsExperience} years in. I build multi-tenant SaaS on Laravel, Node.js, Next.js and AWS - then keep it fast, up, and cheap to run.`,
   proofChip: "Top Rated Plus · 100% Job Success · 4.7★ across 40 reviews",
+  /** The ledger across the bottom of the fold. Real Upwork figures, at a size
+   *  a visitor can actually read - they were previously ~11px inside a mock. */
+  stats: [
+    { label: "Job success", value: "100", unit: "%" },
+    { label: "Hours delivered", value: "2,600", unit: "+" },
+    { label: "Jobs shipped", value: "49", unit: "" },
+    { label: "Years in", value: "8", unit: "+" },
+  ],
   primaryCta: site.primaryCta,
   secondaryCta: { label: "View Portfolio", href: "/portfolio" },
   logosCaption: "Powering solutions with",

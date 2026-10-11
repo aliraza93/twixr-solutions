@@ -758,10 +758,6 @@
     }
   }
 
-  .hero-line {
-    display: block;
-  }
-
   .hero-float {
     animation: hero-float 4.5s var(--ease-inout) infinite;
   }

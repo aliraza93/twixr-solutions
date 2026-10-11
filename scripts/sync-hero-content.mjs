@@ -1,0 +1,81 @@
+/**
+ * Push content/hero.ts into the stored siteSettings row.
+ *
+ * getHero() merges the stored CMS row OVER the file, so a hero edited only in
+ * code never reaches the live site once a row exists. This syncs the fields
+ * the hero composition owns and leaves everything else in the row untouched.
+ *
+ * Usage: node scripts/prisma-env.mjs run node scripts/sync-hero-content.mjs
+ */
+import { PrismaClient } from "@prisma/client";
+import { readFileSync } from "node:fs";
+
+const prisma = new PrismaClient();
+
+// Read the fields straight out of the compiled source rather than importing
+// the TS module, so this runs without a build step.
+const src = readFileSync("content/hero.ts", "utf8");
+
+function block(name) {
+  const start = src.indexOf(`${name}:`);
+  if (start === -1) throw new Error(`Field not found in content/hero.ts: ${name}`);
+  return src.slice(start);
+}
+
+const stableHeading = block("stableHeading").match(/stableHeading:\s*"([^"]+)"/)?.[1];
+if (!stableHeading) throw new Error("Could not parse stableHeading");
+
+// Mirrors lib/cms/hero-headline.ts parseHeadline():
+// "Shipping is the easy part. **Staying up is mine.**"
+const headingLines = [
+  [
+    { kind: "plain", text: "Shipping" },
+    { kind: "plain", text: "is" },
+    { kind: "plain", text: "the" },
+    { kind: "plain", text: "easy" },
+    { kind: "plain", text: "part." },
+    { kind: "emphasis", text: "Staying" },
+    { kind: "emphasis", text: "up" },
+    { kind: "emphasis", text: "is" },
+    { kind: "emphasis", text: "mine." },
+  ],
+];
+
+const stats = [
+  { label: "Job success", value: "100", unit: "%" },
+  { label: "Hours delivered", value: "2,600", unit: "+" },
+  { label: "Jobs shipped", value: "49", unit: "" },
+  { label: "Years in", value: "8", unit: "+" },
+];
+
+const subheading =
+  "Senior full-stack engineer, 8+ years in. I build multi-tenant SaaS on Laravel, Node.js, Next.js and AWS - then keep it fast, up, and cheap to run.";
+
+const row = await prisma.siteSettings.findUnique({ where: { id: "default" } });
+if (!row) {
+  console.log("No siteSettings row; content/hero.ts is already the live source.");
+  await prisma.$disconnect();
+  process.exit(0);
+}
+
+const current = row.hero ?? {};
+const next = {
+  ...current,
+  stableHeading,
+  headingLines,
+  subheading,
+  stats,
+  // The rotating word is retired; an empty list keeps older readers happy.
+  rotatingWords: [],
+};
+
+await prisma.siteSettings.update({
+  where: { id: "default" },
+  data: { hero: next },
+});
+
+console.log("Stored hero updated.");
+console.log("  heading:", stableHeading);
+console.log("  stats:  ", stats.map((s) => `${s.value}${s.unit} ${s.label}`).join(" | "));
+
+await prisma.$disconnect();

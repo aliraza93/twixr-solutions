@@ -66,7 +66,13 @@ export type HeroStat = {
 
 export type HeroContent = {
   eyebrow: string;
+  /**
+   * Plain-text mirror of headingLines, kept in sync by the admin form.
+   * The visible h1 now carries the real text, so nothing renders this; it
+   * stays as a convenient plain string for metadata and search.
+   */
   stableHeading: string;
+  /** Retired. The hero states one line instead of cycling words. */
   rotatingWords: string[];
   headingLines: HeroWord[][];
   subheading: string;
@@ -76,6 +82,9 @@ export type HeroContent = {
   logosCaption: string;
   techLogos: HeroLogo[];
   moreLogos: HeroLogo[];
+  /** Hero proof ledger. Optional so stored CMS rows written before this
+   *  existed still parse; falls back to the dashboard stats. */
+  stats?: HeroStat[];
   dashboard: {
     url: string;
     kicker: string;

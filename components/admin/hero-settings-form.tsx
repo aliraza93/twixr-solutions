@@ -4,6 +4,11 @@ import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import type { HeroContent, SiteContent } from "@/lib/cms/types";
+import {
+  headlinePlainText,
+  headlineToText,
+  parseHeadline,
+} from "@/lib/cms/hero-headline";
 import { saveSiteContentAction } from "@/app/admin/actions";
 import { TextField } from "@/components/admin/fields";
 import { RichEditor } from "@/components/admin/markdown-editor";
@@ -29,11 +34,14 @@ export function HeroSettingsForm({
         const nextHero: HeroContent = {
           ...hero,
           eyebrow: String(data.get("eyebrow") ?? hero.eyebrow),
-          stableHeading: String(data.get("stableHeading") ?? hero.stableHeading),
-          rotatingWords: String(data.get("rotatingWords") ?? "")
-            .split(",")
-            .map((word) => word.trim())
-            .filter(Boolean),
+          headingLines: parseHeadline(
+            String(data.get("headline") ?? headlineToText(hero.headingLines))
+          ),
+          stableHeading: headlinePlainText(
+            parseHeadline(
+              String(data.get("headline") ?? headlineToText(hero.headingLines))
+            )
+          ),
           subheading: String(data.get("subheading") ?? hero.subheading),
           proofChip: String(data.get("proofChip") ?? hero.proofChip),
           primaryCta: {
@@ -57,12 +65,11 @@ export function HeroSettingsForm({
       }}
     >
       <TextField label="Eyebrow" name="eyebrow" defaultValue={hero.eyebrow} />
-      <TextField label="Stable heading" name="stableHeading" defaultValue={hero.stableHeading} />
       <TextField
-        label="Rotating words"
-        name="rotatingWords"
-        defaultValue={hero.rotatingWords.join(", ")}
-        hint="Comma-separated"
+        label="Headline"
+        name="headline"
+        defaultValue={headlineToText(hero.headingLines)}
+        hint="Wrap the pine-coloured part in **double asterisks**"
       />
       <RichEditor
         id="subheading"

@@ -13,7 +13,7 @@
     "seed:briefs": "node scripts/prisma-env.mjs run ./node_modules/.bin/tsx prisma/seed-briefs.ts",
     "seed:receipts": "node scripts/prisma-env.mjs run ./node_modules/.bin/tsx prisma/seed-receipts.ts",
     "backfill:author": "node scripts/prisma-env.mjs run node scripts/backfill-author.mjs",
-    "test:pipeline": "tsx --test lib/pipeline/validators.test.ts lib/pipeline/variety/variety.test.ts lib/pipeline/seo/seo.test.ts"
+    "test:pipeline": "tsx --test lib/pipeline/validators.test.ts lib/pipeline/variety/variety.test.ts lib/pipeline/seo/seo.test.ts lib/cms/hero-headline.test.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.120.0",

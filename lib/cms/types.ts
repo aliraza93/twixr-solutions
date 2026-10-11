@@ -85,11 +85,14 @@ export type HeroContent = {
   /** Hero proof figures. Optional so stored CMS rows written before this
    *  existed still parse; falls back to the dashboard stats. */
   stats?: HeroStat[];
-  /** The four bento tiles beside the headline. Optional for the same reason. */
+  /**
+   * The four bento tiles beside the headline. Optional for the same reason.
+   * Every tile states a result the client gets, not a fact about the founder.
+   */
   bento?: {
-    photo: { src: string; alt: string; caption: string };
-    proof: { badge: string; title: string; note: string };
-    metric: { value: string; label: string; note: string };
+    result: { eyebrow: string; from: string; to: string; caption: string };
+    proof: { value: string; label: string; note: string };
+    cost: { eyebrow: string; title: string; note: string };
     code: { file: string; lines: string[] };
   };
   /** Inline social proof on the action row. */

@@ -26,18 +26,17 @@ const stableHeading = block("stableHeading").match(/stableHeading:\s*"([^"]+)"/)
 if (!stableHeading) throw new Error("Could not parse stableHeading");
 
 // Mirrors lib/cms/hero-headline.ts parseHeadline():
-// "Shipping is the easy part. **Staying up is mine.**"
+// "Ship faster. **Stay up.** Cut the cloud bill."
 const headingLines = [
   [
-    { kind: "plain", text: "Shipping" },
-    { kind: "plain", text: "is" },
+    { kind: "plain", text: "Ship" },
+    { kind: "plain", text: "faster." },
+    { kind: "emphasis", text: "Stay" },
+    { kind: "emphasis", text: "up." },
+    { kind: "plain", text: "Cut" },
     { kind: "plain", text: "the" },
-    { kind: "plain", text: "easy" },
-    { kind: "plain", text: "part." },
-    { kind: "emphasis", text: "Staying" },
-    { kind: "emphasis", text: "up" },
-    { kind: "emphasis", text: "is" },
-    { kind: "emphasis", text: "mine." },
+    { kind: "plain", text: "cloud" },
+    { kind: "plain", text: "bill." },
   ],
 ];
 
@@ -49,7 +48,7 @@ const stats = [
 ];
 
 const subheading =
-  "Senior full-stack engineer, 8+ years in. I build multi-tenant SaaS on Laravel, Node.js, Next.js and AWS - then keep it fast, up, and cheap to run.";
+  "Multi-tenant SaaS, APIs and AWS infrastructure on Laravel, Node.js and Next.js - built to carry real traffic, survive launch day, and stay cheap to run.";
 
 const row = await prisma.siteSettings.findUnique({ where: { id: "default" } });
 if (!row) {
@@ -62,16 +61,17 @@ const current = row.hero ?? {};
 const rating = { score: "4.7", count: "40 reviews" };
 
 const bento = {
-  photo: {
-    src: "/ali-raza.jpg",
-    alt: "Ali Raza, founder and engineer at Twixr Solutions",
-    caption: "Ali Raza \u00b7 Lahore",
+  result: {
+    eyebrow: "Performance",
+    from: "900",
+    to: "6",
+    caption: "queries on one invoice list",
   },
-  proof: { badge: "Upwork", title: "Top Rated Plus", note: "100% job success" },
-  metric: {
-    value: "2,600+",
-    label: "hours delivered",
-    note: "49 jobs, 8+ years",
+  proof: { value: "100%", label: "job success", note: "49 projects delivered" },
+  cost: {
+    eyebrow: "Cloud cost",
+    title: "Bill down, features intact",
+    note: "nothing cut to get there",
   },
   code: {
     file: "reliability.ts",
@@ -105,6 +105,6 @@ await prisma.siteSettings.update({
 console.log("Stored hero updated.");
 console.log("  heading:", stableHeading);
 console.log("  stats:  ", stats.map((s) => `${s.value}${s.unit} ${s.label}`).join(" | "));
-console.log("  bento:  ", [bento.photo.caption, bento.proof.title, bento.metric.value, bento.code.file].join(" | "));
+console.log("  bento:  ", [`${bento.result.from} -> ${bento.result.to}`, bento.proof.value, bento.cost.title, bento.code.file].join(" | "));
 
 await prisma.$disconnect();

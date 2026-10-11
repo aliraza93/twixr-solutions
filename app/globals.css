@@ -48,6 +48,7 @@
   --color-lime: var(--lime);
   --color-lime-ink: var(--lime-ink);
   --color-lime-deep: var(--lime-deep);
+  --color-star: var(--star);
   --color-d-bg: var(--d-bg);
   --color-d-bg-2: var(--d-bg-2);
   --color-d-text: var(--d-text);
@@ -113,6 +114,10 @@
     --accent-600: #0a3a26;
     --accent-tint: #e7f1ec;
     --pine: #0f5132;
+    /* Rating gold. A rating star carries meaning, so WCAG 1.4.11 wants 3:1
+       as a non-text graphic; pure yellow cannot reach that on white, and
+       this amber is the yellow that can (3.9:1). */
+    --star: #d9820a;
     --pine-600: #0a3a26;
     --pine-tint: #e7f1ec;
 
@@ -769,15 +774,6 @@
     transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
     transition: transform var(--dur) var(--ease-out);
     will-change: transform;
-  }
-
-  .hero-tile--float {
-    animation: hero-float 5.5s var(--ease-inout) infinite;
-  }
-
-  .hero-tile--float-slow {
-    animation: hero-float 7s var(--ease-inout) infinite;
-    animation-delay: -2.5s;
   }
 
   .hero-float {
@@ -1847,8 +1843,6 @@
 
   @media (prefers-reduced-motion: reduce) {
     .hero-word,
-    .hero-tile--float,
-    .hero-tile--float-slow,
     .hero-float,
     .hero-caret,
     .hero-scroll-line,

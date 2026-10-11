@@ -14,6 +14,49 @@ import { pickRelatedPosts } from "@/lib/pipeline/seo/related";
 import { notifyIfNewlyPublished } from "@/lib/newsletter/notify";
 import type { BlogPost as PrismaBlogPost } from "@prisma/client";
 
+/**
+ * A post body must not open with a markdown H1. The page already renders the
+ * title as the document's only h1, so a leading "# Title" in the body ships a
+ * second one with identical text. Seven published posts had this.
+ */
+export function stripLeadingH1(body: string): string {
+  const lines = body.split("\n");
+  let i = 0;
+  while (i < lines.length && !lines[i].trim()) i += 1;
+  if (i < lines.length && /^#\s+\S/.test(lines[i].trim())) {
+    lines.splice(i, 1);
+    while (i < lines.length && !lines[i].trim()) lines.splice(i, 1);
+    return lines.join("\n").trim();
+  }
+  return body;
+}
+
+/**
+ * Schema.org wants ISO 8601 for datePublished. Four live posts stored a
+ * human-readable string ("August 26, 2026"), which renders an invalid date
+ * literal into the Article node and costs rich-result eligibility. Formatting
+ * belongs at render time, never in the column.
+ */
+function localIsoDate(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+export function toIsoDate(value: string): string {
+  const raw = (value ?? "").trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+  const parsed = new Date(raw);
+  if (!Number.isNaN(parsed.getTime())) {
+    // Format from local parts. toISOString() converts to UTC, which shifts
+    // a locally-parsed midnight back a day in any zone ahead of UTC and
+    // would silently move every published date.
+    return localIsoDate(parsed);
+  }
+  return localIsoDate(new Date());
+}
+
 function toRecord(row: PrismaBlogPost): BlogPostRecord {
   const body = stripEmDashes(row.body);
   const faqs = resolvePostFaqs(body, stripEmDashesDeep(row.faqs));
@@ -195,7 +238,7 @@ export async function upsertBlogPost(
     slug: input.slug,
     title: stripEmDashes(input.title),
     excerpt: stripEmDashes(input.excerpt),
-    date: input.date,
+    date: toIsoDate(input.date),
     image: input.image,
     category: input.category,
     tags: [...input.tags],
@@ -203,7 +246,7 @@ export async function upsertBlogPost(
     author: input.author,
     authorRole: stripEmDashes(input.authorRole),
     authorImage: input.authorImage,
-    body: stripEmDashes(input.body),
+    body: stripLeadingH1(stripEmDashes(input.body)),
     faqs: stripEmDashesDeep(input.faqs ?? []),
     published: input.published,
     sortOrder: input.order,

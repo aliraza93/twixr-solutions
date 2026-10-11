@@ -74,6 +74,34 @@ export function hashtagCheck(text: string, expected?: number): string[] {
   return [];
 }
 
+/**
+ * The body must not open with a markdown H1. The page title is already the
+ * document's h1, so a leading "# Title" renders a duplicate. The prompt asks
+ * for ## and ###; this enforces it rather than trusting it.
+ */
+export function headingLevelCheck(body: string): string[] {
+  const first = body.split("\n").find((l) => l.trim());
+  if (first && /^#\s+\S/.test(first.trim())) {
+    return [`Body opens with a markdown H1: "${first.trim().slice(0, 60)}"`];
+  }
+  const h1s = body
+    .split("\n")
+    .filter((l) => /^#\s+\S/.test(l.trim())).length;
+  if (h1s > 0) {
+    return [`Body contains ${h1s} markdown H1 heading(s); use ## and ###`];
+  }
+  return [];
+}
+
+/** Titles over ~60 characters truncate in the SERP. */
+export function titleLengthCheck(title: string): string[] {
+  const n = title.trim().length;
+  if (n > 60) {
+    return [`Title is ${n} chars; it will truncate in search results (max 60)`];
+  }
+  return [];
+}
+
 export function lengthCheck(
   text: string,
   kind: "linkedin" | "blog"
@@ -291,6 +319,8 @@ export async function validateBlog(
     ...bannedPhrases(combined),
     ...dashCheck(combined),
     ...lengthCheck(draft.body, "blog"),
+    ...headingLevelCheck(draft.body),
+    ...titleLengthCheck(draft.title),
     ...sourcesRequired(draft, brief),
     ...(await duplicateTitle(draft.slug, draft.title)),
     ...(await duplicateTopic(brief.topic)),

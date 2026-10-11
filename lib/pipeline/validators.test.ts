@@ -5,6 +5,8 @@ import {
   bannedPhrases,
   dashCheck,
   hashtagCheck,
+  headingLevelCheck,
+  titleLengthCheck,
 } from "@/lib/pipeline/validators";
 
 describe("bannedPhrases", () => {
@@ -79,5 +81,36 @@ describe("ensureLinkedInBlogLink", () => {
     const input = `Hook\n\nFull write-up: ${url}\n\n#Laravel #NestJS #AWS #WebDev #Upwork`;
     const out = ensureLinkedInBlogLink(input, url);
     assert.equal(out.split(url).length - 1, 1);
+  });
+});
+
+describe("headingLevelCheck", () => {
+  it("flags a body that opens with a markdown H1", () => {
+    const got = headingLevelCheck("# Queued Jobs vs Scheduled Commands\n\nBody.");
+    assert.equal(got.length, 1);
+    assert.match(got[0], /opens with a markdown H1/);
+  });
+
+  it("flags an H1 further down the body", () => {
+    assert.ok(headingLevelCheck("Intro text.\n\n# Later heading\n\nMore.").length > 0);
+  });
+
+  it("passes a body that starts at H2", () => {
+    assert.deepEqual(headingLevelCheck("## The problem\n\nBody text."), []);
+  });
+
+  it("does not mistake a heading for a hashtag or an anchor", () => {
+    assert.deepEqual(headingLevelCheck("Use #laravel in the tag.\n\n## Real heading"), []);
+    assert.deepEqual(headingLevelCheck("### Deep heading first\n\nBody"), []);
+  });
+});
+
+describe("titleLengthCheck", () => {
+  it("flags a title over 60 characters", () => {
+    assert.ok(titleLengthCheck("x".repeat(61)).length > 0);
+  });
+
+  it("passes a title at the limit", () => {
+    assert.deepEqual(titleLengthCheck("x".repeat(60)), []);
   });
 });

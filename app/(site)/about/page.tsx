@@ -6,7 +6,7 @@ import { site } from "@/content/site";
 import { getFeaturedProjects } from "@/lib/cms/portfolio";
 
 export const metadata: Metadata = pageMetadata({
-  title: "About",
+  title: "About Ali Raza, Full-Stack Engineer",
   description: `${site.name} - ${site.role} and founder of Twixr Solutions. Top Rated Plus on Upwork with ${site.yearsExperience} years building SaaS, e-commerce, APIs, and cloud infrastructure with Laravel, Node, Next.js & Vue.`,
   path: "/about",
   type: "profile",

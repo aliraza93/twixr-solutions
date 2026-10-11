@@ -49,3 +49,5 @@ next-env.d.ts
 # Studio local file uploads
 /public/uploads/*
 !/public/uploads/.gitkeep
+# SEO audit artifacts (regenerated on demand)
+*-audit/

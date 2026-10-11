@@ -4,7 +4,7 @@ import { getBlogCategories, getBlogListings } from "@/lib/cms/blog";
 import { pageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = pageMetadata({
-  title: "Blog",
+  title: "Engineering Blog: Laravel, Node & AWS",
   description:
     "Insights on software engineering, SaaS architecture, Laravel, Next.js, remote work, and building products that scale.",
   path: "/blog",

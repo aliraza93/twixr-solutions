@@ -308,6 +308,8 @@ export function buildBlogPrompt(
     "}",
     "",
     "Body rules: markdown only. Prefer structured faqs over a ## FAQ section.",
+    "Never open the body with a markdown H1 (# Title). The page renders the title as the only h1; start at ##.",
+    "Keep the title at 60 characters or fewer so it does not truncate in search results.",
     "Sell the outcome, not the stack. Follow the structure plan above for the opening.",
     imageInstructions(plan),
     "When using internal links, write them as markdown [anchor](absolute-url) using only allowed URLs.",

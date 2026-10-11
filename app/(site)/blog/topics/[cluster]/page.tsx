@@ -31,12 +31,17 @@ async function clusterData(slug: string) {
   );
   if (!matching.length) return null;
   // Use the most common spelling as the display name.
-  const names = new Map<string, number>();
+  // Spellings of one cluster can differ by case ("AI & Industry News" vs
+  // "AI & industry news"); count them case-insensitively and show the most
+  // common rendering.
+  const names = new Map<string, { label: string; n: number }>();
   for (const p of matching) {
     const name = p.contentCluster!.trim();
-    names.set(name, (names.get(name) ?? 0) + 1);
+    const key = name.toLowerCase();
+    const seen = names.get(key);
+    names.set(key, { label: seen?.label ?? name, n: (seen?.n ?? 0) + 1 });
   }
-  const label = [...names.entries()].sort((a, b) => b[1] - a[1])[0][0];
+  const label = [...names.values()].sort((a, b) => b.n - a.n)[0].label;
   return { label, posts: matching };
 }
 
@@ -48,6 +53,7 @@ export async function generateStaticParams() {
         .map((p) => p.contentCluster?.trim())
         .filter((c): c is string => Boolean(c))
         .map(slugifyCluster)
+        .filter(Boolean)
     ),
   ];
   return clusters.map((cluster) => ({ cluster }));

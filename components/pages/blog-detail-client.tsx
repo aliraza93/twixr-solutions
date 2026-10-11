@@ -21,6 +21,7 @@ import {
   ScrollStagger,
 } from "@/components/motion/scroll-reveal";
 import { site } from "@/content/site";
+import { slugifyCluster } from "@/lib/seo";
 
 const CONTACT_EMAIL = site.contact.email;
 
@@ -126,6 +127,17 @@ export function BlogDetailClient({ post, related }: BlogDetailClientProps) {
               <Link href="/about" className="hover:text-pine">
                 {post.author}
               </Link>
+              {post.contentCluster && (
+                <>
+                  <span aria-hidden> · </span>
+                  <Link
+                    href={`/blog/topics/${slugifyCluster(post.contentCluster)}`}
+                    className="hover:text-pine"
+                  >
+                    {post.contentCluster}
+                  </Link>
+                </>
+              )}
               {reviewedOn && (
                 <>
                   <span aria-hidden> · </span>

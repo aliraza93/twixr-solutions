@@ -6,6 +6,7 @@ import Link from "next/link";
 import { LayoutGrid } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { type BlogListing } from "@/lib/data/blog";
+import { slugifyCluster } from "@/lib/seo";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Chip } from "@/components/ui/chip";
@@ -24,6 +25,26 @@ export function BlogPageClient({
   posts: BlogListing[];
   categories: { id: string; label: string; count: number }[];
 }) {
+  // Topic hubs, deduped by slug and ordered by depth. These were previously
+  // in the sitemap with no inbound link anywhere on the site.
+  const hubs = (() => {
+    const map = new Map<string, { label: string; count: number }>();
+    for (const post of posts) {
+      const cluster = post.contentCluster?.trim();
+      if (!cluster) continue;
+      const slug = slugifyCluster(cluster);
+      if (!slug) continue;
+      const seen = map.get(slug);
+      map.set(slug, {
+        label: seen?.label ?? cluster,
+        count: (seen?.count ?? 0) + 1,
+      });
+    }
+    return [...map.entries()]
+      .map(([slug, v]) => ({ slug, ...v }))
+      .sort((a, b) => b.count - a.count);
+  })();
+
   return (
     <main className="min-h-screen bg-canvas pt-[120px] lg:pt-[140px]">
       <PageHero
@@ -32,6 +53,28 @@ export function BlogPageClient({
         emphasis="Blog"
         description="Insights on software engineering, SaaS architecture, remote work, and building products that scale."
       />
+      {hubs.length > 0 && (
+        <section className="ds-container pb-2">
+          <h2 className="font-mono text-[length:var(--fs-eyebrow)] uppercase tracking-[0.18em] text-muted">
+            Browse by topic
+          </h2>
+          <ul className="mt-4 flex flex-wrap gap-2">
+            {hubs.map((hub) => (
+              <li key={hub.slug}>
+                <Link
+                  href={`/blog/topics/${hub.slug}`}
+                  className="inline-flex items-center gap-2 rounded-pill border border-hairline px-4 py-2 text-sm text-ink-soft transition-colors hover:border-pine hover:text-pine"
+                >
+                  {hub.label}
+                  <span className="font-mono text-[11px] text-muted tabular-nums">
+                    {hub.count}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       <BlogCatalog posts={posts} categories={categories} />
     </main>
   );

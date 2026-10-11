@@ -60,15 +60,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Cluster hubs: the spokes already link up through isPartOf, so the hubs
   // belong in the sitemap too.
-  const clusters = [
+  // Dedupe by slug, not by the raw string: "AI & Industry News" and
+  // "AI & industry news" are one hub, and keying on the string emitted the
+  // same URL twice with a duplicate title and description.
+  const clusterSlugs = [
     ...new Set(
       posts
         .map((p) => p.contentCluster?.trim())
         .filter((c): c is string => Boolean(c))
+        .map(slugifyCluster)
+        .filter(Boolean)
     ),
   ];
-  const hubs: MetadataRoute.Sitemap = clusters.map((cluster) => ({
-    url: `${SITE_URL}/blog/topics/${slugifyCluster(cluster)}`,
+  const hubs: MetadataRoute.Sitemap = clusterSlugs.map((slug) => ({
+    url: `${SITE_URL}/blog/topics/${slug}`,
     changeFrequency: "weekly",
     priority: 0.65,
   }));

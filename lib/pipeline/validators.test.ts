@@ -221,3 +221,22 @@ describe("image helpers", () => {
     assert.equal(inferRender("An engineer reviewing logs at night"), "photo");
   });
 });
+
+describe("vagueTitleCheck", () => {
+  it("flags the templated topic-bank phrasings", () => {
+    assert.ok(vagueTitleCheck("Hype vs Reality on Whatever Everyone Is Posting").length > 0);
+    assert.ok(vagueTitleCheck("Builder's take on a just-released model").length > 0);
+    assert.ok(vagueTitleCheck("What a new framework means for you").length > 0);
+  });
+
+  it("does not flag a concrete title that happens to say 'something'", () => {
+    assert.deepEqual(
+      vagueTitleCheck("Refactor Story: A 400-Line Controller to Something Testable"),
+      []
+    );
+  });
+
+  it("passes ordinary named titles", () => {
+    assert.deepEqual(vagueTitleCheck("Queued Jobs vs Scheduled Commands in Laravel"), []);
+  });
+});

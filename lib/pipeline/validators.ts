@@ -406,8 +406,11 @@ export function liveSourceUrlCheck(
   return real.length ? [] : ["requiresLiveSource brief has no http(s) source URL"];
 }
 
+// "something" on its own is ordinary English - "A 400-Line Controller to
+// Something Testable" names a perfectly concrete subject - so it only counts
+// as templated in the stock phrases the topic-bank slots actually produced.
 const VAGUE_TITLE =
-  /\b(whatever|whichever|something|a (just[- ])?released|a new (model|tool|framework|release)|the latest thing|everyone is (posting|talking))\b/i;
+  /\b(whatever|whichever|something (new|big|interesting)\b|a (just[- ])?released|a new (model|tool|framework|release)|the latest thing|everyone is (posting|talking))\b/i;
 
 /** Titles must name a real subject, not the topic-bank slot it came from. */
 export function vagueTitleCheck(title: string): string[] {

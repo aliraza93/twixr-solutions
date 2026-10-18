@@ -4,38 +4,6 @@
  * composes an article from challenge / solution / deliverables.
  */
 export const caseStudyBodies: Record<string, string> = {
-  "leadquiz-saas-funnel-platform": `## Context
-
-LeadQuiz is a B2B SaaS for agencies that run lead-generation funnels for many clients at once. Marketing teams needed a builder they could actually operate, plus the isolation, scoring, and CRM plumbing that agency work demands.
-
-I joined as full-stack developer and DevOps engineer: NestJS and React on the application side, AWS microservices underneath.
-
-## The challenge
-
-Agencies were stitching together page builders, spreadsheets, and a different CRM per client. They needed one workspace that kept client accounts isolated, let them change funnel logic without a deploy, and still delivered leads into whatever system each client already used.
-
-## The approach
-
-The funnel builder is the product, not a theme layer on top of a CMS.
-
-The application is NestJS and React on PostgreSQL, deployed as AWS microservices (ECS, RDS, S3) so the builder, scoring, and delivery can scale independently. Funnel logic is data: templates, custom domains, and conditional scoring live in the app, not in hardcoded pages.
-
-On the ops side I owned Dockerized services and the AWS footprint so releases stayed repeatable as agency load grew.
-
-## What shipped
-
-- Drag-and-drop funnel builder with 30+ templates
-- Custom domains per funnel
-- Conditional lead scoring and auto-disqualification
-- Role-based team access and multi-client workspaces
-- Zapier and webhook sync into any client CRM
-- Scheduled weekly per-client summary reports
-
-## How it holds up
-
-The platform is in ongoing production use in 2026. The interesting part is not a vanity metric. An agency can stand up a new client funnel, score leads the way that client needs, and dump the result into the CRM they already pay for, without a one-off integration project every time.
-`,
-
   "manageph-contractor-payments-platform": `## Context
 
 ManagePH is a platform for companies that hire and pay contractors around the world. Onboarding, team structure, and payouts had to live in one product, not a pile of spreadsheets and payment tabs.

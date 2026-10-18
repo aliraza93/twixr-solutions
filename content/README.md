@@ -46,6 +46,6 @@ Body supports paragraphs, `##` / `###` headings, and `- ` lists. Add a file, red
 1. **Testimonials** - add 4 - 7 more real Upwork reviews in `testimonials.ts`. Do not invent names.
 2. **Contact URLs** - real Fiverr and Cal.com (or keep `/schedule`). Email is `aliraza.2369196@gmail.com`.
 3. **CV PDF** - add `public/ali-raza-cv.pdf` (`cvHref` already points there).
-4. **Project links** - LeadQuiz / ManagePH / OSRS hrefs in `work.ts`.
+4. **Project links** - LuckyCharmGold / ManagePH / PropDaddy hrefs in `work.ts`.
 5. **DevLabs role** - confirm 2020 - 2022 is accurate.
 6. **Dead links** - Newsletter (`#newsletter`) and several socials are still `#`.

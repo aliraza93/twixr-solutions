@@ -69,30 +69,111 @@ function extractImageBytes(response: unknown): {
 }
 
 /**
- * Palette crossed with a render modifier.
- *
- * 24 palettes on their own repeat visibly within a couple of months. Crossing
- * them with 10 rendering styles gives 240 distinct looks from two small banks,
- * so a reader scrolling the archive does not see one house style.
+ * What kind of picture is being made.
+ * - photo: documentary photograph (blog covers and most inline images)
+ * - diagram: clean low-text technical diagram in the brand palette
+ * - illustration: the old abstract brand look, kept for the LinkedIn card
+ *   background, where a headline is composited on top
  */
-function withBrandStyle(
+export type ImageRender = "photo" | "diagram" | "illustration";
+
+const PHOTO_SPEC = [
+  "Photorealistic documentary photograph, as if taken by a professional photographer on a full-frame camera for a business magazine.",
+  "Believable and ordinary: real materials, slight clutter, cables, worn surfaces, natural imperfections. Unstaged.",
+  "Natural, true-to-life color and lighting, accurate perspective and realistic depth of field. Do not tint the whole frame.",
+  "People, if any: candid and mid-task, seen from behind, from the side, or partly out of frame. Natural hands. No posed smiles at the camera, no stock-photo poses.",
+  "Screens, paper and whiteboards are out of focus or too small to read. No legible text, no logos, no watermarks.",
+  "Not an illustration, not a 3D render, not CGI. No glowing holograms, floating icons, neon circuitry, light trails or sci-fi effects.",
+];
+
+const DIAGRAM_SPEC = [
+  "Clean, minimal technical diagram, like a slide a senior engineer drew for a client.",
+  "Flat shapes on a plain background, generous spacing, thin consistent lines.",
+  "At most six labels, one or two words each, in a plain sans-serif, spelled correctly. No sentences, no paragraphs, no fake code.",
+];
+
+const PHOTO_WORDS = /\b(photo|photograph|shot|candid|workspace|desk|office)\b/i;
+const DIAGRAM_WORDS =
+  /\b(diagram|flowchart|flow chart|sequence|architecture|layers?|decision tree|before and after|panels?|schematic|chart|timeline)\b/i;
+
+/** Infer the render from a prompt when the plan does not say. Photo wins ties. */
+export function inferRender(prompt: string): Exclude<ImageRender, "illustration"> {
+  if (PHOTO_WORDS.test(prompt)) return "photo";
+  return DIAGRAM_WORDS.test(prompt) ? "diagram" : "photo";
+}
+
+function paletteLines(style: BrandStyle): string[] {
+  const { background, accent, ink, muted, panel } = style.og;
+  return [
+    `Colors for this image only: background ${background}, accent ${accent}, ink ${ink}, muted ${muted}, panel ${panel}.`,
+    "Match these hexes. Do not use other palettes.",
+    "Never paint style names, palette names, hex codes, or the words Brand style onto the image.",
+  ];
+}
+
+/**
+ * Build the final model prompt for one image.
+ *
+ * Photos get no hex palette: forcing brand hexes onto a photograph is what
+ * made every cover look synthetic. Diagrams keep the palette so they match
+ * the site. The illustration path is the previous behavior, unchanged.
+ */
+export function buildImagePrompt(
   prompt: string,
   style: BrandStyle,
+  render: ImageRender,
   modifier?: { id: string; prompt: string }
 ): string {
-  const { background, accent, ink, muted, panel } = style.og;
+  if (render === "photo") {
+    return [
+      prompt.trim(),
+      "",
+      ...PHOTO_SPEC,
+      modifier ? `Light and lens: ${modifier.prompt}` : "",
+      "No third-party logos or brand names anywhere.",
+    ]
+      .filter(Boolean)
+      .join("\n");
+  }
+  if (render === "diagram") {
+    return [
+      prompt.trim(),
+      "",
+      ...DIAGRAM_SPEC,
+      `Visual direction: ${style.aiPrompt}`,
+      ...paletteLines(style),
+      "No third-party logos. No people.",
+    ].join("\n");
+  }
   return [
     prompt.trim(),
     "",
     `Visual direction: ${style.aiPrompt}`,
     modifier ? `Rendering style: ${modifier.prompt}` : "",
-    `Colors for this image only: background ${background}, accent ${accent}, ink ${ink}, muted ${muted}, panel ${panel}.`,
-    "Match these hexes. Do not use other palettes.",
-    "Never paint style names, palette names, hex codes, or the words Brand style onto the image.",
+    ...paletteLines(style),
     "No third-party logos. No stock-photo people.",
   ]
     .filter(Boolean)
     .join("\n");
+}
+
+const ASPECTS: Array<{ ratio: string; value: number }> = [
+  { ratio: "1:1", value: 1 },
+  { ratio: "4:3", value: 4 / 3 },
+  { ratio: "3:2", value: 3 / 2 },
+  { ratio: "16:9", value: 16 / 9 },
+  { ratio: "21:9", value: 21 / 9 },
+];
+
+/** "1280x720" -> "16:9" (nearest supported ratio). */
+export function aspectRatioFor(size?: string): string | undefined {
+  const m = size?.match(/^(\d+)\s*x\s*(\d+)$/i);
+  if (!m) return undefined;
+  const r = Number(m[1]) / Number(m[2]);
+  if (!Number.isFinite(r) || r <= 0) return undefined;
+  return ASPECTS.reduce((best, a) =>
+    Math.abs(a.value - r) < Math.abs(best.value - r) ? a : best
+  ).ratio;
 }
 
 function nextStyle(exclude: string[] = []): BrandStyle {
@@ -136,18 +217,40 @@ export async function renderImageBytes(
     size?: string;
     style?: BrandStyle;
     modifier?: { id: string; prompt: string };
+    /** Defaults to "illustration" so existing callers keep their look. */
+    render?: ImageRender;
   }
 ): Promise<{ bytes: Buffer; mimeType: string }> {
   const style = opts?.style ?? pickBrandStyle();
+  const render = opts?.render ?? "illustration";
   const ai = client();
   const sizeHint = opts?.size ? ` Target size about ${opts.size}.` : "";
-  const response = await ai.models.generateContent({
-    model: pipeline.models.image,
-    contents: `${withBrandStyle(prompt, style, opts?.modifier)}${sizeHint}`,
-    config: {
-      responseModalities: [Modality.IMAGE, Modality.TEXT],
-    },
-  });
+  const contents = `${buildImagePrompt(prompt, style, render, opts?.modifier)}${sizeHint}`;
+  const aspectRatio = aspectRatioFor(opts?.size);
+
+  const call = (withAspect: boolean) =>
+    ai.models.generateContent({
+      model: pipeline.models.image,
+      contents,
+      config: {
+        responseModalities: [Modality.IMAGE, Modality.TEXT],
+        ...(withAspect && aspectRatio ? { imageConfig: { aspectRatio } } : {}),
+      },
+    });
+
+  let response;
+  try {
+    response = await call(true);
+  } catch (error) {
+    // Older image models reject imageConfig; the size hint in the prompt
+    // still steers them, so retry once without it.
+    if (!aspectRatio) throw error;
+    console.warn(
+      "Image call with aspectRatio failed, retrying without:",
+      error instanceof Error ? error.message : String(error)
+    );
+    response = await call(false);
+  }
 
   const image = extractImageBytes(response);
   if (!image) {
@@ -167,12 +270,14 @@ export async function generateImage(
     filename?: string;
     style?: BrandStyle;
     modifier?: { id: string; prompt: string };
+    render?: ImageRender;
   }
 ): Promise<string> {
   const { bytes, mimeType } = await renderImageBytes(prompt, {
     size: opts?.size,
     style: opts?.style,
     modifier: opts?.modifier,
+    render: opts?.render,
   });
 
   const ext = mimeType.includes("jpeg") ? "jpg" : "png";
@@ -181,7 +286,9 @@ export async function generateImage(
     opts?.filename ?? `pipeline-${Date.now()}.${ext}`,
     { type: mimeType }
   );
-  const uploaded = await uploadToCloudinary(file);
+  // Blog images never render wider than ~1440 CSS px; 1600 covers retina
+  // crops without shipping the model's full-size output.
+  const uploaded = await uploadToCloudinary(file, { maxWidth: 1600 });
   return uploaded.url;
 }
 
@@ -268,6 +375,8 @@ export async function generateInlineImages(
       plan?.images.inlineModifiers[i] ??
       RENDER_MODIFIERS[randomInt(RENDER_MODIFIERS.length)];
     const size = plan?.images.aspects[i]?.size ?? "1280x720";
+    const render =
+      plan?.images.kinds[i]?.medium ?? inferRender(item.prompt);
     usedStyles.push(style.id);
     styleIds.push(style.id);
     try {
@@ -275,7 +384,8 @@ export async function generateInlineImages(
         size,
         filename: seoImageFilename(draft.slug, "inline", i + 1),
         style,
-        modifier,
+        modifier: render === "photo" ? modifier : undefined,
+        render,
       });
       body = body.replaceAll(item.placeholder, url);
       const escaped = item.placeholder.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -390,12 +500,13 @@ export async function aiCoverImage(
   const style = plan?.images.coverPalette ?? pickBrandStyle();
   const modifier = plan?.images.coverModifier;
   const prompt = [
-    "Editorial blog cover image, wide 16:9, premium technical publication quality.",
-    `Title concept: ${draft.title}.`,
-    `Category: ${draft.category}.`,
-    draft.coverAlt ? `Visual direction: ${draft.coverAlt}.` : "",
-    "Strong visual metaphor. Do not paint the full title as small text.",
-    "Large shapes, atmospheric lighting, magazine-quality composition.",
+    "Wide 16:9 editorial header photograph for an article read by SaaS founders and engineers.",
+    `The article: ${draft.title}.`,
+    draft.coverAlt
+      ? `Scene to photograph: ${draft.coverAlt}.`
+      : "Scene: a real work setting that a founder or engineer reading this article would recognize.",
+    "Show the real-world, human side of the topic: the people, desks, rooms and devices where this work happens. Do not draw the concept itself as graphics.",
+    "Keep one side of the frame calmer so the image crops well to 21:9.",
   ]
     .filter(Boolean)
     .join(" ");
@@ -405,6 +516,7 @@ export async function aiCoverImage(
     filename: seoImageFilename(draft.slug || "post", "cover"),
     style,
     modifier,
+    render: "photo",
   });
   return { url, styleId: style.id };
 }

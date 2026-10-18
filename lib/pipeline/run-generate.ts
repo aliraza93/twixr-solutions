@@ -70,7 +70,11 @@ import {
 import { buildSeoReport, formatSeoReportText } from "@/lib/pipeline/seo/score";
 import type { InventoryItem, RecommendedInternalLink } from "@/lib/pipeline/seo/types";
 import { absoluteUrl } from "@/lib/seo";
-import { validateBlog, validateLinkedIn } from "@/lib/pipeline/validators";
+import {
+  qualityGate,
+  validateBlog,
+  validateLinkedIn,
+} from "@/lib/pipeline/validators";
 
 export type RunGenerateOptions = {
   dryRun?: boolean;
@@ -770,8 +774,10 @@ export async function runGenerateFromBrief(
       verdict: "revise",
       issues: ["critic skipped"],
     };
+    let criticRan = false;
     try {
       cBlog = await criticBlog(draftForValidation);
+      criticRan = true;
       await logStage({
         runId,
         stage: "critic",
@@ -834,11 +840,20 @@ export async function runGenerateFromBrief(
       cBlog.score >= pipeline.criticMinScore &&
       imageReasons.length === 0;
 
-    // Invented internal URLs / empty core meta always block publish (even with autoPublish).
+    // These always block publish, even with autoPublish: invented internal
+    // URLs, empty core meta, unfinished content (placeholders, unanswered
+    // FAQs, empty Sources, templated titles), or a critic score below the
+    // hard floor. The post is kept as needs_review so nothing is lost.
+    const qualityReasons = qualityGate(draftForValidation, brief);
+    const criticHardFail =
+      criticRan && cBlog.score < pipeline.criticHardFloor;
     const seoHardFail =
       vBlog.reasons.some((r) =>
         r.startsWith("Invented or disallowed internal link")
-      ) || metadataCheck.hardFails.length > 0;
+      ) ||
+      metadataCheck.hardFails.length > 0 ||
+      qualityReasons.length > 0 ||
+      criticHardFail;
 
     // Auto-publish by default: validators/critic still run and log, but do not block.
     // publishMode: auto | draft | publish_now (admin manual controls).
@@ -865,6 +880,9 @@ export async function runGenerateFromBrief(
     const reviewReasons = [
       ...imageReasons,
       ...vBlog.reasons,
+      ...(criticHardFail
+        ? [`critic score ${cBlog.score} below hard floor ${pipeline.criticHardFloor}`]
+        : []),
       ...cBlog.issues.map((i) => `critic: ${i}`),
     ];
 

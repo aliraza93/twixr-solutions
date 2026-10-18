@@ -23,7 +23,7 @@ export function GET(): Response {
     `## Key pages`,
     `- [About](${absoluteUrl("/about")}): Background, experience, and Upwork Top Rated Plus profile.`,
     `- [Services](${absoluteUrl("/services")}): SaaS builds, Laravel/Node APIs, Next.js/Vue frontends, cloud & DevOps, AI automation.`,
-    `- [Portfolio](${absoluteUrl("/portfolio")}): Case studies — LeadQuiz, ManagePH, PropDaddy, Forage, and more.`,
+    `- [Portfolio](${absoluteUrl("/portfolio")}): Case studies - LuckyCharmGold, ManagePH, PropDaddy, Forage, and more.`,
     `- [Results](${absoluteUrl("/testimonials")}): Verified Upwork client reviews.`,
     `- [Contact](${absoluteUrl("/contact")}): Start a project.`,
     ``,

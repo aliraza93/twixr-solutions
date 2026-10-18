@@ -6,6 +6,7 @@ import rehypeSlug from "rehype-slug";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import { cn } from "@/lib/utils";
+import { cloudinaryResponsive, cloudinarySrcSet } from "@/lib/media/cloudinary-url";
 import { stripEmDashes } from "@/lib/content/strip-em-dashes";
 
 const sanitizeSchema = {
@@ -84,15 +85,20 @@ export function MarkdownContent({ source, className }: MarkdownContentProps) {
               </a>
             );
           },
-          img: ({ src, alt }) => (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={typeof src === "string" ? src : undefined}
-              alt={alt || ""}
-              loading="lazy"
-              decoding="async"
-            />
-          ),
+          img: ({ src, alt }) => {
+            const url = typeof src === "string" ? src : undefined;
+            return (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={url ? cloudinaryResponsive(url, 1024) : undefined}
+                srcSet={url ? cloudinarySrcSet(url) : undefined}
+                sizes="(min-width: 1024px) 760px, 100vw"
+                alt={alt || ""}
+                loading="lazy"
+                decoding="async"
+              />
+            );
+          },
         }}
       >
         {cleaned}

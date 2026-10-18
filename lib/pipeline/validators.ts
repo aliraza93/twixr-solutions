@@ -301,6 +301,143 @@ export function sourcesRequired(
   return [];
 }
 
+/* ------------------------------------------------------------------ */
+/* Publish quality gate                                                */
+/* ------------------------------------------------------------------ */
+/*
+ * Auto-publish stays on, so these run on every draft and block anything that
+ * still looks unfinished. Each one maps to a defect that actually reached
+ * production (e.g. "Hype vs Reality on Whatever Everyone Is Posting" shipped
+ * with "Add the exact URLs of any vendor post you cite before publishing").
+ */
+
+const PLACEHOLDER_PATTERNS: Array<[RegExp, string]> = [
+  [/\badd (the )?(exact|real|actual) (urls?|links?|sources?)\b/i, "instruction to add sources"],
+  [/\b(cite|link|add|insert|replace|fill)\b[^.\n]{0,60}\bbefore publishing\b/i, "before-publishing instruction"],
+  [/\b(TODO|TBD|FIXME|XXX)\b/, "TODO/TBD marker"],
+  [/lorem ipsum/i, "lorem ipsum"],
+  [/\[(insert|add|placeholder|your|link|source|url|name|company|client)[^\]]{0,40}\]/i, "bracketed placeholder"],
+  [/\b(placeholder|replace[_ -]?me)\b/i, "placeholder word"],
+  [/\{\{[^}]{1,40}\}\}/, "template variable"],
+  [/__INLINE_\d+__/, "unreplaced image placeholder"],
+];
+
+/** Checked in code too: a fake identifier is a placeholder wherever it sits. */
+const CODE_PLACEHOLDER: [RegExp, string] = [
+  /\b[a-z]+-(id|name|url|key)-from-your-[a-z-]+\b/i,
+  "placeholder identifier",
+];
+
+/**
+ * Instructions or template slots that must never be published. Prose is
+ * checked with code fences removed, so a legitimate "// TODO" inside a
+ * before/after code sample does not block a post.
+ */
+export function placeholderCheck(text: string): string[] {
+  const prose = text.replace(/```[\s\S]*?```/g, " ").replace(/`[^`\n]*`/g, " ");
+  const reasons: string[] = [];
+  const checks: Array<[RegExp, string, string]> = [
+    ...PLACEHOLDER_PATTERNS.map(([re, label]) => [re, label, prose] as [RegExp, string, string]),
+    [CODE_PLACEHOLDER[0], CODE_PLACEHOLDER[1], text],
+  ];
+  for (const [re, label, source] of checks) {
+    const m = source.match(re);
+    if (m) {
+      reasons.push(`Unfinished content (${label}): "${m[0].slice(0, 80)}"`);
+    }
+  }
+  return reasons;
+}
+
+/** Every FAQ needs a real answer, in the structured list and in the body. */
+export function faqCompletenessCheck(
+  faqs: Array<{ question: string; answer: string }>,
+  body: string
+): string[] {
+  const reasons: string[] = [];
+  for (const f of faqs) {
+    if (!f.question?.trim()) continue;
+    const words = (f.answer ?? "").trim().split(/\s+/).filter(Boolean).length;
+    if (words < 12) {
+      reasons.push(`FAQ answer missing or too thin (${words} words): "${f.question.slice(0, 70)}"`);
+    }
+  }
+
+  // Body FAQ: a question heading followed straight by another heading or the end.
+  const lines = body.split("\n");
+  let inFaq = false;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (/^##\s/.test(line)) {
+      inFaq = /faq|frequently asked/i.test(line);
+      continue;
+    }
+    if (!inFaq || !/^###\s/.test(line)) continue;
+    let j = i + 1;
+    while (j < lines.length && !lines[j].trim()) j++;
+    const next = lines[j]?.trim() ?? "";
+    if (!next || /^#{2,3}\s/.test(next)) {
+      reasons.push(`Body FAQ question has no answer: "${line.replace(/^###\s*/, "").slice(0, 70)}"`);
+    }
+  }
+  return reasons;
+}
+
+/** A "Sources" section must contain at least one real link. */
+export function sourcesSectionCheck(body: string): string[] {
+  const m = body.match(/^##\s*(sources|references|further reading)\s*$/im);
+  if (!m || m.index === undefined) return [];
+  const rest = body.slice(m.index + m[0].length);
+  const end = rest.search(/^##\s/m);
+  const section = end === -1 ? rest : rest.slice(0, end);
+  if (!/https?:\/\/\S+/i.test(section)) {
+    return ["Sources section has no real URL"];
+  }
+  return [];
+}
+
+/** Live-source briefs need http(s) sources, not prose. */
+export function liveSourceUrlCheck(
+  draft: Pick<BlogDraft, "sources">,
+  brief: Pick<Brief, "requiresLiveSource">
+): string[] {
+  if (!brief.requiresLiveSource || !draft.sources?.length) return [];
+  const real = draft.sources.filter((src) => /^https?:\/\/[^\s]+\.[a-z]{2,}/i.test(src.trim()));
+  return real.length ? [] : ["requiresLiveSource brief has no http(s) source URL"];
+}
+
+const VAGUE_TITLE =
+  /\b(whatever|whichever|something|a (just[- ])?released|a new (model|tool|framework|release)|the latest thing|everyone is (posting|talking))\b/i;
+
+/** Titles must name a real subject, not the topic-bank slot it came from. */
+export function vagueTitleCheck(title: string): string[] {
+  return VAGUE_TITLE.test(title)
+    ? [`Title is vague or templated (no named subject): "${title}"`]
+    : [];
+}
+
+/** Images in the body must carry alt text. */
+export function emptyAltCheck(body: string): string[] {
+  const n = (body.match(/!\[\s*\]\(/g) ?? []).length;
+  return n ? [`${n} body image(s) with empty alt text`] : [];
+}
+
+/** All quality-gate checks that need no network or database. */
+export function qualityGate(
+  draft: Pick<BlogDraft, "title" | "excerpt" | "body" | "faqs" | "sources">,
+  brief: Pick<Brief, "requiresLiveSource">
+): string[] {
+  const text = [draft.title, draft.excerpt, draft.body, ...draft.faqs.flatMap((f) => [f.question, f.answer])].join("\n");
+  return [
+    ...placeholderCheck(text),
+    ...faqCompletenessCheck(draft.faqs, draft.body),
+    ...sourcesSectionCheck(draft.body),
+    ...liveSourceUrlCheck(draft, brief),
+    ...vagueTitleCheck(draft.title),
+    ...emptyAltCheck(draft.body),
+  ];
+}
+
 export async function validateBlog(
   draft: BlogDraft,
   brief: Pick<Brief, "requiresLiveSource" | "topic">,
@@ -322,6 +459,7 @@ export async function validateBlog(
     ...headingLevelCheck(draft.body),
     ...titleLengthCheck(draft.title),
     ...sourcesRequired(draft, brief),
+    ...qualityGate(draft, brief),
     ...(await duplicateTitle(draft.slug, draft.title)),
     ...(await duplicateTopic(brief.topic)),
   ];

@@ -454,8 +454,8 @@ export const AUDIENCES: { id: string; instruction: string }[] = [
   { id: "solo-founder", instruction: "A solo technical founder before product-market fit, optimizing for survival." },
   { id: "startup-cto", instruction: "A CTO at a 20-person startup who has to defend this decision to a board." },
   { id: "agency-owner", instruction: "An agency owner who will have to deliver this across several client projects." },
-  { id: "mid-level-engineer", instruction: "A competent mid-level engineer who owns this service and wants to stop being paged." },
-  { id: "freelancer", instruction: "A freelancer who has to scope, price, and defend this work to a non-technical client." },
+  { id: "saas-owner-scaling", instruction: "A bootstrapped SaaS owner with paying customers whose app is getting slow or fragile, deciding whether to bring in outside help." },
+  { id: "head-of-product", instruction: "A head of product who owns the roadmap and the budget and has to choose between building, buying, or hiring." },
   { id: "non-technical-founder", instruction: "A non-technical founder deciding whether to approve the work. Explain the stakes, not the syntax." },
 ];
 
@@ -473,19 +473,27 @@ export const STAKES: { id: string; instruction: string }[] = [
 /* Images                                                           */
 /* ---------------------------------------------------------------- */
 
-export const INLINE_IMAGE_KINDS: { id: string; prompt: string }[] = [
-  { id: "flow-diagram", prompt: "architecture or data-flow diagram with clear labeled boxes and arrows" },
-  { id: "sequence", prompt: "sequence diagram showing ordered calls between two or three participants" },
-  { id: "before-after", prompt: "before and after comparison panel, two panels, minimal labels" },
-  { id: "decision-tree", prompt: "decision tree or branching flowchart with short labels at each branch" },
-  { id: "checklist-card", prompt: "clean checklist visual, five to seven short items, generous spacing" },
-  { id: "code-card", prompt: "code-window style graphic with large readable snippets, six to ten lines maximum" },
-  { id: "numbers-panel", prompt: "simple chart-like numbers panel: two or three large figures with short captions, no fake axis labels" },
-  { id: "timeline", prompt: "horizontal timeline with three to five labeled events" },
-  { id: "anti-pattern", prompt: "anti-pattern panel: the wrong approach marked with a clear cross, the right one beside it" },
-  { id: "layered-architecture", prompt: "layered architecture stack, three or four labeled horizontal layers" },
-  { id: "metaphor", prompt: "abstract technical metaphor illustration, no people, no logos, one focal idea" },
-  { id: "annotated-log", prompt: "annotated terminal or log card: a few lines of output with short callouts pointing at two of them" },
+export type ImageMedium = "photo" | "diagram";
+
+/**
+ * Inline visual kinds. Most are documentary photos: AI diagrams full of small
+ * text come out garbled and read as machine-made, while a believable photo of
+ * real work reads as a real engineer's blog. The diagram kinds that remain are
+ * the low-text ones, where a picture genuinely explains structure.
+ */
+export const INLINE_IMAGE_KINDS: { id: string; prompt: string; medium: ImageMedium }[] = [
+  { id: "workspace-photo", medium: "photo", prompt: "realistic photo of a developer workspace that fits the topic: laptop, external monitor, notebook, coffee; screen content soft and unreadable" },
+  { id: "over-shoulder-photo", medium: "photo", prompt: "over-the-shoulder photo of an engineer working on a laptop, face not visible, screen slightly out of focus" },
+  { id: "whiteboard-photo", medium: "photo", prompt: "photo of a whiteboard covered in hand-drawn boxes, arrows and sticky notes from a planning session, shot at an angle, handwriting not legible" },
+  { id: "meeting-photo", medium: "photo", prompt: "candid photo of two or three people in a small modern office discussing a project around a laptop, shot from the side or behind" },
+  { id: "desk-detail-photo", medium: "photo", prompt: "close-up detail photo with shallow depth of field: hands on a keyboard, a notebook with sketches, or a phone on the desk, background softly blurred" },
+  { id: "infrastructure-photo", medium: "photo", prompt: "real-world photo of infrastructure that fits the topic: a server rack, network cabling, or a laptop terminal in a dim room" },
+  { id: "video-call-photo", medium: "photo", prompt: "photo of a laptop on a desk during a client video call, call window blurred, notebook and pen beside it, warm home-office light" },
+  { id: "flow-diagram", medium: "diagram", prompt: "simple architecture or data-flow diagram, four to six boxes with one or two word labels and arrows" },
+  { id: "sequence", medium: "diagram", prompt: "sequence diagram showing ordered calls between two or three participants, very short labels" },
+  { id: "before-after", medium: "diagram", prompt: "before and after comparison, two panels, one short label each" },
+  { id: "decision-tree", medium: "diagram", prompt: "decision tree with three or four branches, one or two words at each branch" },
+  { id: "layered-architecture", medium: "diagram", prompt: "layered architecture stack, three or four horizontal layers with one-word labels" },
 ];
 
 export const IMAGE_ASPECTS: { id: string; size: string; weight: number }[] = [
@@ -495,18 +503,22 @@ export const IMAGE_ASPECTS: { id: string; size: string; weight: number }[] = [
   { id: "3x2", size: "1200x800", weight: 15 },
 ];
 
-/** Crossed with the brand palettes, this gives hundreds of distinct looks. */
+/**
+ * Photographic looks: light, lens and framing. Crossed with the scene kinds
+ * these keep the archive from looking like one shoot, without drifting into
+ * illustration styles that read as generated.
+ */
 export const RENDER_MODIFIERS: { id: string; prompt: string }[] = [
-  { id: "flat-vector", prompt: "Flat vector illustration. Clean geometry, no gradients, confident line weights." },
-  { id: "isometric", prompt: "Isometric 3D projection, orderly grid, subtle depth, no perspective distortion." },
-  { id: "blueprint", prompt: "Technical blueprint line art: thin precise lines, measurement ticks, drafting aesthetic." },
-  { id: "risograph", prompt: "Risograph print look: slight misregistration, visible paper grain, two or three ink layers." },
-  { id: "soft-3d", prompt: "Soft 3D clay render: rounded forms, matte surfaces, gentle directional light." },
-  { id: "editorial-collage", prompt: "Editorial collage: cut-paper shapes, layered planes, deliberate asymmetry." },
-  { id: "long-shadow", prompt: "Bold geometric shapes with long directional shadows, poster composition." },
-  { id: "duotone-abstract", prompt: "Duotone photographic abstraction: texture and light only, no recognizable objects or people." },
-  { id: "schematic", prompt: "Engineering schematic: nodes, connectors, and short labels, like a circuit or network diagram." },
-  { id: "gradient-mesh", prompt: "Smooth gradient mesh field with one crisp geometric element on top." },
+  { id: "window-light", prompt: "Soft natural window light from the side, true-to-life colors, gentle shadows." },
+  { id: "overcast-office", prompt: "Even overcast daylight in a real office, neutral white balance, muted tones." },
+  { id: "late-afternoon", prompt: "Warm late afternoon light through blinds, long soft shadows." },
+  { id: "evening-desk", prompt: "Evening scene lit by a desk lamp and monitor glow, low light with natural sensor grain." },
+  { id: "shallow-50mm", prompt: "50mm lens at f/1.8, shallow depth of field, subject sharp, background softly blurred." },
+  { id: "environmental-35mm", prompt: "35mm lens at f/4, environmental framing that shows the room around the subject." },
+  { id: "top-down", prompt: "Top-down shot from directly above the desk, even soft light, items slightly imperfectly arranged." },
+  { id: "film-look", prompt: "Subtle 35mm film look: fine grain, slightly lifted blacks, natural color." },
+  { id: "handheld-candid", prompt: "Handheld candid framing, slightly off-center, like a real behind-the-scenes photo." },
+  { id: "cool-morning", prompt: "Cool early morning light, calm and quiet, soft contrast." },
 ];
 
 export const OG_LAYOUTS: { id: string; titlePosition: "top" | "center" | "bottom"; showCategory: boolean; showRule: boolean; typeScale: "large" | "regular" }[] = [

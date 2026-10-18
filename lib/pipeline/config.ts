@@ -2,9 +2,12 @@ export const pipeline = {
   enabled: process.env.PIPELINE_ENABLED !== "false",
   /** When true (default), publish blog + schedule LinkedIn without needs_review. */
   autoPublish: process.env.PIPELINE_AUTO_PUBLISH !== "false",
-  /** Soft weekly cadence (random days). Default 3-4 posts/week. */
-  postsPerWeekMin: Number(process.env.PIPELINE_POSTS_PER_WEEK_MIN ?? 3),
-  postsPerWeekMax: Number(process.env.PIPELINE_POSTS_PER_WEEK_MAX ?? 4),
+  /**
+   * Soft weekly cadence. Default 1-2 posts/week: one strong post beats three
+   * thin ones for a single-author site after the March 2026 core update.
+   */
+  postsPerWeekMin: Number(process.env.PIPELINE_POSTS_PER_WEEK_MIN ?? 1),
+  postsPerWeekMax: Number(process.env.PIPELINE_POSTS_PER_WEEK_MAX ?? 2),
   /** Generate X drafts for manual posting in admin (no X API). Default on. */
   xManualDrafts: process.env.PIPELINE_X_MANUAL !== "false",
   /** SEO inventory + cannibalization + verified internal links. Default on. */
@@ -28,12 +31,21 @@ export const pipeline = {
   linkedinDelayMaxHours: Number(process.env.PIPELINE_LINKEDIN_DELAY_MAX_HOURS ?? 20),
   /** Relative weights for brief pillar selection (do not need to sum to 100). */
   pillarWeights: {
-    build: Number(process.env.PIPELINE_WEIGHT_BUILD ?? 40),
-    business: Number(process.env.PIPELINE_WEIGHT_BUSINESS ?? 30),
-    timely: Number(process.env.PIPELINE_WEIGHT_TIMELY ?? 20),
+    // Leads come from founders and CTOs, so Business (which now holds the
+    // buyer guides) leads. Timely news goes stale fastest and is the pillar
+    // that produced the templated posts, so it drops to an occasional slot.
+    build: Number(process.env.PIPELINE_WEIGHT_BUILD ?? 35),
+    business: Number(process.env.PIPELINE_WEIGHT_BUSINESS ?? 50),
+    timely: Number(process.env.PIPELINE_WEIGHT_TIMELY ?? 5),
     codeCard: Number(process.env.PIPELINE_WEIGHT_CODE_CARD ?? 10),
   },
   criticMinScore: Number(process.env.CRITIC_MIN_SCORE ?? 78),
+  /**
+   * Below this critic score a post is held as needs_review even with
+   * autoPublish on. The critic itself marks hard fails (invented stats,
+   * thought-leader tone) as under 60.
+   */
+  criticHardFloor: Number(process.env.CRITIC_HARD_FLOOR ?? 60),
   coverMode: (process.env.COVER_IMAGE_MODE ?? "ai") as "og" | "ai",
   notifyTo: process.env.PIPELINE_NOTIFY_TO ?? process.env.CONTACT_TO_EMAIL ?? "",
   models: {
@@ -62,7 +74,7 @@ export const pipeline = {
     /** Min hours between two pipeline blogs going live. */
     minGapHoursMin: Number(process.env.PIPELINE_MIN_GAP_HOURS_MIN ?? 5),
     minGapHoursMax: Number(process.env.PIPELINE_MIN_GAP_HOURS_MAX ?? 30),
-    maxPerDay: Number(process.env.PIPELINE_MAX_PER_DAY ?? 2),
+    maxPerDay: Number(process.env.PIPELINE_MAX_PER_DAY ?? 1),
     /** Never allow a silence longer than this, whatever the dice say. */
     maxSilentDays: Number(process.env.PIPELINE_MAX_SILENT_DAYS ?? 6),
     lengthBands: process.env.PIPELINE_LENGTH_BANDS ?? "",
@@ -77,7 +89,7 @@ export const pipeline = {
     ),
     /** Posts older than this are eligible for the refresh loop. */
     refreshMinAgeDays: Number(process.env.PIPELINE_REFRESH_MIN_AGE_DAYS ?? 90),
-    refreshPerWeek: Number(process.env.PIPELINE_REFRESH_PER_WEEK ?? 2),
+    refreshPerWeek: Number(process.env.PIPELINE_REFRESH_PER_WEEK ?? 1),
   },
   /** IndexNow key file in public/. Empty disables submission. */
   indexNowKey: process.env.INDEXNOW_KEY ?? "",

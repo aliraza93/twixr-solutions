@@ -29,10 +29,15 @@ export type WeekPlan = {
   pillarWeights: Record<string, number>;
 };
 
+/**
+ * Posts per week by mode. Kept low on purpose: a single-author site that
+ * ships 3 to 6 AI-drafted posts a week reads as scaled content, and the
+ * one post that ranks here is the one with first-hand depth.
+ */
 const MODE_TARGETS: Record<WeekMode, { min: number; max: number }> = {
-  quiet: { min: 1, max: 2 },
-  normal: { min: 3, max: 4 },
-  burst: { min: 5, max: 6 },
+  quiet: { min: 1, max: 1 },
+  normal: { min: 1, max: 2 },
+  burst: { min: 2, max: 2 },
 };
 
 /**

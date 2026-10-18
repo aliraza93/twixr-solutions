@@ -7,7 +7,19 @@ import {
   hashtagCheck,
   headingLevelCheck,
   titleLengthCheck,
+  placeholderCheck,
+  faqCompletenessCheck,
+  sourcesSectionCheck,
+  vagueTitleCheck,
+  emptyAltCheck,
+  qualityGate,
 } from "@/lib/pipeline/validators";
+import {
+  cloudinaryAsJpeg,
+  cloudinaryResponsive,
+  cloudinarySrcSet,
+} from "@/lib/media/cloudinary-url";
+import { aspectRatioFor, inferRender } from "@/lib/pipeline/images";
 
 describe("bannedPhrases", () => {
   it("flags known-bad marketing phrases", () => {
@@ -112,5 +124,100 @@ describe("titleLengthCheck", () => {
 
   it("passes a title at the limit", () => {
     assert.deepEqual(titleLengthCheck("x".repeat(60)), []);
+  });
+});
+
+describe("quality gate", () => {
+  it("blocks the placeholder that shipped on 2026-10-16", () => {
+    const hits = placeholderCheck(
+      "## Sources\nAdd the exact URLs of any vendor post you cite before publishing."
+    );
+    assert.ok(hits.length >= 1);
+  });
+
+  it("ignores TODO inside code samples but catches fake identifiers", () => {
+    assert.deepEqual(placeholderCheck("```ts\n// TODO: remove after migration\n```"), []);
+    assert.equal(placeholderCheck("model: `pinned-model-id-from-your-lock`").length, 1);
+  });
+
+  it("does not flag ordinary prose", () => {
+    assert.deepEqual(
+      placeholderCheck("Run the tests before you deploy. Add links between related docs. Pin the version in your lockfile."),
+      []
+    );
+  });
+
+  it("flags unanswered FAQs in the list and in the body", () => {
+    const body = [
+      "## Frequently asked questions",
+      "### Is it free?",
+      "Yes, it is free for every account on every plan today.",
+      "### How do I set it up?",
+      "### Does it work offline?",
+    ].join("\n");
+    const hits = faqCompletenessCheck(
+      [
+        { question: "Is it free?", answer: "Yes, it is free for every account on every plan today, with limits." },
+        { question: "How do I set it up?", answer: "" },
+      ],
+      body
+    );
+    assert.equal(hits.filter((h) => h.startsWith("Body FAQ")).length, 2);
+    assert.equal(hits.filter((h) => h.startsWith("FAQ answer")).length, 1);
+  });
+
+  it("requires a link inside a Sources section", () => {
+    assert.equal(sourcesSectionCheck("## Sources\nVendor blog post.\n").length, 1);
+    assert.deepEqual(sourcesSectionCheck("## Sources\n- https://laravel.com/docs\n"), []);
+  });
+
+  it("flags templated titles and empty alts", () => {
+    assert.equal(vagueTitleCheck("Hype vs Reality on Whatever Everyone Is Posting").length, 1);
+    assert.deepEqual(vagueTitleCheck("Laravel 13 queues: the one change worth upgrading for"), []);
+    assert.equal(emptyAltCheck("![](https://x.test/a.webp)").length, 1);
+  });
+
+  it("passes a finished draft", () => {
+    const hits = qualityGate(
+      {
+        title: "Fixing N+1 queries in a Laravel admin panel",
+        excerpt: "A real fix.",
+        body: "## The fix\nEager load the relation.\n\n![Engineer at a desk](https://x.test/a.webp)",
+        faqs: [{ question: "Does eager loading always help?", answer: "No. It helps when you read the relation for most rows, and costs memory otherwise." }],
+        sources: [],
+      },
+      { requiresLiveSource: false }
+    );
+    assert.deepEqual(hits, []);
+  });
+});
+
+describe("image helpers", () => {
+  const url = "https://res.cloudinary.com/demo/image/upload/v1787601222/twixr-studio/cover.png";
+
+  it("adds delivery transforms to Cloudinary URLs only", () => {
+    assert.ok(cloudinaryResponsive(url, 1024).includes("/upload/f_auto,q_auto:good,c_limit,w_1024/v1787601222/"));
+    assert.equal(cloudinaryResponsive("/og-image.png", 1024), "/og-image.png");
+    assert.equal(cloudinarySrcSet("/og-image.png"), undefined);
+    assert.ok(cloudinaryAsJpeg(url).includes("/upload/f_jpg,q_auto:good/"));
+  });
+
+  it("does not double-transform", () => {
+    const once = cloudinaryAsJpeg(url);
+    assert.equal(cloudinaryResponsive(once, 800), once);
+  });
+
+  it("maps sizes to supported aspect ratios", () => {
+    assert.equal(aspectRatioFor("1280x720"), "16:9");
+    assert.equal(aspectRatioFor("1200x630"), "16:9");
+    assert.equal(aspectRatioFor("1080x1080"), "1:1");
+    assert.equal(aspectRatioFor("1200x900"), "4:3");
+    assert.equal(aspectRatioFor(undefined), undefined);
+  });
+
+  it("infers photo vs diagram from a prompt", () => {
+    assert.equal(inferRender("Photo of a whiteboard with a sequence diagram"), "photo");
+    assert.equal(inferRender("Sequence diagram of a webhook retry"), "diagram");
+    assert.equal(inferRender("An engineer reviewing logs at night"), "photo");
   });
 });

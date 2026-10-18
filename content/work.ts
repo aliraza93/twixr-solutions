@@ -3,22 +3,22 @@ export const work = {
   heading: "Products I've shipped",
   items: [
     {
-      title: "LeadQuiz",
-      outcome: "High-converting lead funnels built for quality.",
-      tech: ["Next.js", "Laravel"],
-      href: "",
+      title: "LuckyCharmGold",
+      outcome: "Laravel + Vue commerce platform with 9 payment integrations and zero-downtime CI/CD.",
+      tech: ["Laravel", "Vue", "Payments"],
+      href: "/portfolio/luckycharmgold-ecommerce-platform",
     },
     {
       title: "ManagePH",
       outcome: "Global contractor payment & team-management platform.",
       tech: ["SaaS", "Payments", "Node.js"],
-      href: "",
+      href: "/portfolio/manageph-contractor-payments-platform",
     },
     {
-      title: "OSRS Gaming",
-      outcome: "Full-stack e-commerce for gaming services.",
-      tech: ["E-commerce", "Stripe", "Laravel"],
-      href: "",
+      title: "PropDaddy",
+      outcome: "Real-estate platform with a Twilio softphone and multi-channel campaigns.",
+      tech: ["Laravel", "Twilio", "MySQL"],
+      href: "/portfolio/propdaddy-real-estate-platform",
     },
   ],
 } as const;

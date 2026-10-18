@@ -113,12 +113,19 @@ function styleBlock(plan: VarietyPlan): string {
   ].join("\n");
 }
 
+const IMAGE_PROMPT_RULES = [
+  "Photo kinds: describe one ordinary, concrete scene a photographer could actually shoot: the place, the objects, what the person is doing. Nothing readable on screens.",
+  "Diagram kinds: name the boxes or layers, at most six, one or two words each. No sentences inside the diagram.",
+  "Each alt describes what the image will actually show, in plain words, under 120 characters, e.g. Engineer reviewing a deploy checklist at a standing desk. No keyword stuffing.",
+];
+
 function imageInstructions(plan?: VarietyPlan): string {
   if (!plan) {
     return [
       "INLINE IMAGES: 2 or 3 for this post.",
       "Place them in the body on their own lines as ![alt](__INLINE_1__), with matching inlineImagePrompts entries.",
-      "Each prompt must describe a specific visual (diagram, before/after, code card, metaphor).",
+      "Most should be realistic photos of real work; at most one simple diagram.",
+      ...IMAGE_PROMPT_RULES,
     ].join("\n");
   }
   const n = plan.images.inlineCount;
@@ -138,6 +145,7 @@ function imageInstructions(plan?: VarietyPlan): string {
       .slice(0, n)
       .map((k, i) => `  __INLINE_${i + 1}__: ${k.prompt}`),
     "Each prompt must describe a specific visual, not a topic restatement.",
+    ...IMAGE_PROMPT_RULES,
   ].join("\n");
 }
 
@@ -299,7 +307,7 @@ export function buildBlogPrompt(
     '  "readingTime": "e.g. 6 min read",',
     '  "body": "markdown with ## / ### headings; lists use - ; inline images as ![alt](__INLINE_n__) on their own line",',
     '  "faqs": [{"question":"...","answer":"..."}],',
-    '  "coverAlt": "descriptive alt, no keyword stuffing (e.g. Laravel queue worker and job flow)",',
+    '  "coverAlt": "the cover photo scene in plain words; it is used both to generate the photo and as its alt text (e.g. Engineer checking a queue dashboard on a laptop in a home office)",',
     '  "inlineImagePrompts": [{"placeholder":"__INLINE_1__","prompt":"...","alt":"..."}],',
     '  "sources": ["https://..."],',
     '  "primaryKeyword": "string",',

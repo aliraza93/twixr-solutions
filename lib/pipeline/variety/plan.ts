@@ -11,6 +11,7 @@ import {
   HEADING_STYLES,
   IMAGE_ASPECTS,
   INLINE_IMAGE_KINDS,
+  type ImageMedium,
   LINKEDIN_LENGTH_BANDS,
   LINKEDIN_SHAPES,
   OG_LAYOUTS,
@@ -84,7 +85,7 @@ export type VarietyPlan = {
   /* images */
   images: {
     inlineCount: number;
-    kinds: { id: string; prompt: string }[];
+    kinds: { id: string; prompt: string; medium?: ImageMedium }[];
     aspects: { id: string; size: string }[];
     coverMode: "ai" | "og";
     coverPalette: BrandStyle;
@@ -421,7 +422,21 @@ export async function buildVarietyPlan(
     })
   );
   const inlineN = Number(inlineCount);
-  const kinds = rng.pickMany(INLINE_IMAGE_KINDS, inlineN);
+  // At most one diagram per post; the rest are photos. Two AI diagrams in a
+  // row is the strongest "generated" tell on a page.
+  const drawnKinds = rng.pickMany(INLINE_IMAGE_KINDS, inlineN);
+  const photoPool = INLINE_IMAGE_KINDS.filter(
+    (k) => k.medium === "photo" && !drawnKinds.some((d) => d.id === k.id)
+  );
+  let diagramSeen = false;
+  const kinds = drawnKinds.map((k) => {
+    if (k.medium !== "diagram") return k;
+    if (!diagramSeen) {
+      diagramSeen = true;
+      return k;
+    }
+    return photoPool.shift() ?? k;
+  });
   const aspects = Array.from({ length: inlineN }, () => {
     const a = pickWeighted(
       rng,

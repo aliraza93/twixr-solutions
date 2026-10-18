@@ -228,13 +228,15 @@ Rules for the generator:
 ## TIMELY (Wed - VERIFY every claim this run)
 
 ### AI & industry news
-- Builder's take on a just-released model - what changes for people who ship
-- New Laravel / NestJS / React version - the one feature worth caring about
-- An AI dev tool that earned or lost a spot in the workflow this month
-- Hype vs reality on whatever everyone is posting about
-- What a model's pricing or limits mean for a small SaaS budget
-- A deprecation or breaking change worth planning for now
-- Benchmark claims vs what you measured yourself
+Every topic here must be pinned to ONE named, verified release from the last
+14 days, and the title must name it. No named subject, no post: pick an
+evergreen topic instead. (The quality gate blocks templated titles.)
+- One named model release from the last 14 days, judged by what it changes for a SaaS team
+- One named Laravel, NestJS, React or Next.js release and the single feature worth upgrading for
+- One named AI dev tool, after a month of real use: kept or dropped, and why
+- One named model's new pricing or rate limits, costed for a small SaaS
+- One named deprecation or breaking change, with the migration plan
+- One vendor's published benchmark checked against your own measurement
 
 ### Regional Big-Tech / IT-policy
 - Big Tech opens or expands a local office (Google Islamabad, Aug 2026 - USED)
@@ -249,6 +251,32 @@ Rules for the generator:
 ---
 
 ## BUSINESS (Fri)
+
+### Buyer guides (founders and CTOs)
+Written for the person who hires, not the person who codes. Explain stakes,
+trade-offs and cost drivers in plain language; tech is the proof lower down.
+Close with one clear next step to /services or /contact. Never invent prices
+or timelines: give ranges only from Receipts, otherwise explain what moves the number.
+- What drives the cost of a SaaS MVP built with Laravel and Next.js
+- Laravel vs Node.js for a new SaaS: how a founder should choose
+- Fixed price vs retainer vs hourly: how to buy development work as a founder
+- How to hire a senior freelance developer without getting burned
+- Signs your SaaS codebase needs a rescue, not a rewrite
+- What a technical audit of a SaaS should cover before you raise or sell
+- Agency vs freelancer vs in-house for your first product
+- How to scope an MVP so version one actually ships
+- Leaving a no-code tool for a custom app: when it pays off
+- What a fractional CTO does in the first 30 days
+- Questions to ask before you sign a software development contract
+- Taking over a project after the previous developer disappeared
+- Multi-tenant SaaS decisions a founder must make before day one
+- AWS vs Vercel vs a VPS for a SaaS: how the bill changes as you grow
+- Why your web app is slow, and how to decide what to fix first
+- How to plan a two-sided marketplace MVP without overbuilding
+- Adding AI features to an existing SaaS: what is worth paying for
+- Hiring a remote developer in Pakistan: time zones, payments, and quality
+- What to put in a product brief so developers quote accurately
+- Stripe billing decisions to make before anyone writes code
 
 ### Freelancing - Upwork / Fiverr
 - Profile headline: outcome vs tool list (USED 2026-09-04)

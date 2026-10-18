@@ -51,3 +51,6 @@ next-env.d.ts
 !/public/uploads/.gitkeep
 # SEO audit artifacts (regenerated on demand)
 *-audit/
+
+# Local scratch, never shipped
+_to_delete/

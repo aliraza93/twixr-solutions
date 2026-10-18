@@ -161,24 +161,6 @@ function buildCaseStudy(
 // visuals; swap in real product screenshots under /public/projects when available.
 const baseProjects: PortfolioProject[] = [
   {
-    slug: "leadquiz-saas-funnel-platform",
-    title: "LeadQuiz - SaaS Lead-Funnel Platform",
-    description:
-      "Full-stack SaaS that lets agencies build high-converting lead funnels - drag-and-drop builder with 30+ templates, custom domains, conditional lead scoring, and multi-client management, on AWS microservices.",
-    categoryId: "saas",
-    categoryLabel: "SaaS",
-    image:
-      "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=1200&auto=format&fit=crop",
-    tags: ["NestJS", "React", "PostgreSQL", "AWS"],
-    year: "2026",
-    client: "LeadQuiz (US)",
-    featured: true,
-    metrics: [
-      { label: "Funnel templates", value: "30+" },
-      { label: "Architecture", value: "Microservices" },
-    ],
-  },
-  {
     slug: "manageph-contractor-payments-platform",
     title: "ManagePH - Contractor Payments & Team Platform",
     description:
@@ -286,30 +268,9 @@ const baseProjects: PortfolioProject[] = [
 export const portfolioCaseStudies: PortfolioCaseStudy[] = [
   buildCaseStudy(baseProjects[0], {
     longDescription:
-      "LeadQuiz is a full-stack SaaS that lets agencies build and run high-converting lead funnels for their clients. It pairs a drag-and-drop funnel builder (30+ templates) with custom domains, conditional lead scoring, auto-disqualification, role-based team access, and CRM-style workflows - all on an AWS microservices backend.",
-    gallery: [
-      baseProjects[0].image,
-      "https://images.unsplash.com/photo-1551434678-e076c223a692?q=80&w=1200&auto=format&fit=crop",
-    ],
-    challenge:
-      "Agencies needed one workspace to manage funnels for many clients - with isolation between accounts, flexible funnel logic, and reliable delivery of leads into whatever CRM each client already used.",
-    solution:
-      "Built a NestJS + React application on an AWS microservices architecture (ECS, RDS/PostgreSQL, S3). Delivered the drag-and-drop builder, conditional scoring, custom domains, Zapier and webhook integrations to sync leads to any CRM, and scheduled weekly per-client summary reports.",
-    outcomes: [
-      "Drag-and-drop funnel builder with 30+ templates",
-      "Custom domains and conditional lead scoring per funnel",
-      "Zapier + webhook sync into any client CRM",
-      "Automated weekly per-client reporting on schedule",
-    ],
-    timeline: "2026 · Ongoing",
-    role: "Full-Stack Developer & DevOps Engineer",
-    techStack: ["NestJS", "React", "PostgreSQL", "Docker", "AWS (ECS, RDS, S3)"],
-  }),
-  buildCaseStudy(baseProjects[1], {
-    longDescription:
       "ManagePH is a global contractor payment and team-management platform. It handles contractor onboarding, role-based team workspaces, and payment workflows so distributed teams can manage people and payouts in one place.",
     gallery: [
-      baseProjects[1].image,
+      baseProjects[0].image,
       "https://images.unsplash.com/photo-1554224155-6726b3ff858f?q=80&w=1200&auto=format&fit=crop",
     ],
     challenge:
@@ -326,7 +287,7 @@ export const portfolioCaseStudies: PortfolioCaseStudy[] = [
     role: "Full-Stack Engineer",
     techStack: ["Laravel", "React", "MySQL", "AWS", "CI/CD"],
   }),
-  buildCaseStudy(baseProjects[2], {
+  buildCaseStudy(baseProjects[1], {
     longDescription:
       "A real-estate web platform where agents work leads end to end. The build added an in-app calling experience, automated outreach across several channels, and the background infrastructure to keep it all running reliably.",
     challenge:
@@ -343,7 +304,7 @@ export const portfolioCaseStudies: PortfolioCaseStudy[] = [
     role: "Full-Stack Developer",
     techStack: ["Laravel", "Twilio", "MySQL", "SendGrid", "VPS / Queues"],
   }),
-  buildCaseStudy(baseProjects[3], {
+  buildCaseStudy(baseProjects[2], {
     longDescription:
       "Forage provides a B2B SaaS product for direct-to-consumer (D2C) brands. Ali contributed as a Laravel + Inertia full-stack developer on the SaaS product across a repeat, multi-project relationship.",
     challenge:
@@ -360,7 +321,7 @@ export const portfolioCaseStudies: PortfolioCaseStudy[] = [
     role: "Full-Stack Developer",
     techStack: ["Laravel", "Inertia", "Vue", "MySQL"],
   }),
-  buildCaseStudy(baseProjects[4], {
+  buildCaseStudy(baseProjects[3], {
     longDescription:
       "A full-stack e-commerce platform for a gaming-services business - a custom storefront with checkout and order management built in PHP/Laravel. The engagement earned a 5.0★ review and became one of Ali's standout client relationships.",
     challenge:
@@ -377,7 +338,7 @@ export const portfolioCaseStudies: PortfolioCaseStudy[] = [
     role: "Full-Stack Developer",
     techStack: ["Laravel", "PHP", "Stripe", "MySQL"],
   }),
-  buildCaseStudy(baseProjects[5], {
+  buildCaseStudy(baseProjects[4], {
     longDescription:
       "A Laravel application with the Google Gemini API integrated into content generation. Beyond the AI work, the engagement improved performance across key parts of the app and added polished, real-time-validated UIs.",
     challenge:
@@ -394,7 +355,7 @@ export const portfolioCaseStudies: PortfolioCaseStudy[] = [
     role: "Full-Stack PHP / Laravel Developer",
     techStack: ["Laravel", "Google Gemini API", "Tailwind CSS", "PHP", "GitHub"],
   }),
-  buildCaseStudy(baseProjects[6], {
+  buildCaseStudy(baseProjects[5], {
     longDescription:
       "As a senior backend Laravel developer, Ali built and maintained Vue.js + Laravel dashboards and owned their deployment on AWS - streamlining releases and keeping hosting secure and scalable.",
     challenge:

@@ -1,3 +1,4 @@
+import { cloudinaryAsJpeg } from "@/lib/media/cloudinary-url";
 import { pipeline } from "@/lib/pipeline/config";
 
 export type LinkedInPostInput = {
@@ -111,7 +112,8 @@ export async function postToLinkedIn(
       | undefined;
 
     if (input.imageUrl) {
-      const imgRes = await fetch(input.imageUrl);
+      // Stored images are WebP; LinkedIn's image upload takes JPG/PNG/GIF only.
+      const imgRes = await fetch(cloudinaryAsJpeg(input.imageUrl));
       if (!imgRes.ok) {
         return {
           ok: false,

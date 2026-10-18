@@ -12,11 +12,21 @@ const BAD_TOPIC_PREFIXES = [
   "Never reuse a (topic",
   "Rotate FORMAT too",
   "Inventing a fresh angle",
+  // Vague Timely slots replaced on 2026-10-18 by named-release versions.
+  // They produced templated posts such as "Hype vs Reality on Whatever
+  // Everyone Is Posting".
+  "Builder's take on a just-released model",
+  "New Laravel / NestJS / React version",
+  "An AI dev tool that earned or lost a spot",
+  "Hype vs reality on whatever",
+  "What a model's pricing or limits mean",
+  "A deprecation or breaking change worth planning",
+  "Benchmark claims vs what you measured",
 ];
 
 async function main() {
   const queued = await prisma.brief.findMany({
-    where: { status: { in: ["queued", "used"] } },
+    where: { status: "queued" },
     select: { id: true, topic: true, status: true },
   });
 

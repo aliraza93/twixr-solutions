@@ -2,6 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
+import {
+  cloudinaryResponsive,
+  cloudinarySrcSet,
+} from "@/lib/media/cloudinary-url";
 import Link from "next/link";
 import { ArrowLeft, Linkedin, Mail, Twitter } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -151,9 +155,19 @@ export function BlogDetailClient({ post, related }: BlogDetailClientProps) {
         <ScrollReveal delay={0.05} className="mb-10 overflow-hidden rounded-lg border border-hairline">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={post.image || "/og-image.png"}
+            src={
+              post.image
+                ? cloudinaryResponsive(post.image, 1440)
+                : "/og-image.png"
+            }
+            srcSet={post.image ? cloudinarySrcSet(post.image) : undefined}
+            sizes="(min-width: 1280px) 1200px, 100vw"
+            width={1440}
+            height={617}
             alt={`Cover image for ${post.title}`}
             className="aspect-21/9 w-full object-cover"
+            fetchPriority="high"
+            decoding="async"
           />
         </ScrollReveal>
 

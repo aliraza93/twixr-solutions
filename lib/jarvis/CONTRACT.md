@@ -19,6 +19,7 @@ Code: `lib/jarvis/` (use cases in `service.ts`, HTTP in `handlers.ts`, gates in 
 | Token | `Authorization: Bearer <token>`. The value comes from the `JARVIS_CONTROL_TOKEN` env var, which **Ali sets in Vercel** (Production, and Preview only if wanted). Use 32 or more random characters, the same value in Jarvis's own Vercel project. Never commit it. |
 | Disabled | If `JARVIS_CONTROL_TOKEN` is missing or shorter than 32 characters, every route answers `503 disabled`, whatever the request carries. |
 | Compare | SHA-256 digests compared with `timingSafeEqual`. The token is never logged or echoed. |
+| Cron routes | `/api/cron/*` use the same constant-time compare (`lib/security/bearer.ts`) against `Bearer $CRON_SECRET`. An unset `CRON_SECRET`, or one under 16 characters, refuses every cron call (`401`), so `Bearer undefined` never passes. |
 | Rate limit | 60 requests per minute per IP (first `x-forwarded-for` hop), in memory per serverless instance, like the contact form. It slows guessing; the token is the real control. `429` carries `Retry-After`. |
 | Caching | Every response has `Cache-Control: no-store, max-age=0`. |
 | Validation | Zod on every query, route param and body. Unknown body keys are refused. Bodies over 16 KB get `413`. |
@@ -38,7 +39,7 @@ Every error is `{ "error": { "code", "message", "details"? } }`.
 | 409 | `duplicate` | Brief topic already queued, or blocked by the duplicate check (`details.matches`) |
 | 409 | `invalid_transition` | Action not allowed from the current state (`details.state`, `details.allowedFrom`); X drafts are manual |
 | 409 | `linked_social` | A blog's scheduled LinkedIn post would go out before it, or would point at a paused blog (`details.socialPostIds`) |
-| 409 | `conflict` | The draft, its linked post, the brief queue or the pipeline switch changed between read and write (the cron, the admin or another call), or a lock wait or the 10 second transaction timed out; nothing was written, read again |
+| 409 | `conflict` | The draft, its linked post, the brief queue or the pipeline switch changed between read and write (the cron, the admin or another call), a draft no longer matches the body's `expect`, or a lock wait or the 10 second transaction timed out; nothing was written, read again. Draft conflicts carry the current `details.state` with `details.updatedAt` (blog) or `details.scheduledFor` (LinkedIn) |
 | 413 | `payload_too_large` | Body over 16 KB |
 | 422 | `quality_gate` | The draft fails the site's quality gates (`details.reasons`); nothing changes and a `warn` log row is written. `override` cannot pass these |
 | 422 | `override_required` | The draft passes the gates, but earlier findings the gate cannot re-check need `override: true` (`details.reasons`) |
@@ -124,7 +125,7 @@ Item: `{ id, pillar, topic, take, targetKeyword, requiresLiveSource, status, ori
   "scheduledFor": "optional ISO time, 1 minute to 90 days ahead" }
 ```
 
-- Sources must be public `http` or `https` URLs: localhost and local names, private, loopback, link-local, CGNAT, benchmarking (198.18.0.0/15), documentation (TEST-NETs, 2001:db8::/32), multicast and cloud metadata hosts are refused, by name and by literal IP, including IPv6 forms that carry an IPv4 address (::/96, ::ffff:0:0/96, 64:ff9b::/96, 2002::/16).
+- Sources must be public `http` or `https` URLs: localhost and local names, private, loopback, link-local, CGNAT, benchmarking (198.18.0.0/15), documentation (TEST-NETs, 2001:db8::/32), multicast and cloud metadata hosts are refused, by name and by literal IP, including IPv6 forms that carry an IPv4 address (::/96, ::ffff:0:0/96, 64:ff9b::/96, 2002::/16). This request check is literal; when the pipeline later fetches a source or checks a link, `lib/security/safe-fetch.ts` resolves the name and refuses it if any address is in those ranges, follows at most 3 redirects with each hop re-checked, and applies a timeout and a 3 MB body cap.
 - A hot topic needs at least one source and is created with `requiresLiveSource=true`. The first source becomes the brief's `sourceUrl`; the rest are added to its instructions.
 - `destinations` must include `blog` (the site's pipeline is blog-first). They are recorded in the log row; the site's cron still draws whether a LinkedIn post or X draft is attached. Jarvis honours them fully once the engine moves (JV-52).
 - Duplicate check: an exact queued topic (any case) is refused; then the pipeline's own `checkManualTopicDuplicate` (existing blogs, cannibalisation, similar briefs) refuses when it blocks. Related but unblocked matches are returned in `duplicateCheck.matches`.
@@ -146,8 +147,11 @@ Social item: `{ kind, id, channel, state, criticScore, reviewReasons, scheduledF
 
 ```json
 { "action": "approve | schedule | pause | resume", "at": "ISO time, required for schedule only",
-  "reason": "optional, up to 280", "override": "optional boolean, not for pause (see quality gates)" }
+  "reason": "optional, up to 280", "override": "optional boolean, not for pause (see quality gates)",
+  "expect": "optional: { state, updatedAt } for a blog, { state, scheduledFor } for a LinkedIn post" }
 ```
+
+- `expect` makes the write conditional on what Jarvis (and Ali) saw: the draft's `state` and its `updatedAt` (blog) or `scheduledFor` (LinkedIn), copied from the draft read. It is checked twice: against the read before any gate runs, and again inside the locked transaction after the row locks, before the update. A mismatch at either point is `409 conflict` with the current `details.state` and `details.updatedAt` or `details.scheduledFor`, and nothing is written or logged. The in-transaction check also sees a LinkedIn post paused or unpaused without a status or time change. A blog body takes only the blog form and a social body only the LinkedIn form (`400 invalid_request` otherwise). Without `expect` the call behaves as before.
 
 - `approve` and `resume` keep the existing time if it is at least a minute ahead; a past-due or missing time is redrawn forward the way the pipeline draws it, and the response carries the new time. `schedule` uses `at` exactly.
 - A blog cannot be paused while its LinkedIn post is scheduled, or scheduled after it; pause or reschedule the LinkedIn post first.
@@ -190,7 +194,9 @@ Every mutating call writes a `generation_logs` row: `stage: "jarvis"`, `meta.sou
 
 ## Follow-ups (not in this change)
 
-- An index on `generation_logs.refId` for the per-draft log reads (a schema change, left for a planned `db:push`).
-- The existing cron routes compare `CRON_SECRET` with `!==`; move them to the same constant-time compare.
-- The source check is literal only: a public name can still resolve to a private address, or redirect to one. The real fix is where the pipeline fetches sources (`lib/pipeline/manual/source-fetch.ts`, the dead-link check): resolve the name, check every address with `isPublicHost`, connect to that address, and turn redirects off (or re-check each hop).
+- An index on `generation_logs.refId` for the per-draft log reads. This repo has no Prisma migrations: schema changes go out with `npm run db:push`, and the Vercel build only runs `prisma generate`, so nothing here applies it on deploy. Ali's step, outside a cron tick (the tick runs every 10 minutes):
+  1. In `prisma/schema.prisma`, add `@@index([refId, createdAt])` to `model GenerationLog` (after `@@index([stage, status])`).
+  2. With the production env pulled (`npx vercel env pull .env --environment production`), preview the change: `node scripts/prisma-env.mjs migrate diff --from-schema-datasource prisma/schema.prisma --to-schema-datamodel prisma/schema.prisma --script`. It must show only `CREATE INDEX "generation_logs_refId_createdAt_idx" ON "generation_logs"("refId", "createdAt");`. Stop if it shows anything else.
+  3. `npm run db:push`, then commit the schema line so the next push does not drop the index.
+- Pin each source fetch to the address that passed the check (an undici `Agent` with a checked `lookup`, or `node:https` with one). Today the check resolves the name just before each request and fetch resolves it again, which leaves a DNS rebinding window of milliseconds.
 - A LinkedIn-only pause for JV-54 (see Authority).

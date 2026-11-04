@@ -467,3 +467,70 @@ describe("deadLinkCheck", () => {
     assert.ok(!requested.some((u) => /169\.254|10\.0\.0\.1|rebind/.test(u)), requested.join(", "));
   });
 });
+
+describe("JSON-LD output cannot break out of its script tag", async () => {
+  const { createElement } = await import("react");
+  const { renderToStaticMarkup } = await import("react-dom/server");
+  const { JsonLd } = await import("@/components/seo/json-ld");
+  const { serializeJsonLd } = await import("@/lib/security/json-ld");
+  const { articleNode, breadcrumbNode, faqPageNode, jsonLdGraph } = await import("@/lib/seo");
+
+  const evil = "</script><script>alert(1)</script><!-- & \u2028\u2029";
+
+  it("escapes <, >, & and U+2028/2029 and still parses back to the same value", () => {
+    const data = { name: evil, nested: [{ text: evil }] };
+    const out = serializeJsonLd(data);
+    assert.doesNotMatch(out, /[<>&\u2028\u2029]/);
+    assert.match(out, /\\u003c\/script\\u003e/);
+    assert.deepEqual(JSON.parse(out), data);
+  });
+
+  it("a blog page graph with a </script> title and FAQ question renders one inert script", () => {
+    const data = jsonLdGraph([
+      articleNode({ slug: "x", title: evil, excerpt: evil, date: "2026-11-04", image: "", body: "body" }),
+      breadcrumbNode([{ name: evil, path: "/blog/x" }]),
+      faqPageNode([{ question: evil, answer: `${evil} answer` }]),
+    ]);
+    const html = renderToStaticMarkup(createElement(JsonLd, { data }));
+    assert.equal(html.match(/<script/g)?.length, 1, "only the JSON-LD script tag");
+    assert.equal(html.match(/<\/script>/g)?.length, 1, "only its own closing tag");
+    assert.doesNotMatch(html, /<!--/);
+    const json = html.replace(/^<script type="application\/ld\+json">/, "").replace(/<\/script>$/, "");
+    const parsed = JSON.parse(json) as { "@graph": Array<Record<string, unknown>> };
+    assert.equal(parsed["@graph"][0].headline ?? parsed["@graph"][0].name, evil);
+  });
+});
+
+describe("unsafe markup in titles, excerpts and FAQs", async () => {
+  const { hasUnsafeMarkup } = await import("@/lib/security/unsafe-markup");
+
+  it("flags script tags, handlers and javascript: URLs, not ordinary prose", () => {
+    for (const bad of [
+      "<script>x</script>",
+      "a </script> b",
+      "< SCRIPT src=x>",
+      '<img src=x onerror="a()">',
+      "<body onload = y>",
+      '<a href="javascript:alert(1)">x</a>',
+      "<iframe src=javascript:alert(1)>",
+      "[click](javascript:alert(1))",
+      "[click]( <JavaScript:alert(1)>)",
+    ]) {
+      assert.equal(hasUnsafeMarkup(bad), true, bad);
+    }
+    for (const ok of [
+      "Why JavaScript bundles grow",
+      "Laravel queues: retries",
+      "Run it on Monday",
+      "a < b and c > d",
+      "json=true in the config",
+      "JavaScript: The Good Parts",
+      "Why JavaScript: a practical guide",
+      "Use onclick= sparingly",
+      "How do I set onChange= in React?",
+      "Option one = cheaper",
+    ]) {
+      assert.equal(hasUnsafeMarkup(ok), false, ok);
+    }
+  });
+});

@@ -8,6 +8,7 @@ import {
   releaseDayPlan,
 } from "@/lib/pipeline/day";
 import { isPipelinePaused } from "@/lib/jarvis/pause";
+import { generationSkipMessage, siteMayGenerate } from "@/lib/jarvis/generator";
 import { runGenerate } from "@/lib/pipeline/run-generate";
 import { runPublishDue } from "@/lib/pipeline/run-publish-due";
 import { recoverStuckPublishing } from "@/lib/pipeline/run-publish-linkedin";
@@ -50,6 +51,18 @@ export async function GET(req: Request) {
   // today's plan either, so resuming later in the day still gets a slot.
   if (await isPipelinePaused()) {
     return NextResponse.json({ due, stuckClaims, plan: null, generate: "paused from Jarvis" });
+  }
+
+  // Jarvis generates (or the switch could not be read, which fails closed):
+  // publishing above already ran; do not draw or claim the site's plan.
+  const generation = await siteMayGenerate();
+  if (!generation.allowed) {
+    return NextResponse.json({
+      due,
+      stuckClaims,
+      plan: null,
+      generate: generationSkipMessage(generation.reason),
+    });
   }
 
   // A previous tick may have claimed a slot and then been killed by the

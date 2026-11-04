@@ -1,5 +1,6 @@
 import type { BlogDraft } from "@/lib/pipeline/generate-blog";
 import { assessBlogMetadata } from "@/lib/pipeline/seo/metadata";
+import { hasUnsafeMarkup } from "@/lib/security/unsafe-markup";
 import {
   bannedPhrases,
   dashCheck,
@@ -82,6 +83,11 @@ function overrideReasons(
   return out;
 }
 
+/** Script tags, event handlers or javascript: URLs in the fields that reach JSON-LD and meta tags. */
+export function unsafeMarkupReasons(fields: Array<[string, string]>): string[] {
+  return fields.filter(([, text]) => hasUnsafeMarkup(text)).map(([label]) => `Unsafe markup in ${label}`);
+}
+
 function result(reasons: string[], needsOverride: string[]): GateResult {
   return { ok: reasons.length === 0, reasons, needsOverride };
 }
@@ -103,6 +109,8 @@ export function blogGate(
     faqs: unknown;
     criticScore: number | null;
     reviewReasons: unknown;
+    /** Declared sources (intake); joined with the http(s) URLs in the body. */
+    sources?: string[];
   },
   brief: { requiresLiveSource: boolean } | null,
   opts: GateOptions
@@ -115,7 +123,9 @@ export function blogGate(
     ...post.tags,
     ...faqs.flatMap((f) => [f.question, f.answer]),
   ].join("\n");
-  const sources = extractUrls(post.body).filter((u) => /^https?:\/\//i.test(u));
+  const sources = [
+    ...new Set([...extractUrls(post.body), ...(post.sources ?? [])]),
+  ].filter((u) => /^https?:\/\//i.test(u));
   const liveSource = { requiresLiveSource: brief?.requiresLiveSource ?? false };
   const draft: BlogDraft = {
     slug: post.slug,
@@ -133,6 +143,14 @@ export function blogGate(
 
   const reasons = [
     ...criticReasons(post.criticScore, opts.criticFloor),
+    ...unsafeMarkupReasons([
+      ["title", post.title],
+      ["excerpt", post.excerpt],
+      ...faqs.flatMap((f, i): Array<[string, string]> => [
+        [`FAQ ${i + 1} question`, f.question],
+        [`FAQ ${i + 1} answer`, f.answer],
+      ]),
+    ]),
     ...assessBlogMetadata(draft).hardFails,
     ...bannedPhrases(combined),
     ...dashCheck(combined),

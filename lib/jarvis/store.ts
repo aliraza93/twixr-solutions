@@ -1,4 +1,5 @@
 import type { DuplicateCheckResult } from "@/lib/pipeline/manual/duplicate-check";
+import type { Generator, GeneratorControl } from "@/lib/jarvis/generator";
 import type { PipelineControl } from "@/lib/jarvis/pause";
 import type { BlogState, SocialState } from "@/lib/jarvis/states";
 
@@ -12,7 +13,7 @@ export type Page<T> = { items: T[]; nextCursor: string | null };
 export type PageArgs = { cursor?: string; limit: number };
 
 export type ControlLog = {
-  refType: "BlogPost" | "SocialPost" | "Brief" | "Pipeline" | "PipelineBacklog";
+  refType: "BlogPost" | "SocialPost" | "Brief" | "Pipeline" | "PipelineBacklog" | "PipelineGenerator" | "Intake";
   refId: string;
   status: "ok" | "warn";
   message: string;
@@ -134,8 +135,85 @@ export type SocialUpdate = {
   scheduledFor: Date;
 };
 
+/** What an accepted intake recorded under its idempotency key. */
+export type IntakeRecord = {
+  key: string;
+  payloadHash: string;
+  blogPostId: string;
+  socialPostId: string | null;
+  gates: unknown;
+  createdAt: Date;
+};
+
+export type IntakeMatch = { kind: "slug" | "title"; id: string; slug: string; title: string };
+
+export type NewIntakeBlog = {
+  slug: string;
+  title: string;
+  excerpt: string;
+  image: string;
+  category: string;
+  tags: string[];
+  readingTime: string;
+  body: string;
+  faqs: Array<{ question: string; answer: string }>;
+  reviewState: "approved" | "needs_review";
+  reviewReasons: string[];
+  criticScore: number;
+  publishAt: Date | null;
+  contentCluster: string;
+  targetKeyword: string;
+  date: string;
+};
+
+export type NewIntakeSocial = {
+  body: string;
+  imageUrl: string;
+  status: "scheduled" | "needs_review";
+  reviewReasons: string[];
+  criticScore: number | null;
+  scheduledFor: Date;
+};
+
+export type NewIntake = {
+  key: string;
+  payloadHash: string;
+  blog: NewIntakeBlog;
+  social: NewIntakeSocial | null;
+  /** Re-checked under the lock, against what other writers committed meanwhile. */
+  limits: {
+    /**
+     * Pipeline blogs dated this UTC day (YYYY-MM-DD), whichever side wrote
+     * them, may not reach maxPerDay: the count the site's own daily cap uses.
+     */
+    day: string;
+    maxPerDay: number;
+    /** A scheduled blog keeps at least this far from every other scheduled blog. */
+    minGapMs: number;
+    now: Date;
+    /**
+     * Set for a next-slot time: redraws the blog (and its LinkedIn post)
+     * after the latest scheduled blog. Unset for an explicit time, which is
+     * refused instead of moved.
+     */
+    redraw?: (latestScheduled: Date | null) => { publishAt: Date; scheduledFor: Date | null };
+  };
+  /** Written with the new ids filled in, in the same transaction. */
+  log: { message: string; meta: Record<string, unknown> };
+};
+
+export type CreateIntakeResult =
+  | { ok: true; blogPostId: string; socialPostId: string | null; publishAt: Date | null; scheduledFor: Date | null }
+  | { ok: false; reason: "replay"; record: IntakeRecord }
+  | { ok: false; reason: "generator"; generator: Generator }
+  | { ok: false; reason: "daily_cap"; accepted: number }
+  | { ok: false; reason: "gap"; near: Date }
+  | { ok: false; reason: "duplicate"; matches: IntakeMatch[] }
+  | { ok: false; reason: "conflict" };
+
 export interface ControlStore {
   pipelineControl(): Promise<PipelineControl | null>;
+  generatorControl(): Promise<GeneratorControl | null>;
   recentRuns(limit: number, since: Date): Promise<RunSummary[]>;
   dayPlan(day: string): Promise<DayPlanRow | null>;
   nextBlogPublishAt(): Promise<Date | null>;
@@ -195,6 +273,27 @@ export interface ControlStore {
     log: ControlLog;
     reschedule: Reschedule;
   }): Promise<{ ok: boolean; applied: Reschedule }>;
+  /**
+   * If the generator is still `expect`: write the control row that makes it
+   * `to`. Advisory lock, re-read, write; one transaction.
+   */
+  setGenerator(input: { expect: Generator; log: ControlLog }): Promise<{ ok: boolean }>;
+
+  /** The accepted intake recorded under this key, if any. */
+  findIntake(key: string): Promise<IntakeRecord | null>;
+  /** Blogs with this slug, or this title (any case). */
+  findBlogMatches(input: { slug: string; title: string }): Promise<IntakeMatch[]>;
+  /** Latest future publishAt among approved pipeline blogs, so a next-slot draw queues after it. */
+  latestScheduledBlogAt(now: Date): Promise<Date | null>;
+  /**
+   * One transaction under the generator lock, then the intake lock: re-check
+   * the generator (must be jarvis), the key (replay), the slug and the title
+   * (duplicate), the daily cap and, for a scheduled blog, the minimum gap
+   * (redraw a next-slot time, refuse an explicit one), then insert the blog,
+   * its LinkedIn post and their log rows, and the Intake row for the key.
+   */
+  createIntake(data: NewIntake): Promise<CreateIntakeResult>;
+
   writeLog(log: ControlLog): Promise<void>;
 }
 

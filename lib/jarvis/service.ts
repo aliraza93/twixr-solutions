@@ -1,10 +1,14 @@
 import { normalizeManualTopic } from "@/lib/pipeline/manual/normalize-topic";
 import { ControlError } from "@/lib/jarvis/errors";
 import { blogGate, socialGate, type GateResult } from "@/lib/jarvis/gates";
+import { DEFAULT_GENERATOR, GENERATOR_REF_ID } from "@/lib/jarvis/generator";
+import { createIntakeUseCase } from "@/lib/jarvis/intake";
 import { JARVIS_SOURCE, PIPELINE_REF_ID } from "@/lib/jarvis/pause";
+import { MIN_LEAD_MS, checkWindow } from "@/lib/jarvis/time";
 import type {
   CreateBriefInput,
   DraftActionInput,
+  IntakeInput,
   PipelineActionInput,
 } from "@/lib/jarvis/schemas";
 import {
@@ -47,6 +51,8 @@ export type ControlConfig = {
   criticMinScore: number;
   /** Minimum hours between two pipeline blogs (PIPELINE_MIN_GAP_HOURS_MIN). */
   minGapHours: number;
+  /** Pipeline blogs per day (PIPELINE_MAX_PER_DAY); also the intake's daily cap. */
+  maxPerDay: number;
   timezone: string;
   crons: Array<{ path: string; schedule: string }>;
 };
@@ -58,10 +64,11 @@ export type ControlDeps = {
   dayKey: (at: Date) => string;
   drawBlogPublishAt: (from: Date) => Date;
   drawLinkedInAt: (after: Date) => Date;
+  /** The pipeline's dead-link check over safeFetch; returns one reason per dead link. */
+  checkLinks: (urls: string[]) => Promise<string[]>;
 };
 
-export const MIN_LEAD_MS = 60_000;
-export const MAX_AHEAD_MS = 90 * 24 * 3600_000;
+export { MAX_AHEAD_MS, MIN_LEAD_MS } from "@/lib/jarvis/time";
 const RUN_WINDOW_MS = 14 * 24 * 3600_000;
 const HOUR_MS = 3600_000;
 
@@ -141,20 +148,6 @@ function logView(l: LogRow) {
     source: l.stage === "jarvis" ? "jarvis" : "pipeline",
     createdAt: l.createdAt,
   };
-}
-
-/** An explicit time must sit between one minute and 90 days from now. */
-function checkWindow(at: Date, current: Date, field: string): Date {
-  const delta = at.getTime() - current.getTime();
-  if (delta < MIN_LEAD_MS || delta > MAX_AHEAD_MS) {
-    throw new ControlError(
-      400,
-      "invalid_request",
-      `${field} must be between 1 minute and 90 days from now`,
-      { field }
-    );
-  }
-  return at;
 }
 
 /** Explicit time, else the existing one if still ahead, else a fresh draw. */
@@ -247,6 +240,32 @@ export function createControlService(deps: ControlDeps) {
   }
 
   const gateOptions = { criticFloor: config.criticFloor, criticMinScore: config.criticMinScore };
+  const intake = createIntakeUseCase(deps, gateOptions);
+
+  /** Hand generation to Jarvis or back to the site's cron. Publishing is untouched. */
+  async function setGenerator(input: Extract<PipelineActionInput, { action: "set_generator" }>) {
+    const control = await store.generatorControl();
+    const from = control?.generator ?? DEFAULT_GENERATOR;
+    if (from === input.generator) {
+      throw new ControlError(409, "invalid_transition", `The generator is already ${from}`, { state: from });
+    }
+    const current = deps.now();
+    const reason = input.reason ?? "";
+    const result = await store.setGenerator({
+      expect: from,
+      log: {
+        refType: "PipelineGenerator",
+        refId: GENERATOR_REF_ID,
+        status: "ok",
+        message: `Generator set to ${input.generator} from Jarvis${reason ? `: ${reason}` : ""}`,
+        meta: { source: JARVIS_SOURCE, action: "set_generator", from, generator: input.generator, reason },
+      },
+    });
+    if (!result.ok) {
+      throw new ControlError(409, "conflict", "The generator switch changed while this request ran; read status again");
+    }
+    return { generator: { from, to: input.generator, changedAt: current, reason } };
+  }
 
   async function actOnBlog(id: string, input: DraftActionInput) {
     const post = await store.getBlog(id);
@@ -403,8 +422,9 @@ export function createControlService(deps: ControlDeps) {
     async status() {
       const current = deps.now();
       const day = deps.dayKey(current);
-      const [control, lastRuns, plan, blogPublishAt, linkedinAt, queuedBriefs] = await Promise.all([
+      const [control, generatorControl, lastRuns, plan, blogPublishAt, linkedinAt, queuedBriefs] = await Promise.all([
         store.pipelineControl(),
+        store.generatorControl(),
         store.recentRuns(10, new Date(current.getTime() - RUN_WINDOW_MS)),
         store.dayPlan(day),
         store.nextBlogPublishAt(),
@@ -420,6 +440,9 @@ export function createControlService(deps: ControlDeps) {
           running: config.enabled && !paused,
           pausedAt: paused ? control?.at ?? null : null,
           pauseReason: paused ? control?.reason ?? "" : "",
+          generator: generatorControl?.generator ?? DEFAULT_GENERATOR,
+          generatorChangedAt: generatorControl?.at ?? null,
+          generatorReason: generatorControl?.reason ?? "",
           autoPublish: config.autoPublish,
           criticFloor: config.criticFloor,
           criticMinScore: config.criticMinScore,
@@ -573,7 +596,10 @@ export function createControlService(deps: ControlDeps) {
       return kind === "blog" ? actOnBlog(id, input) : actOnSocial(id, input);
     },
 
+    submitIntake: (input: IntakeInput) => intake.submit(input),
+
     async actOnPipeline(input: PipelineActionInput) {
+      if (input.action === "set_generator") return setGenerator(input);
       const current = deps.now();
       const control = await store.pipelineControl();
       const paused = control?.paused ?? false;

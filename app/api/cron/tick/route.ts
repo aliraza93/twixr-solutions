@@ -6,6 +6,7 @@ import {
   recoverStaleClaim,
   releaseDayPlan,
 } from "@/lib/pipeline/day";
+import { isPipelinePaused } from "@/lib/jarvis/pause";
 import { runGenerate } from "@/lib/pipeline/run-generate";
 import { runPublishDue } from "@/lib/pipeline/run-publish-due";
 
@@ -39,6 +40,13 @@ export async function GET(req: Request) {
     withAudit: false,
     quiet: true,
   });
+
+  // Paused from Jarvis: publish-due already skipped; do not draw or claim
+  // today's plan either, so resuming later in the day still gets a slot.
+  if (await isPipelinePaused()) {
+    return NextResponse.json({ due, plan: null, generate: "paused from Jarvis" });
+  }
+
   // A previous tick may have claimed a slot and then been killed by the
   // function time limit. Hand back anything claimed that never produced a post.
   const plan = await recoverStaleClaim(await getDayPlan());

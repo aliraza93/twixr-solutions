@@ -10,6 +10,7 @@ import {
   takeNextBrief,
 } from "@/lib/pipeline/briefs";
 import { pipeline } from "@/lib/pipeline/config";
+import { isPipelinePaused } from "@/lib/jarvis/pause";
 import { criticBlog, criticLinkedIn, type CriticResult } from "@/lib/pipeline/critic";
 import { generateBlog, reviseBlogDraft } from "@/lib/pipeline/generate-blog";
 import { generateLinkedIn } from "@/lib/pipeline/generate-linkedin";
@@ -165,6 +166,18 @@ export async function runGenerate(
       });
       if (shouldNotify) await notifyRunSummary(runId);
       return { runId, status: "skip", message: "Pipeline disabled" };
+    }
+
+    // Paused from Jarvis (lib/jarvis/pause.ts). Logged, but no notify mail:
+    // a pause is deliberate and should not page Ali on every run.
+    if (await isPipelinePaused()) {
+      await logStage({
+        runId,
+        stage: "brief",
+        status: "skip",
+        message: "Pipeline paused from Jarvis",
+      });
+      return { runId, status: "skip", message: "Pipeline paused" };
     }
 
     if (!skipCadence) {

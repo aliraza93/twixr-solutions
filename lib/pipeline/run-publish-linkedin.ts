@@ -1,6 +1,7 @@
 import { requireDb, withDb } from "@/lib/cms/db";
 import { postToLinkedIn } from "@/lib/linkedin/client";
 import { pipeline } from "@/lib/pipeline/config";
+import { isPipelinePaused } from "@/lib/jarvis/pause";
 import { createRunId, logStage } from "@/lib/pipeline/log";
 import { notifyRunSummary } from "@/lib/pipeline/notify";
 import { validateLinkedIn } from "@/lib/pipeline/validators";
@@ -37,6 +38,11 @@ export async function runPublishLinkedin(
         message: "PIPELINE_ENABLED is false",
       });
       return { runId, status: "skip", message: "Pipeline disabled" };
+    }
+
+    // Quiet on purpose: the tick calls this every 10 minutes.
+    if (await isPipelinePaused()) {
+      return { runId, status: "skip", message: "Pipeline paused from Jarvis" };
     }
 
     const post = await withDb(async () => {

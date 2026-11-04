@@ -1,6 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { requireDb, withDb } from "@/lib/cms/db";
 import { pipeline } from "@/lib/pipeline/config";
+import { isPipelinePaused } from "@/lib/jarvis/pause";
 import { createRunId, logStage } from "@/lib/pipeline/log";
 import { notifyRunSummary } from "@/lib/pipeline/notify";
 import { runPublishLinkedin } from "@/lib/pipeline/run-publish-linkedin";
@@ -151,6 +152,16 @@ export async function runPublishDue(
         runId,
         status: "skip",
         message: "Pipeline disabled",
+        blogsPublished: 0,
+        linkedIn,
+      };
+    }
+
+    if (await isPipelinePaused()) {
+      return {
+        runId,
+        status: "skip",
+        message: "Pipeline paused from Jarvis",
         blogsPublished: 0,
         linkedIn,
       };

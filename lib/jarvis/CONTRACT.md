@@ -1,6 +1,6 @@
 # Jarvis control API (`/api/jarvis/*`)
 
-The token-protected API Jarvis uses to drive this site's content pipeline (Jarvis ticket JV-51, decisions D-034 and D-035). It reads and writes the pipeline's own tables (`briefs`, `blog_posts`, `social_posts`, `generation_logs`, `pipeline_days`); there is no second source of truth. The site's cron (`vercel.json`) keeps running unchanged and stays the only publisher: approving or scheduling sets the same fields the pipeline sets, and the 10-minute tick publishes when the time comes.
+The token-protected API Jarvis uses to drive this site's content pipeline (Jarvis tickets JV-51 and JV-52b, decisions D-034, D-035 and D-046). It reads and writes the pipeline's own tables (`briefs`, `blog_posts`, `social_posts`, `generation_logs`, `pipeline_days`); there is no second source of truth. The site's cron (`vercel.json`) keeps running unchanged and stays the only publisher: approving or scheduling sets the same fields the pipeline sets, and the 10-minute tick publishes when the time comes.
 
 ## Authority
 
@@ -8,9 +8,11 @@ The token-protected API Jarvis uses to drive this site's content pipeline (Jarvi
 - Jarvis calls `approve`, `schedule` or `resume` only with an approved Approval for that draft, or an approved, unexpired autopilot policy for that site and channel (D-038). `pause` needs neither.
 - Jarvis sends `override: true` only for a draft Ali approved himself, after seeing the findings it overrides. Never under an autopilot policy.
 - Until the engine moves to Jarvis (JV-52), the site's cron still approves its own drafts while `PIPELINE_AUTO_PUBLISH` is true, with no Jarvis Approval involved. This API does not change that.
+- Only one side writes new posts (D-046). The generator switch (`set_generator`) says which: `site` (default) or `jarvis`. Intake is refused while it is `site`.
+- Jarvis sends `approve: true` on an intake only with an approved Approval for that piece, or an approved, unexpired autopilot policy for that site and channel (D-038). Without it, Jarvis sends `approve: false` and the draft waits in needs_review. Intake has no `override`: a draft that needs one is stored as needs_review, and Ali approves it later through the drafts endpoint.
 - The pipeline pause stops blogs and LinkedIn together. When LinkedIn posting moves to Jarvis (JV-54, D-044) a LinkedIn-only pause is needed so the site's blog cron can keep running while Jarvis owns LinkedIn.
 
-Code: `lib/jarvis/` (use cases in `service.ts`, HTTP in `handlers.ts`, gates in `gates.ts`), routes in `app/api/jarvis/`. Tests: `lib/jarvis/jarvis.test.ts` and `lib/jarvis/store-and-cron.test.ts` (run with `npm run test:pipeline`).
+Code: `lib/jarvis/` (use cases in `service.ts` and `intake.ts`, HTTP in `handlers.ts`, gates in `gates.ts`, the generator switch in `generator.ts`), routes in `app/api/jarvis/`. Tests: `lib/jarvis/jarvis.test.ts` and `lib/jarvis/store-and-cron.test.ts` (run with `npm run test:pipeline`).
 
 ## Auth and limits
 
@@ -22,7 +24,7 @@ Code: `lib/jarvis/` (use cases in `service.ts`, HTTP in `handlers.ts`, gates in 
 | Cron routes | `/api/cron/*` use the same constant-time compare (`lib/security/bearer.ts`) against `Bearer $CRON_SECRET`. An unset or blank `CRON_SECRET` refuses every cron call (`401`), so `Bearer undefined` never passes. There is no length minimum for `CRON_SECRET` (a short live value keeps working); `JARVIS_CONTROL_TOKEN` keeps its 32-character minimum. |
 | Rate limit | 60 requests per minute per IP (first `x-forwarded-for` hop), in memory per serverless instance, like the contact form. It slows guessing; the token is the real control. `429` carries `Retry-After`. |
 | Caching | Every response has `Cache-Control: no-store, max-age=0`. |
-| Validation | Zod on every query, route param and body. Unknown body keys are refused. Bodies over 16 KB get `413`. |
+| Validation | Zod on every query, route param and body. Unknown body keys are refused. Bodies over 16 KB get `413`, except `POST /api/jarvis/intake`, which takes up to 64 KB. |
 
 Order of checks: disabled (503), rate limit (429), token (401), then validation and the use case.
 
@@ -36,12 +38,14 @@ Every error is `{ "error": { "code", "message", "details"? } }`.
 | 400 | `invalid_json` | Body is not JSON |
 | 401 | `unauthorized` | Missing or wrong bearer token |
 | 404 | `not_found` | No such draft (manual CMS posts are not controllable) |
-| 409 | `duplicate` | Brief topic already queued, or blocked by the duplicate check (`details.matches`) |
+| 409 | `duplicate` | Brief topic already queued, or blocked by the duplicate check (`details.matches`); an intake whose slug or title (any case) already exists, or whose topic the duplicate check blocks (`details.risk`, `details.matches`) |
+| 409 | `generator_mismatch` | Intake while the generator is `site` (`details.generator`); set it to `jarvis` first |
+| 409 | `idempotency_mismatch` | An intake key already used for a different body (`details.blogPostId`) |
 | 409 | `invalid_transition` | Action not allowed from the current state (`details.state`, `details.allowedFrom`); X drafts are manual |
 | 409 | `linked_social` | A blog's scheduled LinkedIn post would go out before it, or would point at a paused blog (`details.socialPostIds`) |
 | 409 | `conflict` | The draft, its linked post, the brief queue or the pipeline switch changed between read and write (the cron, the admin or another call), a draft no longer matches the body's `expect`, or a lock wait or the 10 second transaction timed out; nothing was written, read again. Draft conflicts carry the current `details.state` with `details.updatedAt` (blog) or `details.scheduledFor` (LinkedIn) |
-| 413 | `payload_too_large` | Body over 16 KB |
-| 422 | `quality_gate` | The draft fails the site's quality gates (`details.reasons`); nothing changes and a `warn` log row is written. `override` cannot pass these |
+| 413 | `payload_too_large` | Body over 16 KB (64 KB for intake) |
+| 422 | `quality_gate` | The draft fails the site's quality gates (`details.reasons`); nothing changes and a `warn` log row is written. `override` cannot pass these. On intake only for a metadata hard fail (the slug becomes the URL); other intake gate failures are stored as needs_review |
 | 422 | `override_required` | The draft passes the gates, but earlier findings the gate cannot re-check need `override: true` (`details.reasons`) |
 | 429 | `rate_limited` | Too many requests |
 | 500 | `internal` | Unexpected failure (message only is logged) |
@@ -98,6 +102,7 @@ Dates are ISO 8601 UTC strings. Lists are newest first and paged with `?limit=1.
 ```json
 {
   "pipeline": { "enabled": true, "paused": false, "running": true, "pausedAt": null, "pauseReason": "",
+                "generator": "site", "generatorChangedAt": null, "generatorReason": "",
                 "autoPublish": true, "criticFloor": 60, "criticMinScore": 78, "timezone": "Asia/Karachi" },
   "cron": [{ "path": "/api/cron/tick", "schedule": "*/10 * * * *" }, { "path": "/api/cron/generate", "schedule": "17 4 * * *" }],
   "today": { "day": "2026-11-04", "planned": true, "go": true, "slots": 1, "generatedCount": 0,
@@ -109,7 +114,7 @@ Dates are ISO 8601 UTC strings. Lists are newest first and paged with `?limit=1.
 }
 ```
 
-`enabled` is `PIPELINE_ENABLED`; `paused` is the Jarvis switch below; `running` is both. `today` is `{ "day", "planned": false }` until the first tick of the local day draws the plan (status never draws it). `lastRuns` covers the last 14 days, Jarvis rows excluded.
+`enabled` is `PIPELINE_ENABLED`; `paused` is the Jarvis switch below; `running` is both. `generator` is who writes new posts (`site` or `jarvis`, see the generator switch); `generatorChangedAt` is `null` until it is first set. A generator row that cannot be read answers `500`. `today` is `{ "day", "planned": false }` until the first tick of the local day draws the plan (status never draws it). `lastRuns` covers the last 14 days, Jarvis rows excluded.
 
 ### `GET /api/jarvis/briefs`
 
@@ -161,7 +166,10 @@ Social item: `{ kind, id, channel, state, criticScore, reviewReasons, scheduledF
 
 ```json
 { "action": "pause | resume", "reason": "optional" }
+{ "action": "set_generator", "generator": "site | jarvis", "reason": "optional" }
 ```
+
+`set_generator` is described under the generator switch below; the rest of this section is the pause.
 
 Pausing stops the cron from generating and publishing until resumed:
 
@@ -183,6 +191,82 @@ Each call moves at most 10 blogs and 25 LinkedIn posts so it stays inside the tr
 
 Response: `{ pipeline: { enabled, paused, running, changedAt, reason }, rescheduled: { blogs: [{ id, from, to }], social: [{ id, from, to, blogId? }] }, resume: { complete, held, message } | null }`.
 
+### Generator switch (`set_generator`)
+
+Hands the writing of new posts to Jarvis (`jarvis`) or back to the site's cron (`site`, the default). It changes nothing else: publishing due posts, the LinkedIn publisher, the stuck-claim sweep and the weekly refresh keep running on the site, and the pause keeps working on top of it (a pause still stops publishing).
+
+While the generator is `jarvis`:
+
+- `/api/cron/tick` publishes what is due, then answers `generate: "Generation handed to Jarvis"` and does not draw or claim the day plan;
+- `runGenerate` (the tick, and `/api/cron/generate?force=1`) logs a `skip` and writes nothing; the daily `/api/cron/generate` still publishes, refreshes and audits;
+- a cron generation that started before the switch re-checks it just before its first write and, if it moved, stops there (the brief stays queued);
+- `POST /api/jarvis/intake` is accepted.
+
+The admin's own manual generate (`/admin`, `runGenerateFromBrief`) is not gated: it is Ali's deliberate click.
+
+Stored as the latest Jarvis row in `generation_logs` with refType `PipelineGenerator` (refId `generator`, `meta.generator`), newest by `createdAt` then `id`, so it survives deploys and never reads as a pause row. No row means `site`. With no database configured the cron sees `site`. **If the read fails, or the latest row has no valid value, the cron fails closed against double writing: it skips generation for that run and keeps publishing.** Setting the current value is `409 invalid_transition` (`details.state`); the switch takes an advisory lock, re-reads and writes in one transaction, so a switch that moved in between is `409 conflict`.
+
+Response: `{ generator: { from, to, changedAt, reason } }`. Logged with `meta.action: "set_generator"`, `meta.from`, `meta.generator`.
+
+### `POST /api/jarvis/intake` (201, or 200 on a replay)
+
+A finished blog from Jarvis's engine. Body (64 KB cap; unknown keys refused):
+
+```json
+{
+  "idempotencyKey": "8..64 of A-Z a-z 0-9 _ -",
+  "title": "1..200", "excerpt": "1..400", "slug": "1..120 (must be clean kebab-case, max 80)",
+  "tags": ["up to 12, 1..40 each"], "category": "optional, up to 60",
+  "body": "markdown, 1..60000 chars",
+  "faqs": [{ "question": "1..300", "answer": "up to 2000" }],
+  "criticScore": "integer 0..100, required",
+  "sources": ["public http(s) URLs, up to 20"], "requiresLiveSource": "optional boolean (default false)",
+  "coverImageUrl": "optional public https URL",
+  "topic": "optional brief topic for the duplicate check (default: title)", "pillar": "optional, e.g. Build/Laravel",
+  "targetKeyword": "optional, up to 120",
+  "linkedin": { "body": "1..3000", "criticScore": "optional 0..100", "imageUrl": "optional public https URL" },
+  "publishAt": "ISO time 1 minute to 90 days ahead, or \"next_slot\" (default)",
+  "approve": "boolean, default false"
+}
+```
+
+Checks, in order (nothing is stored unless it reaches the write):
+
+1. **Idempotency.** A key already recorded with the same body returns the stored result with `200` and `intake.replayed: true`, the drafts' current state and the original gate results, without re-running anything (even if the generator has moved back since). The same key with a different body is `409 idempotency_mismatch`. A refused submission does not consume its key: fix it and send it again under the same key.
+2. **Generator** must be `jarvis`, else `409 generator_mismatch`.
+3. **Metadata hard fails** (empty title, excerpt or slug; slug not clean kebab-case or over 80 characters) are refused: `422 quality_gate`.
+4. **Duplicates** against everything on the site (CMS posts too), not only Jarvis's own drafts: an existing slug, an existing title (any case), or a topic the pipeline's own `checkManualTopicDuplicate` blocks (cannibalisation against the live inventory). Refused: `409 duplicate`.
+5. **Dead links**: every external http(s) URL in the body, the declared sources, the cover and the LinkedIn image is checked with the pipeline's `deadLinkCheck` over `lib/security/safe-fetch.ts` (resolve-then-check, every redirect hop re-checked). Links to this site are checked against the live inventory instead. More than 30 unique external URLs are not fetched; the draft is held with that reason.
+6. **The blog gate** (the same `blogGate` the drafts endpoint runs): critic floor and minimum, metadata, banned phrases, dashes, heading, title and length rules, sources (with `requiresLiveSource`), the publish quality gate (placeholders, FAQ answers, Sources section, vague titles, empty alt text), a cover image, and invented internal links. LinkedIn copy runs `socialGate` (`validateLinkedIn`, its own critic score, and its blog live by its time).
+
+Refusals in steps 3 and 4 write a `warn` row (refType `Intake`, refId the key) and store nothing.
+
+Outcome:
+
+- The blog is stored as a pipeline draft (`origin: "pipeline"`, `published: false`). It is **scheduled** (`reviewState: approved`) only when `approve` is true and every check in steps 5 and 6 passes with nothing needing an override (so a critic score at or above `CRITIC_MIN_SCORE`). Otherwise it is **needs_review** with the reasons as its review reasons (or `Submitted by Jarvis without approve` when it passed but was not approved). It is never published here: the 10-minute tick publishes it at `publishAt`.
+- `publishAt`: an explicit time is used exactly (and kept on a needs_review draft, so a later approve keeps it). `next_slot` draws with the pipeline's own human-hour draw, starting `PIPELINE_MIN_GAP_HOURS_MIN` hours after the latest scheduled blog; a needs_review draft gets no time until it is approved.
+- LinkedIn copy becomes a linked `social_posts` row (`channel: linkedin`) drawn with the pipeline's LinkedIn delay after the blog's time. It is **scheduled** only when the blog is scheduled and its own gate passes; otherwise needs_review with its reasons (for example `Linked blog is not approved to publish yet`, or `No critic score recorded`).
+- One transaction under the advisory lock `jarvis:intake` re-checks the key (a parallel submit of the same key that committed first is replayed), the slug and the title, then inserts the blog, the LinkedIn post and their log rows. A slug a CMS post took in between is `409 duplicate`; a lock wait or timeout is `409 conflict` (retry with the same key).
+
+Response:
+
+```json
+{
+  "intake": { "key": "...", "replayed": false, "receivedAt": "..." },
+  "blog": { "id": "...", "slug": "...", "state": "scheduled | needs_review", "publishAt": "... | null" },
+  "social": { "id": "...", "state": "scheduled | needs_review", "scheduledFor": "..." } ,
+  "gates": {
+    "approveRequested": true,
+    "blog": { "passed": true, "reasons": [], "needsOverride": [] },
+    "social": { "passed": true, "reasons": [], "needsOverride": [] }
+  }
+}
+```
+
+`social` and `gates.social` are `null` without LinkedIn copy. Logged rows, all with one `runId`, `stage: "jarvis"`, `meta.source: "jarvis"`, `meta.action: "intake"`: a `BlogPost` row, a `SocialPost` row, and the `Intake` row (refId the key, `meta.payloadHash`, `meta.blogPostId`, `meta.socialPostId`, `meta.gates`) that is the idempotency record. Keys stay valid as long as that row is kept (nothing prunes `generation_logs` today).
+
+After intake the drafts are ordinary pipeline drafts: read, approve, schedule or pause them through `/api/jarvis/drafts` as before.
+
 ### `GET /api/jarvis/logs`
 
 Query: `runId`, `refId`, `stage` (e.g. `jarvis`, `publish`, `critic`), `status` (`ok|warn|fail|skip`), `limit`, `cursor`.
@@ -200,3 +284,5 @@ Every mutating call writes a `generation_logs` row: `stage: "jarvis"`, `meta.sou
   3. `npm run db:push`, then commit the schema line so the next push does not drop the index.
 - Pin each source fetch to the address that passed the check (an undici `Agent` with a checked `lookup`, or `node:https` with one). Today the check resolves the name just before each request and fetch resolves it again, which leaves a DNS rebinding window of milliseconds.
 - A LinkedIn-only pause for JV-54 (see Authority).
+- The `refId` index above now also serves the intake key lookup (`refType: Intake, refId: <key>`). Until it exists the lookup scans the `jarvis` stage rows through the `(stage, status)` index, which is fine at today's volume.
+- `PIPELINE_ENABLED=false` also stops `runPublishDue`, so it stops the site publishing Jarvis's intake drafts too. Before D-035's final step, decide which side publishes then (keep the site's publisher running with generation off, or move publishing to Jarvis); the generator switch already covers "site stops writing".

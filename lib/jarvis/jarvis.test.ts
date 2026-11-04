@@ -3,7 +3,15 @@ import { beforeEach, describe, it } from "node:test";
 import { MIN_TOKEN_LENGTH, authorize, bearerToken, configuredToken } from "@/lib/jarvis/auth";
 import { makeHandlers, RATE_LIMIT, type JarvisHandlers } from "@/lib/jarvis/handlers";
 import { isPipelinePaused, pauseSource, type PipelineControl } from "@/lib/jarvis/pause";
-import { isPublicHost } from "@/lib/jarvis/schemas";
+import {
+  generatorSource,
+  siteMayGenerate,
+  type Generator,
+  type GeneratorControl,
+} from "@/lib/jarvis/generator";
+import { MAX_LINK_CHECKS } from "@/lib/jarvis/intake";
+import { intakeBody as intakeSchema, isPublicHost } from "@/lib/jarvis/schemas";
+import { intakePayloadHash } from "@/lib/jarvis/intake";
 import { SlidingWindowLimiter } from "@/lib/jarvis/rate-limit";
 import { createControlService } from "@/lib/jarvis/service";
 import { PAUSE_MARKER, blogStateOf, socialStateOf, transitionFor } from "@/lib/jarvis/states";
@@ -12,8 +20,12 @@ import type {
   BriefRow,
   ControlLog,
   ControlStore,
+  CreateIntakeResult,
   DayPlanRow,
+  IntakeMatch,
+  IntakeRecord,
   LogRow,
+  NewIntake,
   PastDue,
   Reschedule,
   SocialDetail,
@@ -83,6 +95,26 @@ function social(over: Partial<SocialDetail> = {}): SocialDetail {
   };
 }
 
+const COVER = "https://res.cloudinary.com/twixr/image/upload/cover.png";
+const LI_BODY = `A queue retry saved a release this week. ${SENTENCE.repeat(3)}\n\n#Laravel #Queues`;
+
+/** A finished blog that passes every site gate. */
+function intakeBody(over: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    idempotencyKey: "jv-content-01JBXK2M3N",
+    title: "Laravel queue retries after a lock timeout",
+    excerpt: "How a queue retry recovered from a database lock without losing a single job.",
+    slug: "laravel-queue-retries-lock-timeout",
+    tags: ["Laravel", "Queues"],
+    body: GOOD_BODY,
+    criticScore: 86,
+    coverImageUrl: COVER,
+    topic: "Laravel queue retries",
+    pillar: "Build/Laravel",
+    ...over,
+  };
+}
+
 type Logged = ControlLog & { id: string; createdAt: Date };
 
 class FakeStore implements ControlStore {
@@ -103,16 +135,103 @@ class FakeStore implements ControlStore {
   /** Simulate the pipeline switch flipping between read and write. */
   racePipeline = false;
   due: PastDue = { blogs: [], social: [], lastScheduledBlogAt: null, held: [], more: false };
+  generator: GeneratorControl | null = null;
+  /** Simulate the generator switch flipping between read and write. */
+  raceGenerator = false;
+  intakes = new Map<string, IntakeRecord>();
+  /** A same-key intake that committed between the pre-check and the write. */
+  hiddenIntake: IntakeRecord | null = null;
+  /** A slug a CMS post took between the pre-check and the write. */
+  hiddenSlug: string | null = null;
+  latestScheduled: Date | null = null;
+  /** URLs the fake dead-link check reports dead; every call is recorded. */
+  deadUrls = new Set<string>();
+  linkChecks: string[][] = [];
 
   private record(log: ControlLog) {
     this.logs.push({ ...log, id: `log${this.logs.length + 1}`, createdAt: NOW });
     if (log.refType === "Pipeline" && log.status === "ok") {
       this.control = { paused: log.meta.action === "pause", at: NOW, reason: String(log.meta.reason ?? "") };
     }
+    if (log.refType === "PipelineGenerator" && log.status === "ok") {
+      this.generator = { generator: log.meta.generator as Generator, at: NOW, reason: String(log.meta.reason ?? "") };
+    }
   }
 
   async pipelineControl() {
     return this.control;
+  }
+  async generatorControl() {
+    return this.generator;
+  }
+  async setGenerator(input: { expect: Generator; log: ControlLog }) {
+    if (this.raceGenerator || (this.generator?.generator ?? "site") !== input.expect) return { ok: false };
+    this.record(input.log);
+    return { ok: true };
+  }
+  async findIntake(key: string) {
+    return this.intakes.get(key) ?? null;
+  }
+  async findBlogMatches({ slug, title }: { slug: string; title: string }): Promise<IntakeMatch[]> {
+    return [...this.blogs.values()]
+      .filter((b) => b.slug === slug || b.title.trim().toLowerCase() === title.trim().toLowerCase())
+      .map((b) => ({ kind: b.slug === slug ? ("slug" as const) : ("title" as const), id: b.id, slug: b.slug, title: b.title }));
+  }
+  async latestScheduledBlogAt() {
+    return this.latestScheduled;
+  }
+  async createIntake(data: NewIntake): Promise<CreateIntakeResult> {
+    if (this.hiddenIntake) {
+      this.intakes.set(this.hiddenIntake.key, this.hiddenIntake);
+      this.hiddenIntake = null;
+    }
+    const prior = this.intakes.get(data.key);
+    if (prior) return { ok: false, reason: "replay", record: prior };
+    if (this.hiddenSlug === data.blog.slug) {
+      return { ok: false, reason: "duplicate", matches: [{ kind: "slug", id: "cms1", slug: data.blog.slug, title: "CMS post" }] };
+    }
+    const matches = await this.findBlogMatches(data.blog);
+    if (matches.length) return { ok: false, reason: "duplicate", matches };
+    const id = `intake-blog${this.blogs.size + 1}`;
+    const { date: _date, image, ...rest } = data.blog;
+    void _date;
+    this.blogs.set(id, {
+      ...blog(),
+      ...rest,
+      id,
+      image,
+      origin: "pipeline",
+      published: false,
+      briefId: null,
+      brief: null,
+      social: [],
+      createdAt: NOW,
+      updatedAt: NOW,
+    });
+    let socialId: string | null = null;
+    if (data.social) {
+      socialId = `intake-li${this.socials.size + 1}`;
+      this.socials.set(socialId, {
+        ...social(),
+        ...data.social,
+        id: socialId,
+        blogPostId: id,
+        blog: { published: false, reviewState: data.blog.reviewState, publishAt: data.blog.publishAt },
+      });
+    }
+    const meta = { ...data.log.meta, source: "jarvis", action: "intake", key: data.key, blogPostId: id, socialPostId: socialId };
+    this.record({ refType: "BlogPost", refId: id, status: "ok", message: data.log.message, meta });
+    if (socialId) this.record({ refType: "SocialPost", refId: socialId, status: "ok", message: "li", meta });
+    this.record({ refType: "Intake", refId: data.key, status: "ok", message: data.log.message, meta: { ...meta, payloadHash: data.payloadHash } });
+    this.intakes.set(data.key, {
+      key: data.key,
+      payloadHash: data.payloadHash,
+      blogPostId: id,
+      socialPostId: socialId,
+      gates: data.log.meta.gates,
+      createdAt: NOW,
+    });
+    return { ok: true, blogPostId: id, socialPostId: socialId };
   }
   async recentRuns() {
     return [
@@ -279,6 +398,10 @@ function build(limiter = new SlidingWindowLimiter(1000, 60_000)) {
         dayKey: () => "2026-11-04",
         drawBlogPublishAt: drawBlog,
         drawLinkedInAt: drawLi,
+        checkLinks: async (urls) => {
+          store.linkChecks.push(urls);
+          return urls.filter((u) => store.deadUrls.has(u)).map((u) => `Dead or unreachable link: ${u}`);
+        },
       }),
   });
 }
@@ -328,6 +451,8 @@ function everyRoute(auth?: string | null) {
     handlers.getDraft(req("drafts/blog/blog1", { auth }), { kind: "blog", id: "blog1" }),
     handlers.actOnDraft(req("drafts/blog/blog1", { auth, body: { action: "approve" } }), { kind: "blog", id: "blog1" }),
     handlers.actOnPipeline(req("pipeline", { auth, body: { action: "pause" } })),
+    handlers.actOnPipeline(req("pipeline", { auth, body: { action: "set_generator", generator: "jarvis" } })),
+    handlers.submitIntake(req("intake", { auth, body: intakeBody() })),
     handlers.listLogs(req("logs", { auth })),
   ];
 }
@@ -382,6 +507,8 @@ describe("auth", () => {
     }
     assert.equal(store.logs.length, 0);
     assert.equal(store.briefs.length, 0);
+    assert.equal(store.intakes.size, 0);
+    assert.equal(store.generator, null);
     assert.equal(store.blogs.get("blog1")?.reviewState, "needs_review");
   });
 
@@ -1286,5 +1413,400 @@ describe("conditional write (expect)", () => {
       assert.equal(r.json.error.code, "invalid_request");
     }
     assert.equal(store.logs.length, 0);
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* Generator switch (JV-52b)                                           */
+/* ------------------------------------------------------------------ */
+
+const setGen = (generator: unknown, extra: Record<string, unknown> = {}) =>
+  call(handlers.actOnPipeline(req("pipeline", { body: { action: "set_generator", generator, ...extra } })));
+
+describe("generator switch", () => {
+  it("defaults to site, switches to jarvis and back, logged and shown in status", async () => {
+    const before = await call(handlers.status(req("status")));
+    assert.equal(before.json.pipeline.generator, "site");
+    assert.equal(before.json.pipeline.generatorChangedAt, null);
+
+    const r = await setGen("jarvis", { reason: "JV-52b cut-over" });
+    assert.equal(r.status, 200);
+    assert.deepEqual(r.json.generator, { from: "site", to: "jarvis", changedAt: NOW.toISOString(), reason: "JV-52b cut-over" });
+    const after = await call(handlers.status(req("status")));
+    assert.equal(after.json.pipeline.generator, "jarvis");
+    assert.equal(after.json.pipeline.generatorReason, "JV-52b cut-over");
+    assert.equal(after.json.pipeline.paused, false, "the generator does not pause publishing");
+    assert.equal(after.json.pipeline.running, true);
+
+    assert.equal((await setGen("site")).status, 200);
+    assert.deepEqual(
+      store.logs.map((l) => [l.refType, l.refId, l.meta.source, l.meta.action, l.meta.from, l.meta.generator]),
+      [
+        ["PipelineGenerator", "generator", "jarvis", "set_generator", "site", "jarvis"],
+        ["PipelineGenerator", "generator", "jarvis", "set_generator", "jarvis", "site"],
+      ]
+    );
+  });
+
+  it("setting the current value is an invalid transition and writes nothing", async () => {
+    const r = await setGen("site");
+    assert.equal(r.status, 409);
+    assert.equal(r.json.error.code, "invalid_transition");
+    assert.equal(r.json.error.details.state, "site");
+    assert.equal(store.logs.length, 0);
+  });
+
+  it("a switch that moved between read and write is a conflict", async () => {
+    store.raceGenerator = true;
+    const r = await setGen("jarvis");
+    assert.equal(r.status, 409);
+    assert.equal(r.json.error.code, "conflict");
+    assert.equal(store.logs.length, 0);
+  });
+
+  it("is independent of the pause switch", async () => {
+    await call(handlers.actOnPipeline(req("pipeline", { body: { action: "pause" } })));
+    await setGen("jarvis");
+    const s = await call(handlers.status(req("status")));
+    assert.equal(s.json.pipeline.paused, true);
+    assert.equal(s.json.pipeline.generator, "jarvis");
+    assert.equal(store.control?.paused, true, "a generator row never reads as a pause row");
+  });
+
+  it("validates the body strictly", async () => {
+    for (const body of [
+      { action: "set_generator" },
+      { action: "set_generator", generator: "both" },
+      { action: "set_generator", generator: "jarvis", extra: 1 },
+      { action: "pause", generator: "jarvis" },
+    ]) {
+      const r = await call(handlers.actOnPipeline(req("pipeline", { body })));
+      assert.equal(r.status, 400, JSON.stringify(body));
+    }
+    assert.equal(store.logs.length, 0);
+  });
+
+  it("the cron's generator check: allowed without a database, fails closed on a read error", async () => {
+    const original = { ...generatorSource };
+    const originalError = console.error;
+    console.error = () => undefined;
+    try {
+      assert.deepEqual(await siteMayGenerate(), { allowed: true }, "no database configured");
+      generatorSource.configured = () => true;
+      generatorSource.read = async () => null;
+      assert.deepEqual(await siteMayGenerate(), { allowed: true }, "no row means site");
+      generatorSource.read = async () => ({ generator: "site", at: NOW, reason: "" });
+      assert.deepEqual(await siteMayGenerate(), { allowed: true });
+      generatorSource.read = async () => ({ generator: "jarvis", at: NOW, reason: "" });
+      assert.deepEqual(await siteMayGenerate(), { allowed: false, reason: "jarvis" });
+      generatorSource.read = async () => {
+        throw new Error("connection reset");
+      };
+      assert.deepEqual(await siteMayGenerate(), { allowed: false, reason: "unreadable" });
+    } finally {
+      Object.assign(generatorSource, original);
+      console.error = originalError;
+    }
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* Intake (JV-52b)                                                     */
+/* ------------------------------------------------------------------ */
+
+const intake = (body: unknown, headers?: Record<string, string>) => call(handlers.submitIntake(req("intake", { body, headers })));
+
+describe("intake: generator and validation", () => {
+  it("is refused while the site generates, before any check or write", async () => {
+    const r = await intake(intakeBody({ approve: true }));
+    assert.equal(r.status, 409);
+    assert.equal(r.json.error.code, "generator_mismatch");
+    assert.equal(r.json.error.details.generator, "site");
+    assert.equal(store.blogs.size, 0);
+    assert.equal(store.linkChecks.length, 0);
+  });
+
+  const bad: Array<[string, Record<string, unknown>, string]> = [
+    ["an unknown key", { publishNow: true }, ""],
+    ["a short idempotency key", { idempotencyKey: "abc" }, "idempotencyKey"],
+    ["a key with spaces", { idempotencyKey: "has spaces here" }, "idempotencyKey"],
+    ["no title", { title: "  " }, "title"],
+    ["no body", { body: "" }, "body"],
+    ["no critic score", { criticScore: undefined }, "criticScore"],
+    ["a critic score over 100", { criticScore: 101 }, "criticScore"],
+    ["an http cover", { coverImageUrl: "http://res.cloudinary.com/x.png" }, "coverImageUrl"],
+    ["a private source", { sources: ["http://10.0.0.5/x"] }, "sources.0"],
+    ["a bad publishAt", { publishAt: "soon" }, "publishAt"],
+    ["an unknown LinkedIn key", { linkedin: { body: LI_BODY, post: true } }, "linkedin"],
+    ["an unknown FAQ key", { faqs: [{ question: "Why?", answer: "Because", extra: 1 }] }, "faqs.0"],
+  ];
+  for (const [name, over, path] of bad) {
+    it(`refuses ${name}`, async () => {
+      store.generator = { generator: "jarvis", at: NOW, reason: "" };
+      const r = await intake(intakeBody(over));
+      assert.equal(r.status, 400, JSON.stringify(r.json));
+      assert.equal(r.json.error.code, "invalid_request");
+      if (path) assert.ok(r.json.error.details.issues.some((i: { path: string }) => i.path === path), JSON.stringify(r.json));
+      assert.equal(store.blogs.size, 0);
+    });
+  }
+
+  it("takes bodies up to 64 KB on this route only, and refuses more", async () => {
+    store.generator = { generator: "jarvis", at: NOW, reason: "" };
+    const long = `${GOOD_BODY}\n\n${SENTENCE.repeat(250)}`;
+    assert.ok(JSON.stringify(intakeBody({ body: long })).length > 16 * 1024);
+    const ok = await intake(intakeBody({ body: long }));
+    assert.equal(ok.status, 201, JSON.stringify(ok.json));
+    const big = await intake(intakeBody({ idempotencyKey: "jv-content-toolarge", body: "x".repeat(70_000) }));
+    assert.equal(big.status, 413);
+    const declared = await intake(intakeBody({ idempotencyKey: "jv-content-declared" }), { "content-length": "70000" });
+    assert.equal(declared.status, 413);
+    // The other routes keep 16 KB.
+    const brief = await call(handlers.createBrief(req("briefs", { body: { topic: "a".repeat(20_000) } })));
+    assert.equal(brief.status, 413);
+  });
+
+  it("refuses a publishAt outside 1 minute to 90 days", async () => {
+    store.generator = { generator: "jarvis", at: NOW, reason: "" };
+    for (const at of ["2026-11-04T09:00:00Z", "2027-06-01T00:00:00Z"]) {
+      const r = await intake(intakeBody({ publishAt: at, approve: true }));
+      assert.equal(r.status, 400);
+      assert.equal(r.json.error.details.field, "publishAt");
+    }
+    assert.equal(store.blogs.size, 0);
+  });
+});
+
+describe("intake: storing and scheduling", () => {
+  beforeEach(() => {
+    store.generator = { generator: "jarvis", at: NOW, reason: "" };
+  });
+
+  it("without approve, a passing blog and its LinkedIn copy are stored for review", async () => {
+    const r = await intake(intakeBody({ linkedin: { body: LI_BODY, criticScore: 84 } }));
+    assert.equal(r.status, 201, JSON.stringify(r.json));
+    assert.equal(r.json.intake.replayed, false);
+    assert.equal(r.json.blog.state, "needs_review");
+    assert.equal(r.json.blog.publishAt, null);
+    assert.equal(r.json.gates.blog.passed, true);
+    assert.equal(r.json.gates.approveRequested, false);
+    assert.equal(r.json.social.state, "needs_review");
+    const b = store.blogs.get(r.json.blog.id);
+    assert.equal(b?.published, false);
+    assert.equal(b?.origin, "pipeline");
+    assert.deepEqual(b?.reviewReasons, ["Submitted by Jarvis without approve"]);
+    const li = store.socials.get(r.json.social.id);
+    assert.equal(li?.blogPostId, r.json.blog.id);
+    assert.ok((li?.reviewReasons as string[]).includes("Linked blog is not approved to publish yet"));
+    assert.deepEqual(
+      store.logs.map((l) => [l.refType, l.meta.source, l.meta.action]),
+      [["BlogPost", "jarvis", "intake"], ["SocialPost", "jarvis", "intake"], ["Intake", "jarvis", "intake"]]
+    );
+  });
+
+  it("with approve and every gate passing: scheduled at the next slot, LinkedIn after it, never published", async () => {
+    const r = await intake(intakeBody({ approve: true, linkedin: { body: LI_BODY, criticScore: 84 } }));
+    assert.equal(r.status, 201);
+    assert.equal(r.json.blog.state, "scheduled");
+    assert.equal(r.json.blog.publishAt, DRAWN_BLOG_AT.toISOString());
+    assert.equal(r.json.social.state, "scheduled");
+    assert.equal(r.json.social.scheduledFor, drawLi(DRAWN_BLOG_AT).toISOString());
+    const b = store.blogs.get(r.json.blog.id);
+    assert.equal(b?.reviewState, "approved");
+    assert.equal(b?.published, false, "the tick publishes, intake never does");
+    assert.deepEqual(b?.reviewReasons, []);
+    assert.equal(store.socials.get(r.json.social.id)?.status, "scheduled");
+  });
+
+  it("the next slot queues the minimum gap after the last scheduled blog", async () => {
+    store.latestScheduled = new Date(NOW.getTime() + 10 * HOUR);
+    const r = await intake(intakeBody({ approve: true }));
+    assert.equal(r.json.blog.publishAt, drawBlog(new Date(NOW.getTime() + 15 * HOUR)).toISOString());
+  });
+
+  it("an explicit publishAt is used exactly, and kept on a draft held for review", async () => {
+    const at = "2026-11-06T09:30:00.000Z";
+    const r = await intake(intakeBody({ approve: true, publishAt: at }));
+    assert.equal(r.json.blog.publishAt, at);
+    const held = await intake(intakeBody({ idempotencyKey: "jv-content-held", slug: "held-post", title: "A held post about queue retries", publishAt: at }));
+    assert.equal(held.json.blog.state, "needs_review");
+    assert.equal(held.json.blog.publishAt, at);
+  });
+
+  const heldBy: Array<[string, Record<string, unknown>, RegExp, "reasons" | "needsOverride"]> = [
+    ["a critic score under the hard floor", { criticScore: 40 }, /below hard floor 60/, "reasons"],
+    ["a critic score under the minimum", { criticScore: 70 }, /below minimum 78/, "needsOverride"],
+    ["no cover image", { coverImageUrl: undefined }, /Cover image missing/, "reasons"],
+    ["a dash character", { body: `${GOOD_BODY} One more ${EM_DASH} line.` }, /em\/en dash/, "reasons"],
+    ["a banned phrase", { excerpt: "In today's fast-paced world, queues matter for every single team out there." }, /Banned phrase/, "reasons"],
+    ["a short body", { body: "## Short\n\nToo short to publish." }, /too short/, "reasons"],
+    ["a live-source brief without sources", { requiresLiveSource: true }, /needs at least one source/, "reasons"],
+    ["a placeholder", { body: `${GOOD_BODY}\n\nTODO add the numbers.` }, /Unfinished content/, "reasons"],
+    ["a thin FAQ answer", { faqs: [{ question: "Does it retry?", answer: "Yes." }] }, /FAQ answer missing or too thin/, "reasons"],
+  ];
+  for (const [name, over, pattern, field] of heldBy) {
+    it(`approve with ${name} is stored as needs_review with the reason`, async () => {
+      const r = await intake(intakeBody({ approve: true, ...over }));
+      assert.equal(r.status, 201, JSON.stringify(r.json));
+      assert.equal(r.json.blog.state, "needs_review");
+      assert.equal(r.json.gates.blog.passed, false);
+      assert.ok(r.json.gates.blog[field].some((x: string) => pattern.test(x)), JSON.stringify(r.json.gates));
+      const b = store.blogs.get(r.json.blog.id);
+      assert.equal(b?.reviewState, "needs_review");
+      assert.ok((b?.reviewReasons as string[]).some((x) => pattern.test(x)));
+    });
+  }
+
+  it("checks external links (body, sources, cover) with the safe fetch and holds a dead one", async () => {
+    const dead = "https://laravel.com/docs/queues-gone";
+    store.deadUrls.add(dead);
+    const body = `${GOOD_BODY}\n\nSee [the docs](${dead}) and [our services](https://www.twixrsolutions.com/services).`;
+    const r = await intake(intakeBody({ approve: true, body, sources: ["https://laravel.com/docs/queues"] }));
+    assert.equal(r.json.blog.state, "needs_review");
+    assert.deepEqual(r.json.gates.blog.reasons, [`Dead or unreachable link: ${dead}`]);
+    assert.deepEqual(store.linkChecks[0].sort(), [COVER, dead, "https://laravel.com/docs/queues"].sort());
+  });
+
+  it("holds a draft with more links than it will check, without fetching any", async () => {
+    const links = Array.from({ length: MAX_LINK_CHECKS + 1 }, (_, i) => `- https://example.org/ref-${i}`).join("\n");
+    const r = await intake(intakeBody({ approve: true, body: `${GOOD_BODY}\n\n${links}` }));
+    assert.equal(r.json.blog.state, "needs_review");
+    assert.ok(r.json.gates.blog.reasons.some((x: string) => /Too many external links/.test(x)));
+    assert.equal(store.linkChecks.length, 0);
+  });
+
+  it("holds an invented internal link against the live inventory", async () => {
+    store.allowlist = new Set(["https://www.twixrsolutions.com/services"]);
+    const body = `${GOOD_BODY}\n\nRead [the guide](https://www.twixrsolutions.com/blog/made-up).`;
+    const r = await intake(intakeBody({ approve: true, body }));
+    assert.equal(r.json.blog.state, "needs_review");
+    assert.ok(r.json.gates.blog.reasons.some((x: string) => /Invented or disallowed internal link/.test(x)));
+  });
+
+  it("an approved blog with a LinkedIn copy that fails its own gate: blog scheduled, LinkedIn held", async () => {
+    const r = await intake(intakeBody({ approve: true, linkedin: { body: LI_BODY } }));
+    assert.equal(r.json.blog.state, "scheduled");
+    assert.equal(r.json.social.state, "needs_review");
+    assert.equal(r.json.gates.social.passed, false);
+    assert.ok(r.json.gates.social.reasons.some((x: string) => /No critic score recorded/.test(x)));
+    const dashed = await intake(
+      intakeBody({ idempotencyKey: "jv-content-li-dash", slug: "li-dash", title: "LinkedIn dash check post title", approve: true, linkedin: { body: `${LI_BODY} ${EM_DASH}`, criticScore: 90 } })
+    );
+    assert.equal(dashed.json.social.state, "needs_review");
+  });
+});
+
+describe("intake: refusals and duplicates", () => {
+  beforeEach(() => {
+    store.generator = { generator: "jarvis", at: NOW, reason: "" };
+  });
+
+  it("refuses a metadata hard fail (unclean or long slug) with 422 and stores nothing", async () => {
+    for (const slug of ["Bad Slug", "a".repeat(81)]) {
+      const r = await intake(intakeBody({ slug, approve: true }));
+      assert.equal(r.status, 422);
+      assert.equal(r.json.error.code, "quality_gate");
+      assert.ok(r.json.error.details.reasons.length);
+    }
+    assert.equal(store.blogs.size, 0);
+    assert.deepEqual(store.logs.map((l) => [l.refType, l.status]), [["Intake", "warn"], ["Intake", "warn"]]);
+    assert.equal(store.linkChecks.length, 0, "no network for a refused draft");
+  });
+
+  it("refuses a slug, a title (any case) or a topic that already exists", async () => {
+    store.blogs.set("blog1", blog({ slug: "laravel-queue-retries-lock-timeout", title: "Something else entirely here" }));
+    const bySlug = await intake(intakeBody());
+    assert.equal(bySlug.status, 409);
+    assert.equal(bySlug.json.error.code, "duplicate");
+    assert.match(bySlug.json.error.details.matches[0].reason, /Slug already exists/);
+
+    store.blogs.set("blog1", blog({ slug: "other", title: "LARAVEL QUEUE RETRIES AFTER A LOCK TIMEOUT" }));
+    const byTitle = await intake(intakeBody());
+    assert.equal(byTitle.status, 409);
+    assert.match(byTitle.json.error.details.matches[0].reason, /Duplicate title/);
+
+    store.blogs.clear();
+    store.dup = {
+      blocked: true,
+      risk: 0.93,
+      reason: "Cannibalizes an existing post",
+      matches: [{ kind: "blog", title: "Queue retries in Laravel", url: "https://www.twixrsolutions.com/blog/q", score: 0.93, reason: "x" }],
+    };
+    const byTopic = await intake(intakeBody());
+    assert.equal(byTopic.status, 409);
+    assert.equal(byTopic.json.error.message, "Cannibalizes an existing post");
+    assert.equal(byTopic.json.error.details.risk, 0.93);
+    assert.equal([...store.blogs.values()].length, 0);
+    assert.equal(store.intakes.size, 0);
+    assert.ok(store.logs.every((l) => l.refType === "Intake" && l.status === "warn" && l.meta.source === "jarvis"));
+  });
+
+  it("a refused key is not consumed: the corrected draft goes in under the same key", async () => {
+    assert.equal((await intake(intakeBody({ slug: "Bad Slug" }))).status, 422);
+    const r = await intake(intakeBody());
+    assert.equal(r.status, 201);
+  });
+
+  it("a slug taken between the check and the insert is a duplicate", async () => {
+    store.hiddenSlug = "laravel-queue-retries-lock-timeout";
+    const r = await intake(intakeBody());
+    assert.equal(r.status, 409);
+    assert.equal(r.json.error.code, "duplicate");
+    assert.equal(store.intakes.size, 0);
+  });
+});
+
+describe("intake: idempotency", () => {
+  beforeEach(() => {
+    store.generator = { generator: "jarvis", at: NOW, reason: "" };
+  });
+
+  it("the same key and body returns the stored result with the drafts' current state", async () => {
+    const first = await intake(intakeBody({ approve: true, linkedin: { body: LI_BODY, criticScore: 84 } }));
+    assert.equal(first.status, 201);
+    const again = await intake(intakeBody({ approve: true, linkedin: { body: LI_BODY, criticScore: 84 } }));
+    assert.equal(again.status, 200);
+    assert.equal(again.json.intake.replayed, true);
+    assert.equal(again.json.blog.id, first.json.blog.id);
+    assert.equal(again.json.social.id, first.json.social.id);
+    assert.equal(again.json.blog.state, "scheduled");
+    assert.deepEqual(again.json.gates, first.json.gates);
+    assert.equal(store.blogs.size, 1, "nothing written twice");
+    assert.equal(store.logs.length, 3);
+    assert.equal(store.linkChecks.length, 1, "a replay does not fetch links again");
+  });
+
+  it("a replay still answers after the generator moved back to site", async () => {
+    const first = await intake(intakeBody());
+    store.generator = { generator: "site", at: NOW, reason: "" };
+    const again = await intake(intakeBody());
+    assert.equal(again.status, 200);
+    assert.equal(again.json.blog.id, first.json.blog.id);
+  });
+
+  it("the same key with a different body is refused", async () => {
+    await intake(intakeBody());
+    const r = await intake(intakeBody({ title: "A different title about queue retries" }));
+    assert.equal(r.status, 409);
+    assert.equal(r.json.error.code, "idempotency_mismatch");
+    assert.equal(store.blogs.size, 1);
+  });
+
+  it("a parallel submit of the same key that committed first is replayed, not written twice", async () => {
+    const body = intakeBody();
+    store.blogs.set("blog-parallel", blog({ id: "blog-parallel", slug: "parallel", title: "Parallel" }));
+    store.hiddenIntake = {
+      key: String(body.idempotencyKey),
+      payloadHash: intakePayloadHash(intakeSchema.parse(body)),
+      blogPostId: "blog-parallel",
+      socialPostId: null,
+      gates: { approveRequested: false },
+      createdAt: NOW,
+    };
+    const r = await intake(body);
+    assert.equal(r.status, 200);
+    assert.equal(r.json.intake.replayed, true);
+    assert.equal(r.json.blog.id, "blog-parallel");
+    assert.equal(store.blogs.size, 1);
   });
 });

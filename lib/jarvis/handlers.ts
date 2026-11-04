@@ -8,6 +8,7 @@ import {
   draftActionBodyFor,
   draftParams,
   draftsQuery,
+  intakeBody,
   logsQuery,
   pipelineActionBody,
 } from "@/lib/jarvis/schemas";
@@ -28,6 +29,8 @@ export type HandlerDeps = {
 };
 
 export const MAX_BODY_BYTES = 16 * 1024;
+/** A finished blog with FAQs and LinkedIn copy needs more room; this cap is for /api/jarvis/intake only. */
+export const MAX_INTAKE_BODY_BYTES = 64 * 1024;
 export const RATE_LIMIT = { max: 60, windowMs: 60_000 };
 
 const BASE_HEADERS: Record<string, string> = {
@@ -65,14 +68,14 @@ function query(req: Request): Record<string, string> {
   return Object.fromEntries(new URL(req.url).searchParams);
 }
 
-function tooLarge(): ControlError {
-  return new ControlError(413, "payload_too_large", `Body over ${MAX_BODY_BYTES} bytes`);
+function tooLarge(max: number): ControlError {
+  return new ControlError(413, "payload_too_large", `Body over ${max} bytes`);
 }
 
 /** Refuse by Content-Length first, then read the stream with a hard cap. */
-async function readCapped(req: Request): Promise<string> {
+async function readCapped(req: Request, max: number): Promise<string> {
   const declared = Number(req.headers.get("content-length") ?? "");
-  if (Number.isFinite(declared) && declared > MAX_BODY_BYTES) throw tooLarge();
+  if (Number.isFinite(declared) && declared > max) throw tooLarge(max);
   if (!req.body) return "";
   const reader = req.body.getReader();
   const chunks: Uint8Array[] = [];
@@ -81,17 +84,17 @@ async function readCapped(req: Request): Promise<string> {
     const { done, value } = await reader.read();
     if (done) break;
     total += value.byteLength;
-    if (total > MAX_BODY_BYTES) {
+    if (total > max) {
       await reader.cancel().catch(() => undefined);
-      throw tooLarge();
+      throw tooLarge(max);
     }
     chunks.push(value);
   }
   return Buffer.concat(chunks).toString("utf8");
 }
 
-async function body(req: Request): Promise<unknown> {
-  const text = await readCapped(req);
+async function body(req: Request, max = MAX_BODY_BYTES): Promise<unknown> {
+  const text = await readCapped(req, max);
   try {
     return JSON.parse(text);
   } catch {
@@ -158,6 +161,11 @@ export function makeHandlers(deps: HandlerDeps) {
 
     actOnPipeline: (req: Request) =>
       guarded(req, async () => ok(await deps.service().actOnPipeline(parse(pipelineActionBody, await body(req))))),
+
+    submitIntake: (req: Request) =>
+      guarded(req, async () =>
+        deps.service().submitIntake(parse(intakeBody, await body(req, MAX_INTAKE_BODY_BYTES)))
+      ),
 
     listLogs: (req: Request) =>
       guarded(req, async () => ok(await deps.service().listLogs(parse(logsQuery, query(req))))),

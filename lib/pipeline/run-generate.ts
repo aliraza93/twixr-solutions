@@ -11,6 +11,7 @@ import {
 } from "@/lib/pipeline/briefs";
 import { pipeline } from "@/lib/pipeline/config";
 import { isPipelinePaused } from "@/lib/jarvis/pause";
+import { generationSkipMessage, siteMayGenerate } from "@/lib/jarvis/generator";
 import { criticBlog, criticLinkedIn, type CriticResult } from "@/lib/pipeline/critic";
 import { generateBlog, reviseBlogDraft } from "@/lib/pipeline/generate-blog";
 import { generateLinkedIn } from "@/lib/pipeline/generate-linkedin";
@@ -180,6 +181,15 @@ export async function runGenerate(
       return { runId, status: "skip", message: "Pipeline paused" };
     }
 
+    // Generation handed to Jarvis (lib/jarvis/generator.ts), or the switch
+    // could not be read: write nothing. Publishing is not affected.
+    const generation = await siteMayGenerate();
+    if (!generation.allowed) {
+      const message = generationSkipMessage(generation.reason);
+      await logStage({ runId, stage: "brief", status: "skip", message });
+      return { runId, status: "skip", message };
+    }
+
     if (!skipCadence) {
       const cadence = await shouldGenerateToday(force);
       await logStage({
@@ -282,6 +292,7 @@ export async function runGenerate(
       dryRun,
       opportunityId,
       opportunityPriority,
+      siteGeneratorOnly: true,
     });
   } catch (error) {
     const message =
@@ -305,6 +316,12 @@ export async function runGenerate(
 export type RunGenerateFromBriefOptions = RunGenerateOptions & {
   opportunityId?: string;
   opportunityPriority?: number;
+  /**
+   * Re-check the generator switch just before the first write, so a switch
+   * to Jarvis while this run was drafting writes nothing. Set by the cron's
+   * runGenerate; the admin's own manual generate does not set it.
+   */
+  siteGeneratorOnly?: boolean;
 };
 
 /**
@@ -707,6 +724,22 @@ export async function runGenerateFromBrief(
         imageReasons.push(
           `Planned ${plan.images.inlineCount} inline image(s), got ${inline.generated}`
         );
+      }
+    }
+
+    if (options.siteGeneratorOnly) {
+      const generation = await siteMayGenerate();
+      if (!generation.allowed) {
+        const message = generationSkipMessage(generation.reason);
+        await logStage({
+          runId,
+          stage: "blog",
+          status: "skip",
+          refType: "Brief",
+          refId: brief.id,
+          message: `${message}; draft discarded before writing, brief left queued`,
+        });
+        return { runId, status: "skip", message };
       }
     }
 

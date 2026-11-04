@@ -84,6 +84,7 @@ const HOUR = 3600_000;
 type Mods = {
   store: typeof import("@/lib/jarvis/prisma-store");
   pause: typeof import("@/lib/jarvis/pause");
+  generator: typeof import("@/lib/jarvis/generator");
   publishDue: typeof import("@/lib/pipeline/run-publish-due");
   publishLi: typeof import("@/lib/pipeline/run-publish-linkedin");
   generate: typeof import("@/lib/pipeline/run-generate");
@@ -106,6 +107,7 @@ before(async () => {
   m = {
     store: await import("@/lib/jarvis/prisma-store"),
     pause: await import("@/lib/jarvis/pause"),
+    generator: await import("@/lib/jarvis/generator"),
     publishDue: await import("@/lib/pipeline/run-publish-due"),
     publishLi: await import("@/lib/pipeline/run-publish-linkedin"),
     generate: await import("@/lib/pipeline/run-generate"),
@@ -643,5 +645,249 @@ describe("cron routes: CRON_SECRET", () => {
     } finally {
       process.env.CRON_SECRET = saved;
     }
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* Generator switch and intake (JV-52b)                                */
+/* ------------------------------------------------------------------ */
+
+/** Control reads by refType: the pause row and the generator row are separate. */
+function controlRows(rows: { pause?: unknown; generator?: unknown; generatorError?: boolean }) {
+  fake.handlers["generationLog.findFirst"] = (args) => {
+    const where = (args as { where: { refType?: string } }).where;
+    if (where.refType === "Pipeline") return rows.pause ?? null;
+    if (where.refType === "PipelineGenerator") {
+      if (rows.generatorError) throw new Error("db down");
+      return rows.generator ?? null;
+    }
+    return null;
+  };
+}
+
+const jarvisGenerates = { createdAt: NOW, meta: { action: "set_generator", generator: "jarvis" } };
+const tickReq = () =>
+  new Request("https://twixrsolutions.com/api/cron/tick", { headers: { authorization: "Bearer cron-secret-for-tests" } });
+const generateReq = () =>
+  new Request("https://twixrsolutions.com/api/cron/generate?force=1", {
+    headers: { authorization: "Bearer cron-secret-for-tests" },
+  });
+/** publishDueBlogs read the due blogs: publishing ran. */
+const publishRan = () =>
+  fake.of("blogPost", "findMany").some((c) => {
+    const where = (c.args as { where?: Record<string, unknown> }).where ?? {};
+    return where.reviewState === "approved" && where.published === false && "publishAt" in where;
+  });
+
+describe("cron: generator switch", () => {
+  it("getGeneratorControl reads the newest generator row and refuses a row without a valid value", async () => {
+    controlRows({ generator: jarvisGenerates });
+    const c = await m.generator.getGeneratorControl(fake as never);
+    assert.equal(c?.generator, "jarvis");
+    const read = fake.of("generationLog", "findFirst")[0].args as { where: unknown; orderBy: unknown };
+    assert.deepEqual(read.where, { stage: "jarvis", refType: "PipelineGenerator", status: "ok" });
+    assert.deepEqual(read.orderBy, [{ createdAt: "desc" }, { id: "desc" }]);
+    controlRows({ generator: { createdAt: NOW, meta: { generator: "both" } } });
+    await assert.rejects(m.generator.getGeneratorControl(fake as never), /no valid generator/);
+  });
+
+  it("runGenerate writes nothing while Jarvis generates, and logs the skip", async () => {
+    controlRows({ generator: jarvisGenerates });
+    const r = await m.generate.runGenerate({ force: true });
+    assert.equal(r.status, "skip");
+    assert.equal(r.message, "Generation handed to Jarvis");
+    assert.equal(fake.calls.filter((c) => c.model === "brief").length, 0, "no brief taken");
+    assert.equal(fake.calls.filter((c) => c.model === "blogPost" && c.op !== "findMany").length, 0, "no post written");
+    const skip = fake.of("generationLog", "create").map((c) => (c.args as { data: { status: string; message: string } }).data);
+    assert.deepEqual(skip.map((d) => [d.status, d.message]), [["skip", "Generation handed to Jarvis"]]);
+  });
+
+  it("the tick keeps publishing but neither draws nor claims the plan while Jarvis generates", async () => {
+    controlRows({ generator: jarvisGenerates });
+    const res = await m.tick.GET(tickReq());
+    const body = (await res.json()) as { generate: string; plan: unknown; due: { message: string } };
+    assert.equal(body.generate, "Generation handed to Jarvis");
+    assert.equal(body.plan, null);
+    assert.doesNotMatch(body.due.message, /paused/);
+    assert.ok(publishRan(), "publish-due ran");
+    assert.ok(fake.of("socialPost", "findFirst").length > 0, "the LinkedIn publisher ran");
+    assert.equal(fake.of("pipelineDay", "findUnique").length, 0);
+    assert.equal(fake.of("pipelineDay", "create").length, 0);
+    assert.equal(fake.of("pipelineDay", "updateMany").length, 0);
+  });
+
+  it("a failed generator read fails closed: no generation, publishing continues", async () => {
+    const originalError = console.error;
+    console.error = () => undefined;
+    try {
+      controlRows({ generatorError: true });
+      const res = await m.tick.GET(tickReq());
+      const body = (await res.json()) as { generate: string };
+      assert.match(body.generate, /unreadable; generation skipped, publishing continues/);
+      assert.ok(publishRan());
+      assert.equal(fake.of("pipelineDay", "findUnique").length, 0);
+
+      fake.reset();
+      controlRows({ generatorError: true });
+      const r = await m.generate.runGenerate({ force: true });
+      assert.equal(r.status, "skip");
+      assert.equal(fake.calls.filter((c) => c.model === "brief").length, 0);
+    } finally {
+      console.error = originalError;
+    }
+  });
+
+  it("/api/cron/generate?force=1 publishes due work but generates nothing while Jarvis generates", async () => {
+    controlRows({ generator: jarvisGenerates });
+    const res = await m.cronGenerate.GET(generateReq());
+    const body = (await res.json()) as { generate: { status: string; message: string }; due: { message: string } };
+    assert.equal(body.generate.status, "skip");
+    assert.equal(body.generate.message, "Generation handed to Jarvis");
+    assert.doesNotMatch(body.due.message, /paused/);
+    assert.ok(publishRan());
+    assert.equal(fake.calls.filter((c) => c.model === "brief").length, 0);
+  });
+
+  it("with the site as generator the tick goes on to the day plan as before", async () => {
+    controlRows({ generator: { createdAt: NOW, meta: { action: "set_generator", generator: "site" } } });
+    const res = await m.tick.GET(
+      new Request("https://twixrsolutions.com/api/cron/tick?dryRun=1", { headers: { authorization: "Bearer cron-secret-for-tests" } })
+    );
+    const body = (await res.json()) as { generate: string };
+    assert.equal(body.generate, "skipped (dryRun)");
+    assert.ok(fake.of("pipelineDay", "findUnique").length > 0, "the plan was read");
+  });
+
+  it("a pause still wins over the generator: nothing publishes", async () => {
+    controlRows({ pause: { createdAt: NOW, meta: { action: "pause" } }, generator: jarvisGenerates });
+    const body = (await (await m.tick.GET(tickReq())).json()) as { generate: string };
+    assert.equal(body.generate, "paused from Jarvis");
+    assert.equal(publishRan(), false);
+  });
+});
+
+describe("prisma store: generator switch and intake", () => {
+  const genLog = {
+    refType: "PipelineGenerator" as const,
+    refId: "generator",
+    status: "ok" as const,
+    message: "m",
+    meta: { action: "set_generator", generator: "jarvis" },
+  };
+
+  it("setGenerator takes its advisory lock, re-reads, and writes only if unchanged", async () => {
+    controlRows({ generator: jarvisGenerates });
+    assert.deepEqual(await store().setGenerator({ expect: "site", log: genLog }), { ok: false });
+    assert.equal(fake.of("generationLog", "create").length, 0);
+    assert.deepEqual(fake.raw()[0].args, ["jarvis:pipeline-generator"]);
+
+    fake.reset();
+    controlRows({});
+    assert.deepEqual(await store().setGenerator({ expect: "site", log: genLog }), { ok: true });
+    const row = (fake.of("generationLog", "create")[0].args as { data: Record<string, unknown> }).data;
+    assert.equal(row.stage, "jarvis");
+    assert.equal(row.refType, "PipelineGenerator");
+    assert.deepEqual(fake.txOptions[0], TX);
+  });
+
+  const intakeData = (social = true) => ({
+    key: "jv-content-01JBXK2M3N",
+    payloadHash: "hash1",
+    blog: {
+      slug: "laravel-queue-retries",
+      title: "Laravel queue retries",
+      excerpt: "e",
+      image: "https://res.cloudinary.com/x.png",
+      category: "",
+      tags: ["Laravel"],
+      readingTime: "4 min read",
+      body: "b",
+      faqs: [],
+      reviewState: "approved" as const,
+      reviewReasons: [],
+      criticScore: 86,
+      publishAt: new Date(NOW.getTime() + 20 * HOUR),
+      contentCluster: "Laravel",
+      targetKeyword: "queue retries",
+      date: "2026-11-04",
+    },
+    social: social
+      ? {
+          body: "li",
+          imageUrl: "",
+          status: "scheduled" as const,
+          reviewReasons: [],
+          criticScore: 84,
+          scheduledFor: new Date(NOW.getTime() + 30 * HOUR),
+        }
+      : null,
+    log: { message: "intake", meta: { state: "scheduled" } },
+  });
+
+  it("createIntake: lock, re-check key, slug and title, then insert blog, LinkedIn and three log rows", async () => {
+    fake.handlers["blogPost.aggregate"] = () => ({ _max: { sortOrder: 41 } });
+    fake.handlers["blogPost.create"] = () => ({ id: "b9" });
+    fake.handlers["socialPost.create"] = () => ({ id: "li9" });
+    const r = await store().createIntake(intakeData());
+    assert.deepEqual(r, { ok: true, blogPostId: "b9", socialPostId: "li9" });
+    assert.deepEqual(fake.raw()[0].args, ["jarvis:intake"]);
+    const keyRead = fake.of("generationLog", "findFirst")[0].args as { where: unknown };
+    assert.deepEqual(keyRead.where, { stage: "jarvis", refType: "Intake", refId: "jv-content-01JBXK2M3N", status: "ok" });
+    const dupRead = fake.of("blogPost", "findMany")[0].args as { where: unknown };
+    assert.deepEqual(dupRead.where, {
+      OR: [{ slug: "laravel-queue-retries" }, { title: { equals: "Laravel queue retries", mode: "insensitive" } }],
+    });
+    const blog = (fake.of("blogPost", "create")[0].args as { data: Record<string, unknown> }).data;
+    assert.equal(blog.published, false);
+    assert.equal(blog.origin, "pipeline");
+    assert.equal(blog.reviewState, "approved");
+    assert.equal(blog.sortOrder, 42);
+    const li = (fake.of("socialPost", "create")[0].args as { data: Record<string, unknown> }).data;
+    assert.equal(li.blogPostId, "b9");
+    assert.equal(li.channel, "linkedin");
+    const logs = fake.of("generationLog", "create").map((c) => (c.args as { data: Record<string, unknown> }).data);
+    assert.deepEqual(logs.map((l) => [l.refType, l.refId]), [["BlogPost", "b9"], ["SocialPost", "li9"], ["Intake", "jv-content-01JBXK2M3N"]]);
+    assert.equal(new Set(logs.map((l) => l.runId)).size, 1, "one run id for the intake");
+    assert.equal((logs[2].meta as Record<string, unknown>).payloadHash, "hash1");
+    assert.equal((logs[2].meta as Record<string, unknown>).source, "jarvis");
+    assert.deepEqual(fake.txOptions[0], TX);
+  });
+
+  it("createIntake replays a key already recorded and writes nothing", async () => {
+    fake.handlers["generationLog.findFirst"] = () => ({
+      createdAt: NOW,
+      meta: { payloadHash: "hash1", blogPostId: "b1", socialPostId: null, gates: { approveRequested: true } },
+    });
+    const r = await store().createIntake(intakeData());
+    assert.equal(r.ok, false);
+    assert.equal(r.ok === false && r.reason, "replay");
+    assert.equal(fake.of("blogPost", "create").length, 0);
+    assert.equal(fake.of("generationLog", "create").length, 0);
+  });
+
+  it("createIntake refuses a slug or title found under the lock", async () => {
+    fake.handlers["blogPost.findMany"] = () => [{ id: "b1", slug: "laravel-queue-retries", title: "x" }];
+    const r = await store().createIntake(intakeData(false));
+    assert.deepEqual(r, { ok: false, reason: "duplicate", matches: [{ kind: "slug", id: "b1", slug: "laravel-queue-retries", title: "x" }] });
+    assert.equal(fake.of("blogPost", "create").length, 0);
+  });
+
+  it("createIntake maps a unique slug violation to duplicate and a lock timeout to conflict", async () => {
+    fake.txError = Object.assign(new Error("unique"), { code: "P2002" });
+    const dup = await store().createIntake(intakeData());
+    assert.equal(dup.ok === false && dup.reason, "duplicate");
+    fake.txError = Object.assign(new Error("timeout"), { code: "P2028" });
+    assert.deepEqual(await store().createIntake(intakeData()), { ok: false, reason: "conflict" });
+    fake.txError = new Error("boom");
+    await assert.rejects(store().createIntake(intakeData()), /boom/);
+  });
+
+  it("findIntake reads the newest ok Intake row for the key", async () => {
+    fake.handlers["generationLog.findFirst"] = () => ({
+      createdAt: NOW,
+      meta: { payloadHash: "h", blogPostId: "b1", socialPostId: "li1", gates: null },
+    });
+    const r = await store().findIntake("jv-content-key1");
+    assert.deepEqual(r, { key: "jv-content-key1", payloadHash: "h", blogPostId: "b1", socialPostId: "li1", gates: null, createdAt: NOW });
   });
 });

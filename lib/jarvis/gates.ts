@@ -103,6 +103,8 @@ export function blogGate(
     faqs: unknown;
     criticScore: number | null;
     reviewReasons: unknown;
+    /** Declared sources (intake); joined with the http(s) URLs in the body. */
+    sources?: string[];
   },
   brief: { requiresLiveSource: boolean } | null,
   opts: GateOptions
@@ -115,7 +117,9 @@ export function blogGate(
     ...post.tags,
     ...faqs.flatMap((f) => [f.question, f.answer]),
   ].join("\n");
-  const sources = extractUrls(post.body).filter((u) => /^https?:\/\//i.test(u));
+  const sources = [
+    ...new Set([...extractUrls(post.body), ...(post.sources ?? [])]),
+  ].filter((u) => /^https?:\/\//i.test(u));
   const liveSource = { requiresLiveSource: brief?.requiresLiveSource ?? false };
   const draft: BlogDraft = {
     slug: post.slug,

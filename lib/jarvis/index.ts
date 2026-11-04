@@ -2,6 +2,7 @@ import vercelConfig from "@/vercel.json";
 import { pipeline } from "@/lib/pipeline/config";
 import { localDayKey } from "@/lib/pipeline/day";
 import { randomBlogPublishAt, randomLinkedInScheduledFor } from "@/lib/pipeline/schedule";
+import { deadLinkCheck } from "@/lib/pipeline/validators";
 import { configuredToken } from "@/lib/jarvis/auth";
 import { RATE_LIMIT, makeHandlers } from "@/lib/jarvis/handlers";
 import { createPrismaControlStore } from "@/lib/jarvis/prisma-store";
@@ -32,5 +33,6 @@ export const jarvisHandlers = makeHandlers({
       dayKey: (at) => localDayKey(at),
       drawBlogPublishAt: (from) => randomBlogPublishAt(from),
       drawLinkedInAt: (after) => randomLinkedInScheduledFor(after),
+      checkLinks: (urls) => deadLinkCheck(urls),
     }),
 });

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { GENERATORS } from "@/lib/jarvis/generator";
 import { BLOG_STATES, DRAFT_ACTIONS, SOCIAL_STATES } from "@/lib/jarvis/states";
 import { isAllowedPort, isPublicHost } from "@/lib/security/public-host";
 
@@ -30,6 +31,15 @@ const publicHttpUrl = z
       return false;
     }
   }, "Source must be a public http(s) URL");
+
+/** Image URLs are served to readers, so https only. */
+const publicHttpsUrl = publicHttpUrl.refine((value) => value.startsWith("https://"), "Must be an https URL");
+
+const pillarField = z
+  .string()
+  .trim()
+  .max(60)
+  .regex(/^[A-Za-z][A-Za-z ]*(\/[A-Za-z][A-Za-z .]*)?$/, "Invalid pillar");
 
 export const pageQuery = z.object({
   cursor: rowId.optional(),
@@ -65,12 +75,7 @@ export const createBriefBody = z
     kind: z.enum(["brief", "hot_topic"]).default("brief"),
     topic: z.string().trim().min(3).max(200),
     take: z.string().trim().max(400).default(""),
-    pillar: z
-      .string()
-      .trim()
-      .max(60)
-      .regex(/^[A-Za-z][A-Za-z ]*(\/[A-Za-z][A-Za-z .]*)?$/, "Invalid pillar")
-      .optional(),
+    pillar: pillarField.optional(),
     sources: z
       .array(publicHttpUrl)
       .max(5)
@@ -162,11 +167,60 @@ export function draftActionBodyFor(kind: "blog" | "social"): z.ZodType<DraftActi
 
 export type DraftActionInput = z.infer<typeof draftActionBody>;
 
-export const pipelineActionBody = z
+const reasonField = z.string().trim().min(1).max(280).optional();
+
+export const pipelineActionBody = z.discriminatedUnion("action", [
+  z.object({ action: z.enum(["pause", "resume"]), reason: reasonField }).strict(),
+  z
+    .object({ action: z.literal("set_generator"), generator: z.enum(GENERATORS), reason: reasonField })
+    .strict(),
+]);
+
+export type PipelineActionInput = z.infer<typeof pipelineActionBody>;
+
+/**
+ * A finished blog from Jarvis's engine (POST /api/jarvis/intake). The site
+ * re-runs all of its own gates; `approve` asks for scheduled, which the site
+ * grants only when every gate passes. Jarvis sends `approve: true` only under
+ * an approved Approval or an approved, unexpired autopilot policy (D-038).
+ */
+export const IDEMPOTENCY_KEY_RE = /^[A-Za-z0-9_-]{8,64}$/;
+
+const score = z.number().int().min(0).max(100);
+
+export const intakeBody = z
   .object({
-    action: z.enum(["pause", "resume"]),
-    reason: z.string().trim().min(1).max(280).optional(),
+    idempotencyKey: z.string().regex(IDEMPOTENCY_KEY_RE, "8 to 64 letters, digits, - or _"),
+    title: z.string().trim().min(1).max(200),
+    excerpt: z.string().trim().min(1).max(400),
+    /** Length and kebab-case are metadata hard fails, refused by the gate (422). */
+    slug: z.string().trim().min(1).max(120),
+    tags: z.array(z.string().trim().min(1).max(40)).max(12).default([]),
+    category: z.string().trim().max(60).default(""),
+    body: z.string().trim().min(1).max(60_000),
+    faqs: z
+      .array(z.object({ question: z.string().trim().min(1).max(300), answer: z.string().trim().max(2000) }).strict())
+      .max(20)
+      .default([]),
+    criticScore: score,
+    sources: z.array(publicHttpUrl).max(20).default([]),
+    requiresLiveSource: z.boolean().default(false),
+    coverImageUrl: publicHttpsUrl.optional(),
+    /** The brief topic, for the duplicate check; defaults to the title. */
+    topic: z.string().trim().min(3).max(200).optional(),
+    pillar: pillarField.optional(),
+    targetKeyword: z.string().trim().max(120).default(""),
+    linkedin: z
+      .object({
+        body: z.string().trim().min(1).max(3000),
+        criticScore: score.optional(),
+        imageUrl: publicHttpsUrl.optional(),
+      })
+      .strict()
+      .optional(),
+    publishAt: z.union([isoDateTime, z.literal("next_slot")]).default("next_slot"),
+    approve: z.boolean().default(false),
   })
   .strict();
 
-export type PipelineActionInput = z.infer<typeof pipelineActionBody>;
+export type IntakeInput = z.infer<typeof intakeBody>;

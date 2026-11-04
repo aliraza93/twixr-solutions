@@ -4,12 +4,17 @@ import { remainingBriefCount } from "@/lib/pipeline/briefs";
 import { createRunId } from "@/lib/pipeline/log";
 import { checkManualTopicDuplicate } from "@/lib/pipeline/manual/duplicate-check";
 import { getSiteContentInventory, inventoryUrlAllowlist } from "@/lib/pipeline/seo/inventory";
+import { pipeline } from "@/lib/pipeline/config";
+import { DEFAULT_GENERATOR, getGeneratorControl } from "@/lib/jarvis/generator";
 import { JARVIS_SOURCE, JARVIS_STAGE, getPipelineControl } from "@/lib/jarvis/pause";
 import { PAUSE_MARKER, blogStateOf, socialStateOf } from "@/lib/jarvis/states";
 import type {
   BlogGuard,
   ControlLog,
   ControlStore,
+  CreateIntakeResult,
+  IntakeMatch,
+  IntakeRecord,
   Move,
   Page,
   RunSummary,
@@ -201,6 +206,43 @@ async function locked<T>(db: PrismaClient, fn: (tx: Tx) => Promise<T>, onConflic
   }
 }
 
+/** refType of the generation_logs row that records an accepted intake under its key (refId). */
+export const INTAKE_REF_TYPE = "Intake";
+
+type LogFinder = { generationLog: Pick<PrismaClient["generationLog"], "findFirst"> };
+type BlogFinder = { blogPost: Pick<PrismaClient["blogPost"], "findMany"> };
+
+async function readIntake(db: LogFinder, key: string): Promise<IntakeRecord | null> {
+  const row = await db.generationLog.findFirst({
+    where: { stage: JARVIS_STAGE, refType: INTAKE_REF_TYPE, refId: key, status: "ok" },
+    orderBy: newestFirst,
+    select: { meta: true, createdAt: true },
+  });
+  if (!row) return null;
+  const meta = (row.meta ?? {}) as Record<string, unknown>;
+  return {
+    key,
+    payloadHash: String(meta.payloadHash ?? ""),
+    blogPostId: String(meta.blogPostId ?? ""),
+    socialPostId: typeof meta.socialPostId === "string" ? meta.socialPostId : null,
+    gates: meta.gates ?? null,
+    createdAt: row.createdAt,
+  };
+}
+
+async function blogMatches(db: BlogFinder, slug: string, title: string): Promise<IntakeMatch[]> {
+  const rows = await db.blogPost.findMany({
+    where: { OR: [{ slug }, { title: { equals: title.trim(), mode: "insensitive" } }] },
+    select: { id: true, slug: true, title: true },
+    take: 5,
+  });
+  return rows.map((r) => ({ kind: r.slug === slug ? ("slug" as const) : ("title" as const), ...r }));
+}
+
+function isUniqueViolation(error: unknown): boolean {
+  return (error as { code?: unknown } | null)?.code === "P2002";
+}
+
 function moveLog(kind: "BlogPost" | "SocialPost", m: Move): ControlLog {
   return {
     refType: kind,
@@ -216,6 +258,8 @@ export function createPrismaControlStore(getDb: () => PrismaClient = requireDb):
 
   return {
     pipelineControl: () => getPipelineControl(db()),
+
+    generatorControl: () => getGeneratorControl(db()),
 
     async recentRuns(limit, since) {
       const groups = await db().generationLog.groupBy({
@@ -611,6 +655,117 @@ export function createPrismaControlStore(getDb: () => PrismaClient = requireDb):
         },
         { ok: false, applied: none }
       );
+    },
+
+    async setGenerator({ expect, log }) {
+      return locked(
+        db(),
+        async (tx) => {
+          // One switch writer at a time; the re-read below sees the latest row.
+          await advisoryLock(tx, "jarvis:pipeline-generator");
+          const control = await getGeneratorControl(tx);
+          if ((control?.generator ?? DEFAULT_GENERATOR) !== expect) return { ok: false };
+          await tx.generationLog.create({ data: logData(log) });
+          return { ok: true };
+        },
+        { ok: false }
+      );
+    },
+
+    findIntake: (key) => readIntake(db(), key),
+
+    findBlogMatches: ({ slug, title }) => blogMatches(db(), slug, title),
+
+    async latestScheduledBlogAt(now) {
+      const row = await db().blogPost.findFirst({
+        where: { origin: "pipeline", published: false, reviewState: "approved", publishAt: { gt: now } },
+        orderBy: { publishAt: "desc" },
+        select: { publishAt: true },
+      });
+      return row?.publishAt ?? null;
+    },
+
+    async createIntake(data) {
+      const slugTaken: CreateIntakeResult = {
+        ok: false,
+        reason: "duplicate",
+        matches: [{ kind: "slug", id: "", slug: data.blog.slug, title: data.blog.title }],
+      };
+      try {
+        return await locked<CreateIntakeResult>(
+          db(),
+          async (tx) => {
+            // Every intake write takes this lock, so the key, slug and title
+            // re-checks below and the inserts are atomic against each other.
+            await advisoryLock(tx, "jarvis:intake");
+            const prior = await readIntake(tx, data.key);
+            if (prior) return { ok: false, reason: "replay", record: prior };
+            const matches = await blogMatches(tx, data.blog.slug, data.blog.title);
+            if (matches.length) return { ok: false, reason: "duplicate", matches };
+
+            const order = await tx.blogPost.aggregate({ _max: { sortOrder: true } });
+            const { faqs, reviewReasons, ...blog } = data.blog;
+            const created = await tx.blogPost.create({
+              data: {
+                ...blog,
+                faqs: faqs as Prisma.InputJsonValue,
+                reviewReasons: reviewReasons as Prisma.InputJsonValue,
+                published: false,
+                origin: "pipeline",
+                sortOrder: (order._max.sortOrder ?? 0) + 1,
+                author: pipeline.defaults.author,
+                authorRole: pipeline.defaults.authorRole,
+                authorImage: pipeline.defaults.authorImage,
+              },
+              select: { id: true },
+            });
+            let socialPostId: string | null = null;
+            if (data.social) {
+              const { reviewReasons: socialReasons, ...social } = data.social;
+              const post = await tx.socialPost.create({
+                data: {
+                  ...social,
+                  reviewReasons: socialReasons as Prisma.InputJsonValue,
+                  channel: "linkedin",
+                  visibility: "PUBLIC",
+                  blogPostId: created.id,
+                },
+                select: { id: true },
+              });
+              socialPostId = post.id;
+            }
+
+            const runId = createRunId();
+            const meta = {
+              ...data.log.meta,
+              source: JARVIS_SOURCE,
+              action: "intake",
+              key: data.key,
+              blogPostId: created.id,
+              socialPostId,
+            };
+            const row = (refType: ControlLog["refType"], refId: string, message: string, extra = {}) => ({
+              data: { ...logData({ refType, refId, status: "ok", message, meta: { ...meta, ...extra } }), runId },
+            });
+            await tx.generationLog.create(row("BlogPost", created.id, data.log.message));
+            if (socialPostId) {
+              await tx.generationLog.create(
+                row("SocialPost", socialPostId, `Jarvis intake LinkedIn post for blog ${data.blog.slug}`)
+              );
+            }
+            // The idempotency record: refId is the key, newest wins.
+            await tx.generationLog.create(
+              row("Intake", data.key, data.log.message, { payloadHash: data.payloadHash })
+            );
+            return { ok: true, blogPostId: created.id, socialPostId };
+          },
+          { ok: false, reason: "conflict" }
+        );
+      } catch (error) {
+        // A CMS post created the slug between our check and the insert.
+        if (isUniqueViolation(error)) return slugTaken;
+        throw error;
+      }
     },
 
     async writeLog(log) {

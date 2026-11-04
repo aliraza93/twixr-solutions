@@ -12,6 +12,8 @@ export type ControlErrorCode =
   | "conflict"
   | "quality_gate"
   | "override_required"
+  | "idempotency_mismatch"
+  | "generator_mismatch"
   | "internal";
 
 export class ControlError extends Error {

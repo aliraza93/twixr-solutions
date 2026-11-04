@@ -38,7 +38,7 @@ Every error is `{ "error": { "code", "message", "details"? } }`.
 | 409 | `duplicate` | Brief topic already queued, or blocked by the duplicate check (`details.matches`) |
 | 409 | `invalid_transition` | Action not allowed from the current state (`details.state`, `details.allowedFrom`); X drafts are manual |
 | 409 | `linked_social` | A blog's scheduled LinkedIn post would go out before it, or would point at a paused blog (`details.socialPostIds`) |
-| 409 | `conflict` | The draft, its linked post, the brief queue or the pipeline switch changed between read and write (the cron, the admin or another call); read again |
+| 409 | `conflict` | The draft, its linked post, the brief queue or the pipeline switch changed between read and write (the cron, the admin or another call), or a lock wait or the 10 second transaction timed out; nothing was written, read again |
 | 413 | `payload_too_large` | Body over 16 KB |
 | 422 | `quality_gate` | The draft fails the site's quality gates (`details.reasons`); nothing changes and a `warn` log row is written. `override` cannot pass these |
 | 422 | `override_required` | The draft passes the gates, but earlier findings the gate cannot re-check need `override: true` (`details.reasons`) |
@@ -57,7 +57,7 @@ Derived from the pipeline's own columns; no new column.
 | `scheduled` | `published=false`, `reviewState=approved` (goes live at `publishAt`) | `status=scheduled` (posts at `scheduledFor`) |
 | `published` | `published=true` | `status=published` |
 | `discarded` | `reviewState=none` | (blog only) |
-| `publishing` | | Claimed by the LinkedIn publisher for this run (read only) |
+| `publishing` | | Claimed by the LinkedIn publisher for this run (read only); counts as going out for every link rule |
 | `manual`, `failed` | | X drafts, failed posts (read only) |
 
 | Action | From | To |
@@ -73,10 +73,20 @@ Some checks ran at generation and cannot be repeated on a stored draft: the netw
 
 ## Concurrency
 
-- Every Jarvis write and its log row run in one transaction at Serializable isolation; a serialization failure answers `409 conflict`.
-- The LinkedIn link rule is checked inside the write: a blog moves to scheduled only if none of its LinkedIn posts is scheduled before the new time (pause: none scheduled at all); a LinkedIn post moves to scheduled only if its blog is published, or approved with `publishAt` at or before the post.
-- A new brief's exact-topic check runs again inside the insert's transaction.
-- The site's publishers are conditional too: a blog goes live only through an update that still requires `reviewState=approved`, `published=false` and a due `publishAt`, and the LinkedIn publisher first claims the row (`scheduled` to `publishing`) and posts only if that claim matched. A claimed row that was never posted goes back to `scheduled` on an error; a row whose post went out but whose final write failed stays `publishing` so it can never post twice (check it by hand).
+The site uses a plain PrismaClient over Prisma Postgres (Accelerate), so nothing here depends on Serializable isolation. Every guarded write runs in one interactive transaction at the default isolation (read committed) with explicit locks, a 10 second timeout (under Accelerate's 15 second limit) and a 5 second wait to start:
+
+- Blog writes lock the blog row (`SELECT ... FOR UPDATE`), then all LinkedIn rows of that blog, then re-check everything in the conditional `updateMany`. LinkedIn writes find their blog and lock in the same order (blog, then its LinkedIn rows), so two writers cannot deadlock.
+- The LinkedIn link rule is part of that conditional write: a blog moves to scheduled only if none of its LinkedIn posts that are `scheduled` or `publishing` goes out before the new time (pause: none at all); a LinkedIn post moves to scheduled only if its blog is published, or approved with `publishAt` at or before the post.
+- A new brief takes `pg_advisory_xact_lock` on a hash of its normalised topic, then re-checks for a queued brief with that topic and inserts, so two calls for one topic cannot both insert.
+- The pipeline switch takes an advisory lock, re-reads the latest control row, and only then moves work and writes the new row.
+- A lock conflict, deadlock or timeout rolls everything back and answers `409 conflict`.
+
+The site's own publishers need no change to respect those locks: Postgres makes their conditional updates wait for the lock and re-check the row after it commits.
+
+- A blog goes live only through an update that still requires `reviewState=approved`, `published=false` and a due `publishAt`.
+- The LinkedIn publisher first claims the row (`scheduled` to `publishing`) and posts only if that claim matched. A claimed row that was never posted goes back to `scheduled` on an error.
+- If LinkedIn accepted the post but recording it fails, the failure is logged (`fail`, with the LinkedIn id) and the row stays `publishing`, so it is never posted again.
+- Every tick, even while paused, moves `publishing` rows more than 15 minutes past their `scheduledFor` to `needs_review` with the reason "LinkedIn publish not confirmed, check the profile before retrying". They never go back to `scheduled`: check the profile before approving one again.
 
 ## Endpoints
 
@@ -114,7 +124,7 @@ Item: `{ id, pillar, topic, take, targetKeyword, requiresLiveSource, status, ori
   "scheduledFor": "optional ISO time, 1 minute to 90 days ahead" }
 ```
 
-- Sources must be public `http` or `https` URLs: localhost, private, loopback, link-local, CGNAT and cloud metadata hosts are refused, by name and by literal IP.
+- Sources must be public `http` or `https` URLs: localhost and local names, private, loopback, link-local, CGNAT, benchmarking (198.18.0.0/15), documentation (TEST-NETs, 2001:db8::/32), multicast and cloud metadata hosts are refused, by name and by literal IP, including IPv6 forms that carry an IPv4 address (::/96, ::ffff:0:0/96, 64:ff9b::/96, 2002::/16).
 - A hot topic needs at least one source and is created with `requiresLiveSource=true`. The first source becomes the brief's `sourceUrl`; the rest are added to its instructions.
 - `destinations` must include `blog` (the site's pipeline is blog-first). They are recorded in the log row; the site's cron still draws whether a LinkedIn post or X draft is attached. Jarvis honours them fully once the engine moves (JV-52).
 - Duplicate check: an exact queued topic (any case) is refused; then the pipeline's own `checkManualTopicDuplicate` (existing blogs, cannibalisation, similar briefs) refuses when it blocks. Related but unblocked matches are returned in `duplicateCheck.matches`.
@@ -157,9 +167,17 @@ Pausing stops the cron from generating and publishing until resumed:
 
 The switch is stored as the latest Jarvis row in `generation_logs` (stage `jarvis`, refType `Pipeline`, newest by `createdAt` then `id`), so it survives deploys. `PIPELINE_ENABLED=false` still overrides it. With no database configured the cron sees "not paused"; if the read fails, the cron fails closed and treats the pipeline as paused for that run. Pausing twice or resuming a running pipeline is `409 invalid_transition`; the read and the write run in one transaction, so a switch that flipped in between is `409 conflict`.
 
-On resume, past-due work is spread forward instead of all going out on the next tick: approved blogs whose `publishAt` passed are redrawn one by one with the pipeline's own human-hour draw, each at least `PIPELINE_MIN_GAP_HOURS_MIN` (default 5) hours after the previous one and after any blog already scheduled; past-due LinkedIn posts get the same spacing and never land before their blog's new time. Each move is logged (`meta.action: "reschedule"`).
+On resume, past-due work is spread forward instead of all going out on the next tick:
 
-Response: `{ pipeline: { enabled, paused, running, changedAt, reason }, rescheduled: { blogs: [{ id, from, to }], social: [{ id, from, to }] } }`.
+- Approved blogs whose `publishAt` passed are redrawn one by one with the pipeline's own human-hour draw, each at least `PIPELINE_MIN_GAP_HOURS_MIN` (default 5) hours after the previous one and after any blog already scheduled.
+- Every scheduled LinkedIn post of a moved blog that would now go out before it, whatever its old time (for example due in 12 hours after a short pause), moves to after the blog's new time with the pipeline's LinkedIn delay draw. It moves in the same transaction as its blog, and the blog moves only if none of its posts stays before it; otherwise both stay where they were.
+- Other past-due LinkedIn posts get the same spacing and never land before their blog's time.
+- A past-due blog whose LinkedIn post is `publishing` right now is not moved (`resume.held`): it goes live on the next tick so the post's link works.
+- Each move is logged (`meta.action: "reschedule"`).
+
+Each call moves at most 10 blogs and 25 LinkedIn posts so it stays inside the transaction timeout. If more remain, the pipeline stays paused, the batch is logged as `PipelineBacklog` (`resume_batch`), and the response says `resume.complete: false`: call resume again until it is `true`, which is the call that flips the switch.
+
+Response: `{ pipeline: { enabled, paused, running, changedAt, reason }, rescheduled: { blogs: [{ id, from, to }], social: [{ id, from, to, blogId? }] }, resume: { complete, held, message } | null }`.
 
 ### `GET /api/jarvis/logs`
 
@@ -174,5 +192,5 @@ Every mutating call writes a `generation_logs` row: `stage: "jarvis"`, `meta.sou
 
 - An index on `generation_logs.refId` for the per-draft log reads (a schema change, left for a planned `db:push`).
 - The existing cron routes compare `CRON_SECRET` with `!==`; move them to the same constant-time compare.
-- Confirm on the production database (Prisma Accelerate) that interactive transactions accept Serializable isolation; if not, the guarded conditional updates still hold and only the cross-row checks lose their isolation.
-
+- The source check is literal only: a public name can still resolve to a private address, or redirect to one. The real fix is where the pipeline fetches sources (`lib/pipeline/manual/source-fetch.ts`, the dead-link check): resolve the name, check every address with `isPublicHost`, connect to that address, and turn redirects off (or re-check each hop).
+- A LinkedIn-only pause for JV-54 (see Authority).

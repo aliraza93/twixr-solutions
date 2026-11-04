@@ -144,6 +144,8 @@ class FakeStore implements ControlStore {
   /** A slug a CMS post took between the pre-check and the write. */
   hiddenSlug: string | null = null;
   latestScheduled: Date | null = null;
+  /** Pipeline blogs with today's date written by the site's own cron (not in the blogs map). */
+  pipelineBlogsToday = 0;
   /** Simulate the switch moving back to site between the pre-check and the locked write. */
   generatorFlipsInWrite = false;
   /** A twin submit of the same key that commits right after the first key lookup. */
@@ -213,9 +215,9 @@ class FakeStore implements ControlStore {
     }
     const matches = await this.findBlogMatches(data.blog);
     if (matches.length) return { ok: false, reason: "duplicate", matches };
-    const accepted = this.logs.filter(
-      (l) => l.refType === "Intake" && l.status === "ok" && l.createdAt >= data.limits.dayStart
-    ).length;
+    const accepted =
+      this.pipelineBlogsToday +
+      [...this.blogs.values()].filter((b) => b.origin === "pipeline" && b.id.startsWith("intake-blog")).length;
     if (accepted >= data.limits.maxPerDay) return { ok: false, reason: "daily_cap", accepted };
     let publishAt = data.blog.publishAt;
     let scheduledFor = data.social?.scheduledFor ?? null;
@@ -1899,7 +1901,8 @@ describe("intake: unsafe markup is refused at the door and by the gate", () => {
     ["a <script> excerpt", { excerpt: "Read this <script src=//x.example></script> now" }, "excerpt"],
     ["a </script> FAQ question", { faqs: [{ question: "Why </script><script>x()</script>?", answer: SENTENCE }] }, "faqs.0.question"],
     ["an event handler in an FAQ answer", { faqs: [{ question: "Why?", answer: `<img src=x onerror="x()"> ${SENTENCE}` }] }, "faqs.0.answer"],
-    ["a javascript: URL in the title", { title: "Click javascript:alert(1)" }, "title"],
+    ["a javascript: link in the title", { title: "[Click](javascript:alert(1))" }, "title"],
+    ["a javascript: href in the excerpt", { excerpt: 'See <a href="javascript:alert(1)">this</a> now' }, "excerpt"],
   ];
   for (const [name, over, path] of cases) {
     it(`refuses ${name} with 400`, async () => {
@@ -2002,5 +2005,17 @@ describe("intake: races under the lock", () => {
     assert.equal(r.status, 400);
     assert.equal(r.json.error.details.field, "publishAt");
     assert.equal(store.blogs.size, 0);
+  });
+});
+
+describe("intake: daily cap counts the site's own posts too", () => {
+  it("on the flip day a post the site's cron already wrote counts: intake is refused with daily_cap", async () => {
+    store.generator = { generator: "jarvis", at: NOW, reason: "" };
+    store.pipelineBlogsToday = 4; // written today by the site's cron before the switch
+    assert.equal((await intake(intakeBody())).status, 201, "the fifth post of the day goes in");
+    const over = await intake(intakeBody({ idempotencyKey: "jv-content-flipday", slug: "flip-day", title: "A flip day post about queue retries" }));
+    assert.equal(over.status, 409);
+    assert.equal(over.json.error.code, "daily_cap");
+    assert.deepEqual(over.json.error.details, { cap: 5, accepted: 5 });
   });
 });

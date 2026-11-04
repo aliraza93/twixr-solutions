@@ -824,7 +824,7 @@ describe("prisma store: generator switch and intake", () => {
         }
       : null,
     log: { message: "intake", meta: { state: "scheduled" } },
-    limits: { dayStart: new Date(NOW.getTime() - HOUR), maxPerDay: 1, minGapMs: 5 * HOUR, now: NOW, ...limits },
+    limits: { day: "2026-11-04", maxPerDay: 1, minGapMs: 5 * HOUR, now: NOW, ...limits },
   });
 
   it("createIntake: lock, re-check key, slug and title, then insert blog, LinkedIn and three log rows", async () => {
@@ -1101,7 +1101,7 @@ describe("prisma store: createIntake re-checks the generator, the daily cap and 
       },
       social: { body: "li", imageUrl: "", status: "scheduled", reviewReasons: [], criticScore: 90, scheduledFor: new Date(NOW.getTime() + 22 * HOUR) },
       log: { message: "m", meta: {} },
-      limits: { dayStart: new Date(NOW.getTime() - HOUR), maxPerDay: 2, minGapMs: 5 * HOUR, now: NOW },
+      limits: { day: "2026-11-04", maxPerDay: 2, minGapMs: 5 * HOUR, now: NOW },
       ...over,
     }) as never;
 
@@ -1115,12 +1115,22 @@ describe("prisma store: createIntake re-checks the generator, the daily cap and 
     assert.equal(fake.of("blogPost", "create").length, 0);
   });
 
-  it("refuses at the daily cap, counting today's accepted intakes", async () => {
+  it("refuses at the daily cap, counting today's pipeline blogs as the site's own cap does", async () => {
     controlRows({ generator: jarvisGenerates });
-    fake.handlers["generationLog.count"] = () => 2;
+    fake.handlers["blogPost.count"] = () => 2;
     assert.deepEqual(await store().createIntake(base()), { ok: false, reason: "daily_cap", accepted: 2 });
-    const where = (fake.of("generationLog", "count")[0].args as { where: Record<string, unknown> }).where;
-    assert.deepEqual(where, { stage: "jarvis", refType: "Intake", status: "ok", createdAt: { gte: new Date(NOW.getTime() - HOUR) } });
+    const where = (fake.of("blogPost", "count")[0].args as { where: Record<string, unknown> }).where;
+    assert.deepEqual(where, { origin: "pipeline", date: "2026-11-04" });
+    assert.equal(fake.of("generationLog", "count").length, 0, "not the Intake log rows");
+    assert.equal(fake.of("blogPost", "create").length, 0);
+  });
+
+  it("flip day: one pipeline blog the site's cron wrote today fills a cap of 1", async () => {
+    controlRows({ generator: jarvisGenerates });
+    fake.handlers["blogPost.count"] = (args) =>
+      (args as { where: { date?: string } }).where.date === "2026-11-04" ? 1 : 0;
+    const r = await store().createIntake(base({ limits: { day: "2026-11-04", maxPerDay: 1, minGapMs: 5 * HOUR, now: NOW } }));
+    assert.deepEqual(r, { ok: false, reason: "daily_cap", accepted: 1 });
     assert.equal(fake.of("blogPost", "create").length, 0);
   });
 
@@ -1142,7 +1152,7 @@ describe("prisma store: createIntake re-checks the generator, the daily cap and 
       seen.push(l);
       return { publishAt: to, scheduledFor: liTo };
     };
-    const r = await store().createIntake(base({ limits: { dayStart: NOW, maxPerDay: 2, minGapMs: 5 * HOUR, now: NOW, redraw } }));
+    const r = await store().createIntake(base({ limits: { day: "2026-11-04", maxPerDay: 2, minGapMs: 5 * HOUR, now: NOW, redraw } }));
     assert.equal(r.ok, true);
     assert.deepEqual(seen, [latest]);
     assert.equal((fake.of("blogPost", "create")[0].args as { data: { publishAt: Date } }).data.publishAt, to);

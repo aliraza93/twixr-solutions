@@ -62,10 +62,6 @@ export function normalizeIntake(input: IntakeInput): IntakeInput {
   };
 }
 
-function utcDayStart(at: Date): Date {
-  return new Date(Date.UTC(at.getUTCFullYear(), at.getUTCMonth(), at.getUTCDate()));
-}
-
 /** External http(s) URLs in the body, the declared sources and the images; site links are checked by the allowlist. */
 export function externalLinks(input: IntakeInput): string[] {
   const own = siteHost();
@@ -304,7 +300,7 @@ export function createIntakeUseCase(deps: ControlDeps, gateOptions: Omit<GateOpt
         key,
         payloadHash,
         limits: {
-          dayStart: utcDayStart(current),
+          day: current.toISOString().slice(0, 10),
           maxPerDay: config.maxPerDay,
           minGapMs: config.minGapHours * HOUR_MS,
           now: current,
@@ -361,7 +357,7 @@ export function createIntakeUseCase(deps: ControlDeps, gateOptions: Omit<GateOpt
             throw new ControlError(
               409,
               "daily_cap",
-              `The site already accepted ${result.accepted} intake(s) today (UTC), its daily cap of ${config.maxPerDay}`,
+              `The site already has ${result.accepted} pipeline blog(s) dated today (UTC), its daily cap of ${config.maxPerDay}`,
               { cap: config.maxPerDay, accepted: result.accepted }
             );
           case "gap":

@@ -711,9 +711,9 @@ export function createPrismaControlStore(getDb: () => PrismaClient = requireDb):
             if (matches.length) return { ok: false, reason: "duplicate", matches };
 
             const { limits } = data;
-            const accepted = await tx.generationLog.count({
-              where: { stage: JARVIS_STAGE, refType: INTAKE_REF_TYPE, status: "ok", createdAt: { gte: limits.dayStart } },
-            });
+            // The same count as the site's own daily cap (pipelineDailyCapReached),
+            // so a day the site's cron already wrote on counts for intake too.
+            const accepted = await tx.blogPost.count({ where: { origin: "pipeline", date: limits.day } });
             if (accepted >= limits.maxPerDay) return { ok: false, reason: "daily_cap", accepted };
 
             let publishAt = data.blog.publishAt;

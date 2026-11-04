@@ -505,10 +505,31 @@ describe("unsafe markup in titles, excerpts and FAQs", async () => {
   const { hasUnsafeMarkup } = await import("@/lib/security/unsafe-markup");
 
   it("flags script tags, handlers and javascript: URLs, not ordinary prose", () => {
-    for (const bad of ["<script>x</script>", "a </script> b", "< SCRIPT src=x>", '<img src=x onerror="a()">', "x onload = y", "JavaScript:alert(1)"]) {
+    for (const bad of [
+      "<script>x</script>",
+      "a </script> b",
+      "< SCRIPT src=x>",
+      '<img src=x onerror="a()">',
+      "<body onload = y>",
+      '<a href="javascript:alert(1)">x</a>',
+      "<iframe src=javascript:alert(1)>",
+      "[click](javascript:alert(1))",
+      "[click]( <JavaScript:alert(1)>)",
+    ]) {
       assert.equal(hasUnsafeMarkup(bad), true, bad);
     }
-    for (const ok of ["Why JavaScript bundles grow", "Laravel queues: retries", "Run it on Monday", "a < b and c > d", "json=true in the config"]) {
+    for (const ok of [
+      "Why JavaScript bundles grow",
+      "Laravel queues: retries",
+      "Run it on Monday",
+      "a < b and c > d",
+      "json=true in the config",
+      "JavaScript: The Good Parts",
+      "Why JavaScript: a practical guide",
+      "Use onclick= sparingly",
+      "How do I set onChange= in React?",
+      "Option one = cheaper",
+    ]) {
       assert.equal(hasUnsafeMarkup(ok), false, ok);
     }
   });

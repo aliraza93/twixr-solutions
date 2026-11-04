@@ -182,8 +182,11 @@ export type NewIntake = {
   social: NewIntakeSocial | null;
   /** Re-checked under the lock, against what other writers committed meanwhile. */
   limits: {
-    /** Accepted intakes since this time (UTC day start) may not reach maxPerDay. */
-    dayStart: Date;
+    /**
+     * Pipeline blogs dated this UTC day (YYYY-MM-DD), whichever side wrote
+     * them, may not reach maxPerDay: the count the site's own daily cap uses.
+     */
+    day: string;
     maxPerDay: number;
     /** A scheduled blog keeps at least this far from every other scheduled blog. */
     minGapMs: number;

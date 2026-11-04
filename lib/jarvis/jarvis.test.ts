@@ -100,7 +100,7 @@ class FakeStore implements ControlStore {
   hiddenQueuedTopic: string | null = null;
   /** Simulate the pipeline switch flipping between read and write. */
   racePipeline = false;
-  due: PastDue = { blogs: [], social: [], lastScheduledBlogAt: null };
+  due: PastDue = { blogs: [], social: [], lastScheduledBlogAt: null, held: [], more: false };
 
   private record(log: ControlLog) {
     this.logs.push({ ...log, id: `log${this.logs.length + 1}`, createdAt: NOW });
@@ -182,9 +182,17 @@ class FakeStore implements ControlStore {
   async pastDue() {
     return this.due;
   }
-  async setPipelineControl(input: { expectPaused: boolean; log: ControlLog; reschedule: Reschedule }) {
+  async setPipelineControl(input: { expectPaused: boolean; flip: boolean; log: ControlLog; reschedule: Reschedule }) {
     if (this.racePipeline || (this.control?.paused ?? false) !== input.expectPaused) {
       return { ok: false, applied: { blogs: [], social: [] } };
+    }
+    // Same rule as the transaction: a blog moves only if none of its live posts stays before it.
+    for (const b of input.reschedule.blogs) {
+      const after = new Map(input.reschedule.social.filter((m) => m.blogId === b.id).map((m) => [m.id, m.to]));
+      const early = [...this.socials.values()].filter(
+        (p) => p.blogPostId === b.id && ["scheduled", "publishing"].includes(p.status) && (after.get(p.id) ?? p.scheduledFor) < b.to
+      );
+      if (early.length) throw new Error(`blog ${b.id} would move after its LinkedIn post(s) ${early.map((p) => p.id)}`);
     }
     for (const m of input.reschedule.blogs) {
       const b = this.blogs.get(m.id);
@@ -194,14 +202,17 @@ class FakeStore implements ControlStore {
       const p = this.socials.get(m.id);
       if (p) this.socials.set(m.id, { ...p, scheduledFor: m.to });
     }
-    this.record(input.log);
+    if (input.flip) this.record(input.log);
+    else this.logs.push({ ...input.log, refType: "PipelineBacklog", id: `log${this.logs.length + 1}`, createdAt: NOW });
     return { ok: true, applied: input.reschedule };
   }
   /** Guards evaluated against the store's current rows, as the transaction does. */
   async updateBlog(id: string, guard: BlogGuard, data: Parameters<ControlStore["updateBlog"]>[2], log: ControlLog) {
     const b = this.blogs.get(id);
     if (this.raceNextUpdate || !b || b.published || b.updatedAt.getTime() !== guard.updatedAt.getTime()) return false;
-    const live = [...this.socials.values()].filter((p) => p.blogPostId === id && p.status === "scheduled");
+    const live = [...this.socials.values()].filter(
+      (p) => p.blogPostId === id && (p.status === "scheduled" || p.status === "publishing")
+    );
     const blocked =
       "noneScheduled" in guard.social
         ? live.length > 0
@@ -907,11 +918,13 @@ describe("resume backlog", () => {
     store.socials.set("li1", social({ status: "scheduled", scheduledFor: old2, blogPostId: "b1" }));
     store.due = {
       blogs: [
-        { id: "b1", slug: "b1", publishAt: old1 },
-        { id: "b2", slug: "b2", publishAt: old2 },
+        { id: "b1", slug: "b1", publishAt: old1, social: [{ id: "li1", scheduledFor: old2 }] },
+        { id: "b2", slug: "b2", publishAt: old2, social: [] },
       ],
       social: [{ id: "li1", scheduledFor: old2, blogPostId: "b1", blogPublished: false, blogPublishAt: old1 }],
       lastScheduledBlogAt: null,
+      held: [],
+      more: false,
     };
     const r = await call(handlers.actOnPipeline(req("pipeline", { body: { action: "resume" } })));
     assert.equal(r.status, 200, JSON.stringify(r.json));
@@ -931,16 +944,18 @@ describe("resume backlog", () => {
     store.control = { paused: true, at: NOW, reason: "" };
     const last = new Date(NOW.getTime() + 40 * HOUR);
     store.due = {
-      blogs: [{ id: "b1", slug: "b1", publishAt: new Date(NOW.getTime() - HOUR) }],
+      blogs: [{ id: "b1", slug: "b1", publishAt: new Date(NOW.getTime() - HOUR), social: [] }],
       social: [],
       lastScheduledBlogAt: last,
+      held: [],
+      more: false,
     };
     const r = await call(handlers.actOnPipeline(req("pipeline", { body: { action: "resume" } })));
     assert.equal(r.json.rescheduled.blogs[0].to, drawBlog(new Date(last.getTime() + 5 * HOUR)).toISOString());
   });
 
   it("pause moves nothing, and a raced switch is a conflict", async () => {
-    store.due = { blogs: [{ id: "b1", slug: "b1", publishAt: NOW }], social: [], lastScheduledBlogAt: null };
+    store.due = { blogs: [{ id: "b1", slug: "b1", publishAt: NOW, social: [] }], social: [], lastScheduledBlogAt: null, held: [], more: false };
     const p = await call(handlers.actOnPipeline(req("pipeline", { body: { action: "pause" } })));
     assert.deepEqual(p.json.rescheduled, { blogs: [], social: [] });
     store.racePipeline = true;
@@ -1016,5 +1031,116 @@ describe("source URLs must be public", () => {
     assert.equal(isPublicHost("8.8.8.8"), true);
     assert.equal(isPublicHost("[2606:4700::1111]"), true);
     assert.equal(isPublicHost("172.32.0.1"), true);
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* Second review: linked LinkedIn posts on resume, batches, publishing */
+/* ------------------------------------------------------------------ */
+
+describe("resume moves a moved blog's LinkedIn posts with it", () => {
+  it("short pause: blog past due, its LinkedIn post due in about 12 hours", async () => {
+    store.control = { paused: true, at: NOW, reason: "" };
+    const blogWas = new Date(NOW.getTime() - HOUR);
+    const liWas = new Date(NOW.getTime() + 12 * HOUR);
+    store.blogs.set("b1", blog({ id: "b1", reviewState: "approved", publishAt: blogWas }));
+    store.socials.set("li1", social({ status: "scheduled", scheduledFor: liWas, blogPostId: "b1" }));
+    store.due = {
+      blogs: [{ id: "b1", slug: "b1", publishAt: blogWas, social: [{ id: "li1", scheduledFor: liWas }] }],
+      social: [], // not past due itself
+      lastScheduledBlogAt: null,
+      held: [],
+      more: false,
+    };
+    const r = await call(handlers.actOnPipeline(req("pipeline", { body: { action: "resume" } })));
+    assert.equal(r.status, 200, JSON.stringify(r.json));
+    const blogTo = new Date(r.json.rescheduled.blogs[0].to);
+    assert.equal(blogTo.toISOString(), drawBlog(NOW).toISOString());
+    assert.ok(blogTo.getTime() > liWas.getTime(), "the blog's new time is after the post's old time");
+    const li = r.json.rescheduled.social.find((m: { id: string }) => m.id === "li1");
+    assert.ok(li, "the LinkedIn post moved too");
+    assert.equal(li.blogId, "b1");
+    assert.equal(li.to, drawLi(blogTo).toISOString(), "LinkedIn delay drawn from the blog's new time");
+    assert.ok(store.socials.get("li1")!.scheduledFor > store.blogs.get("b1")!.publishAt!);
+  });
+
+  it("a linked post already after the blog's new time stays put", async () => {
+    store.control = { paused: true, at: NOW, reason: "" };
+    const later = new Date(NOW.getTime() + 60 * HOUR);
+    store.due = {
+      blogs: [{ id: "b1", slug: "b1", publishAt: new Date(NOW.getTime() - HOUR), social: [{ id: "li1", scheduledFor: later }] }],
+      social: [],
+      lastScheduledBlogAt: null,
+      held: [],
+      more: false,
+    };
+    const r = await call(handlers.actOnPipeline(req("pipeline", { body: { action: "resume" } })));
+    assert.deepEqual(r.json.rescheduled.social, []);
+  });
+
+  it("a capped batch moves work but keeps the pipeline paused until the rest is moved", async () => {
+    store.control = { paused: true, at: NOW, reason: "" };
+    store.due = {
+      blogs: [{ id: "b1", slug: "b1", publishAt: new Date(NOW.getTime() - HOUR), social: [] }],
+      social: [],
+      lastScheduledBlogAt: null,
+      held: ["b9"],
+      more: true,
+    };
+    const first = await call(handlers.actOnPipeline(req("pipeline", { body: { action: "resume" } })));
+    assert.equal(first.status, 200);
+    assert.equal(first.json.pipeline.paused, true);
+    assert.equal(first.json.resume.complete, false);
+    assert.deepEqual(first.json.resume.held, ["b9"]);
+    assert.equal(first.json.rescheduled.blogs.length, 1);
+    assert.equal(store.logs.at(-1)!.refType, "PipelineBacklog");
+    assert.equal(store.control?.paused, true, "switch not flipped");
+
+    store.due = { blogs: [], social: [], lastScheduledBlogAt: null, held: [], more: false };
+    const second = await call(handlers.actOnPipeline(req("pipeline", { body: { action: "resume" } })));
+    assert.equal(second.json.pipeline.paused, false);
+    assert.equal(second.json.resume.complete, true);
+    assert.equal(store.control?.paused, false);
+  });
+});
+
+describe("publishing counts as going out", () => {
+  it("a blog cannot be paused or scheduled past a LinkedIn post that is publishing", async () => {
+    const li = social({ status: "publishing", scheduledFor: new Date(NOW.getTime() - 5 * 60_000) });
+    store.blogs.set("blog1", blog({ reviewState: "approved", publishAt: new Date(NOW.getTime() + HOUR), social: [li] }));
+    const p = await act("blog", "blog1", { action: "pause" });
+    assert.equal(p.json.error.code, "linked_social");
+    const s = await act("blog", "blog1", { action: "schedule", at: "2026-11-06T09:30:00Z" });
+    assert.equal(s.json.error.code, "linked_social");
+  });
+
+  it("publishing is a readable, read-only state", async () => {
+    assert.equal(socialStateOf({ status: "publishing", reviewReasons: [] }), "publishing");
+    store.socials.set("li1", social({ status: "publishing" }));
+    assert.equal((await act("social", "li1", { action: "pause" })).json.error.code, "invalid_transition");
+  });
+});
+
+describe("source hosts: IPv4 inside IPv6 and reserved ranges", () => {
+  for (const url of [
+    "http://[::127.0.0.1]/",
+    "http://[::ffff:10.0.0.1]/",
+    "http://[64:ff9b::7f00:1]/",
+    "http://[2002:7f00:1::]/",
+    "http://[2001:db8::1]/",
+    "http://198.18.0.1/",
+    "http://198.19.255.1/",
+    "http://192.0.2.10/",
+    "http://198.51.100.10/",
+    "http://203.0.113.10/",
+    "http://[ff02::1]/",
+  ]) {
+    it(`refuses ${url}`, async () => {
+      const r = await call(handlers.createBrief(req("briefs", { body: { topic: "Laravel queue retries", sources: [url] } })));
+      assert.equal(r.status, 400);
+    });
+  }
+  it("still accepts public IPv4-mapped addresses", () => {
+    assert.equal(isPublicHost(new URL("http://[::ffff:8.8.8.8]/").hostname), true);
   });
 });

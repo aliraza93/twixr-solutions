@@ -15,6 +15,7 @@ import type {
   RunSummary,
   SocialGuard,
 } from "@/lib/jarvis/store";
+import { RESUME_BATCH } from "@/lib/jarvis/store";
 
 /** ControlStore over the pipeline's own Prisma tables. */
 
@@ -70,6 +71,7 @@ function socialWhere(state?: string): Prisma.SocialPostWhereInput {
   switch (state) {
     case "published":
     case "scheduled":
+    case "publishing":
     case "manual":
     case "failed":
       return { status: state };
@@ -127,19 +129,35 @@ const SEVERITY: Record<string, number> = { skip: 0, ok: 1, warn: 2, fail: 3 };
 
 type CreateBriefResult = Awaited<ReturnType<ControlStore["createBrief"]>>;
 
-const SERIALIZABLE = { isolationLevel: "Serializable" as const };
+/**
+ * Default isolation (read committed) with explicit locks, so correctness does
+ * not depend on Serializable support through Prisma Postgres / Accelerate.
+ * 10 seconds stays under Accelerate's 15 second interactive limit.
+ */
+export const TX_OPTIONS = { timeout: 10_000, maxWait: 5_000 };
 
-/** Postgres serialization failure or Prisma's write conflict code. */
-export function isSerializationFailure(error: unknown): boolean {
+/** LinkedIn rows that count as "going out": scheduled, or claimed mid-post. */
+export const LIVE_SOCIAL = ["scheduled", "publishing"];
+
+/**
+ * Errors that mean "someone else got there first, nothing was committed":
+ * Prisma's write conflict or deadlock (P2034), a transaction that timed out
+ * or closed (P2028), and the raw Postgres serialization and deadlock codes.
+ */
+export function isLockConflict(error: unknown): boolean {
   const code = (error as { code?: unknown } | null)?.code;
-  return code === "P2034" || code === "40001";
+  return code === "P2034" || code === "P2028" || code === "40001" || code === "40P01";
 }
 
 /** Guards for the cross-row LinkedIn link, evaluated inside the write. */
 export function blogLinkWhere(guard: BlogGuard["social"]): Prisma.BlogPostWhereInput {
   return "noneScheduled" in guard
-    ? { socialPosts: { none: { status: "scheduled" } } }
-    : { socialPosts: { none: { status: "scheduled", scheduledFor: { lt: guard.noneScheduledBefore } } } };
+    ? { socialPosts: { none: { status: { in: LIVE_SOCIAL } } } }
+    : {
+        socialPosts: {
+          none: { status: { in: LIVE_SOCIAL }, scheduledFor: { lt: guard.noneScheduledBefore } },
+        },
+      };
 }
 
 export function socialLinkWhere(blogLiveBy: Date): Prisma.SocialPostWhereInput {
@@ -152,12 +170,33 @@ export function socialLinkWhere(blogLiveBy: Date): Prisma.SocialPostWhereInput {
   };
 }
 
-/** Run a guarded write at Serializable; a serialization failure means "moved". */
-async function serial<T>(db: PrismaClient, fn: (tx: Prisma.TransactionClient) => Promise<T>, onConflict: T): Promise<T> {
+type Tx = Prisma.TransactionClient;
+
+/** Lock order is always blog row, then its LinkedIn rows, so two writers cannot deadlock. */
+export async function lockBlog(tx: Tx, blogId: string): Promise<void> {
+  await tx.$queryRaw`SELECT id FROM blog_posts WHERE id = ${blogId} FOR UPDATE`;
+  await tx.$queryRaw`SELECT id FROM social_posts WHERE "blogPostId" = ${blogId} ORDER BY id FOR UPDATE`;
+}
+
+export async function lockSocial(tx: Tx, socialId: string): Promise<void> {
+  const rows = await tx.$queryRaw<Array<{ blogPostId: string | null }>>`
+    SELECT "blogPostId" FROM social_posts WHERE id = ${socialId}`;
+  const blogId = rows[0]?.blogPostId;
+  if (blogId) await lockBlog(tx, blogId);
+  else await tx.$queryRaw`SELECT id FROM social_posts WHERE id = ${socialId} FOR UPDATE`;
+}
+
+/** Transaction-scoped advisory lock on a text key (released at commit or rollback). */
+export async function advisoryLock(tx: Tx, key: string): Promise<void> {
+  await tx.$queryRaw`SELECT 1 AS locked FROM (SELECT pg_advisory_xact_lock(hashtext(${key}))) AS l`;
+}
+
+/** Run a locked write; a lock conflict or timeout means "moved". */
+async function locked<T>(db: PrismaClient, fn: (tx: Tx) => Promise<T>, onConflict: T): Promise<T> {
   try {
-    return await db.$transaction(fn, SERIALIZABLE);
+    return await db.$transaction(fn, TX_OPTIONS);
   } catch (error) {
-    if (isSerializationFailure(error)) return onConflict;
+    if (isLockConflict(error)) return onConflict;
     throw error;
   }
 }
@@ -338,12 +377,27 @@ export function createPrismaControlStore(getDb: () => PrismaClient = requireDb):
     },
 
     async pastDue(now) {
-      const [blogs, social, last] = await Promise.all([
+      const due = { origin: "pipeline", published: false, reviewState: "approved", publishAt: { lte: now } };
+      const [blogs, held, social, last] = await Promise.all([
         db().blogPost.findMany({
-          where: { origin: "pipeline", published: false, reviewState: "approved", publishAt: { lte: now } },
+          where: { ...due, socialPosts: { none: { status: "publishing" } } },
           orderBy: { publishAt: "asc" },
-          select: { id: true, slug: true, publishAt: true },
-          take: 50,
+          select: {
+            id: true,
+            slug: true,
+            publishAt: true,
+            socialPosts: {
+              where: { status: "scheduled" },
+              orderBy: { scheduledFor: "asc" },
+              select: { id: true, scheduledFor: true },
+            },
+          },
+          take: RESUME_BATCH.blogs + 1,
+        }),
+        db().blogPost.findMany({
+          where: { ...due, socialPosts: { some: { status: "publishing" } } },
+          select: { id: true },
+          take: 20,
         }),
         db().socialPost.findMany({
           where: { status: "scheduled", channel: "linkedin", scheduledFor: { lte: now } },
@@ -354,7 +408,7 @@ export function createPrismaControlStore(getDb: () => PrismaClient = requireDb):
             blogPostId: true,
             blogPost: { select: { published: true, publishAt: true } },
           },
-          take: 50,
+          take: RESUME_BATCH.social + 1,
         }),
         db().blogPost.findFirst({
           where: { origin: "pipeline", published: false, reviewState: "approved", publishAt: { gt: now } },
@@ -363,8 +417,13 @@ export function createPrismaControlStore(getDb: () => PrismaClient = requireDb):
         }),
       ]);
       return {
-        blogs: blogs.map((b) => ({ id: b.id, slug: b.slug, publishAt: b.publishAt as Date })),
-        social: social.map((p) => ({
+        blogs: blogs.slice(0, RESUME_BATCH.blogs).map((b) => ({
+          id: b.id,
+          slug: b.slug,
+          publishAt: b.publishAt as Date,
+          social: b.socialPosts,
+        })),
+        social: social.slice(0, RESUME_BATCH.social).map((p) => ({
           id: p.id,
           scheduledFor: p.scheduledFor,
           blogPostId: p.blogPostId,
@@ -372,14 +431,18 @@ export function createPrismaControlStore(getDb: () => PrismaClient = requireDb):
           blogPublishAt: p.blogPost?.publishAt ?? null,
         })),
         lastScheduledBlogAt: last?.publishAt ?? null,
+        held: held.map((b) => b.id),
+        more: blogs.length > RESUME_BATCH.blogs || social.length > RESUME_BATCH.social,
       };
     },
 
     async createBrief(data, log) {
-      return serial<CreateBriefResult>(
+      return locked<CreateBriefResult>(
         db(),
         async (tx) => {
-          // Re-checked inside the transaction so two calls cannot both insert.
+          // The advisory lock on the normalised topic makes the re-check and
+          // the insert atomic: a second call for the same topic waits here.
+          await advisoryLock(tx, `jarvis:brief:${data.topic.trim().toLowerCase()}`);
           const existing = await tx.brief.findFirst({
             where: { status: "queued", topic: { equals: data.topic, mode: "insensitive" } },
             select: { id: true },
@@ -396,9 +459,10 @@ export function createPrismaControlStore(getDb: () => PrismaClient = requireDb):
     },
 
     async updateBlog(id, guard, data, log) {
-      return serial(
+      return locked(
         db(),
         async (tx) => {
+          await lockBlog(tx, id);
           const result = await tx.blogPost.updateMany({
             where: {
               id,
@@ -418,9 +482,10 @@ export function createPrismaControlStore(getDb: () => PrismaClient = requireDb):
     },
 
     async updateSocial(id, guard: SocialGuard, data, log) {
-      return serial(
+      return locked(
         db(),
         async (tx) => {
+          await lockSocial(tx, id);
           const result = await tx.socialPost.updateMany({
             where: {
               id,
@@ -439,45 +504,81 @@ export function createPrismaControlStore(getDb: () => PrismaClient = requireDb):
       );
     },
 
-    async setPipelineControl({ expectPaused, log, reschedule }) {
+    async setPipelineControl({ expectPaused, flip, log, reschedule }) {
       const none = { blogs: [] as Move[], social: [] as Move[] };
-      return serial(
+      return locked(
         db(),
         async (tx) => {
+          // One switch writer at a time; the re-read below sees the latest row.
+          await advisoryLock(tx, "jarvis:pipeline-control");
           const control = await getPipelineControl(tx);
           if ((control?.paused ?? false) !== expectPaused) return { ok: false, applied: none };
           const applied = { blogs: [] as Move[], social: [] as Move[] };
-          for (const m of reschedule.blogs) {
-            const r = await tx.blogPost.updateMany({
-              where: { id: m.id, origin: "pipeline", published: false, reviewState: "approved", publishAt: m.from },
-              data: { publishAt: m.to },
-            });
-            if (r.count === 1) {
-              applied.blogs.push(m);
-              await tx.generationLog.create({ data: logData(moveLog("BlogPost", m)) });
-            }
-          }
-          for (const m of reschedule.social) {
+
+          const moveSocial = async (m: Move) => {
             const r = await tx.socialPost.updateMany({
-              where: { id: m.id, status: "scheduled", scheduledFor: m.from },
+              where: { id: m.id, status: "scheduled", scheduledFor: m.from, ...socialLinkWhere(m.to) },
               data: { scheduledFor: m.to },
             });
+            return r.count === 1;
+          };
+
+          for (const b of reschedule.blogs) {
+            await lockBlog(tx, b.id);
+            // Its LinkedIn posts first, so the guarded blog move below can pass.
+            const linked = reschedule.social.filter((m) => m.blogId === b.id);
+            const moved: Move[] = [];
+            for (const m of linked) if (await moveSocial(m)) moved.push(m);
+            const r = await tx.blogPost.updateMany({
+              where: {
+                id: b.id,
+                origin: "pipeline",
+                published: false,
+                reviewState: "approved",
+                publishAt: b.from,
+                ...blogLinkWhere({ noneScheduledBefore: b.to }),
+              },
+              data: { publishAt: b.to },
+            });
             if (r.count === 1) {
+              applied.blogs.push(b);
+              applied.social.push(...moved);
+              await tx.generationLog.create({ data: logData(moveLog("BlogPost", b)) });
+              for (const m of moved) await tx.generationLog.create({ data: logData(moveLog("SocialPost", m)) });
+            } else {
+              // The blog stays where it was, so its posts go back too.
+              for (const m of moved) {
+                await tx.socialPost.updateMany({
+                  where: { id: m.id, status: "scheduled", scheduledFor: m.to },
+                  data: { scheduledFor: m.from },
+                });
+              }
+            }
+          }
+
+          for (const m of reschedule.social.filter((x) => !x.blogId)) {
+            await lockSocial(tx, m.id);
+            if (await moveSocial(m)) {
               applied.social.push(m);
               await tx.generationLog.create({ data: logData(moveLog("SocialPost", m)) });
             }
           }
+
+          const summary = {
+            blogs: applied.blogs.map((m) => m.id),
+            social: applied.social.map((m) => m.id),
+          };
           await tx.generationLog.create({
-            data: logData({
-              ...log,
-              meta: {
-                ...log.meta,
-                rescheduled: {
-                  blogs: applied.blogs.map((m) => m.id),
-                  social: applied.social.map((m) => m.id),
-                },
-              },
-            }),
+            data: logData(
+              flip
+                ? { ...log, meta: { ...log.meta, rescheduled: summary } }
+                : {
+                    ...log,
+                    refType: "PipelineBacklog",
+                    message: "Jarvis resume moved a batch of past-due work; the pipeline stays paused until the rest is moved",
+                    meta: { ...log.meta, action: "resume_batch", rescheduled: summary },
+                  }
+            ),
           });
           return { ok: true, applied };
         },

@@ -232,7 +232,8 @@ export function createControlService(deps: ControlDeps) {
       to: move.to,
       reason: input.reason ?? "",
     };
-    const scheduledSocial = post.social.filter((s) => s.status === "scheduled");
+    // A post being published right now counts as going out.
+    const scheduledSocial = post.social.filter((s) => s.status === "scheduled" || s.status === "publishing");
 
     let data;
     let message: string;
@@ -529,11 +530,15 @@ export function createControlService(deps: ControlDeps) {
       if (input.action === "resume" && !paused) {
         throw new ControlError(409, "invalid_transition", "The pipeline is not paused", { state: "running" });
       }
-      const reschedule =
-        input.action === "resume" ? planBacklog(await store.pastDue(current), current) : { blogs: [], social: [] };
+      const due = input.action === "resume" ? await store.pastDue(current) : null;
+      const reschedule = due ? planBacklog(due, current) : { blogs: [], social: [] };
+      // A capped batch: move it, stay paused, and let the next resume call
+      // move the rest, so no transaction runs past its timeout.
+      const flip = !due?.more;
       const reason = input.reason ?? "";
       const result = await store.setPipelineControl({
         expectPaused: paused,
+        flip,
         reschedule,
         log: {
           refType: "Pipeline",
@@ -546,15 +551,26 @@ export function createControlService(deps: ControlDeps) {
       if (!result.ok) {
         throw new ControlError(409, "conflict", "The pipeline switch changed while this request ran; read status again");
       }
+      const nowPaused = input.action === "pause" || !flip;
       return {
         pipeline: {
           enabled: config.enabled,
-          paused: input.action === "pause",
-          running: config.enabled && input.action !== "pause",
+          paused: nowPaused,
+          running: config.enabled && !nowPaused,
           changedAt: current,
           reason,
         },
         rescheduled: result.applied,
+        resume:
+          input.action === "resume"
+            ? {
+                complete: flip,
+                held: due?.held ?? [],
+                message: flip
+                  ? "Resumed"
+                  : "More past-due work remains; the pipeline stays paused. Call resume again to move the next batch.",
+              }
+            : null,
       };
     },
   };
@@ -563,30 +579,41 @@ export function createControlService(deps: ControlDeps) {
    * Past-due work after a pause must not all go out on the next tick. Blogs
    * are redrawn one after another, each at least the pipeline's minimum gap
    * after the previous (and after anything already scheduled), with the
-   * pipeline's own human-hour draw. LinkedIn posts follow the same spacing
-   * and never land before their blog's (new) time.
+   * pipeline's own human-hour draw. Every scheduled LinkedIn post of a moved
+   * blog that would now go out before it, whatever its old time, is moved to
+   * after the blog's new time with the pipeline's LinkedIn delay draw. Other
+   * past-due LinkedIn posts follow the same spacing.
    */
   function planBacklog(due: PastDue, current: Date): Reschedule {
     const gapMs = config.minGapHours * HOUR_MS;
     const blogs: Move[] = [];
+    const social: Move[] = [];
+    const seen = new Set<string>();
+    let prevLi: Date | null = null;
+    const nextLi = (notBefore: number) => {
+      const after = Math.max(notBefore, current.getTime(), prevLi ? prevLi.getTime() + gapMs : 0);
+      const to = deps.drawLinkedInAt(new Date(after));
+      prevLi = to;
+      return to;
+    };
+
     let prev: Date | null = due.lastScheduledBlogAt;
     for (const b of due.blogs) {
       const from = prev ? new Date(Math.max(current.getTime(), prev.getTime() + gapMs)) : current;
       const to = deps.drawBlogPublishAt(from);
       blogs.push({ id: b.id, from: b.publishAt, to });
       prev = to;
+      for (const p of b.social) {
+        seen.add(p.id);
+        if (p.scheduledFor.getTime() >= to.getTime()) continue;
+        social.push({ id: p.id, from: p.scheduledFor, to: nextLi(to.getTime()), blogId: b.id });
+      }
     }
-    const newBlogAt = new Map(blogs.map((m) => [m.id, m.to]));
-    const social: Move[] = [];
-    let prevLi: Date | null = null;
+
     for (const p of due.social) {
-      let after = prevLi ? prevLi.getTime() + gapMs : current.getTime();
-      const blogAt =
-        (p.blogPostId && newBlogAt.get(p.blogPostId)) || (!p.blogPublished ? p.blogPublishAt : null);
-      if (blogAt) after = Math.max(after, blogAt.getTime());
-      const to = deps.drawLinkedInAt(new Date(Math.max(after, current.getTime())));
-      social.push({ id: p.id, from: p.scheduledFor, to });
-      prevLi = to;
+      if (seen.has(p.id)) continue;
+      const blogAt = !p.blogPublished && p.blogPublishAt ? p.blogPublishAt.getTime() : 0;
+      social.push({ id: p.id, from: p.scheduledFor, to: nextLi(blogAt) });
     }
     return { blogs, social };
   }

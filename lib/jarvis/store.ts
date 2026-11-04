@@ -11,7 +11,7 @@ export type Page<T> = { items: T[]; nextCursor: string | null };
 export type PageArgs = { cursor?: string; limit: number };
 
 export type ControlLog = {
-  refType: "BlogPost" | "SocialPost" | "Brief" | "Pipeline";
+  refType: "BlogPost" | "SocialPost" | "Brief" | "Pipeline" | "PipelineBacklog";
   refId: string;
   status: "ok" | "warn";
   message: string;
@@ -159,12 +159,18 @@ export interface ControlStore {
   }): Promise<DuplicateCheckResult>;
   internalAllowlist(): Promise<Set<string>>;
 
-  /** Past-due approved blogs and scheduled LinkedIn posts, oldest first. */
+  /**
+   * Past-due approved blogs (with every scheduled LinkedIn post of each,
+   * whatever its time) and past-due LinkedIn posts, oldest first, capped at
+   * RESUME_BATCH; `more` says the cap cut the list.
+   */
   pastDue(now: Date): Promise<PastDue>;
 
   /**
    * Each write and its log row commit together, or neither does. Writes run
-   * at Serializable isolation; a serialization failure reports as a conflict.
+   * at the default isolation under row locks (SELECT ... FOR UPDATE on the
+   * blog row, then its LinkedIn rows) or an advisory lock, with a 10 second
+   * transaction timeout; a lock conflict or timeout reports as a conflict.
    */
   createBrief(
     data: NewBrief,
@@ -174,19 +180,31 @@ export interface ControlStore {
   updateBlog(id: string, guard: BlogGuard, data: BlogUpdate, log: ControlLog): Promise<boolean>;
   updateSocial(id: string, guard: SocialGuard, data: SocialUpdate, log: ControlLog): Promise<boolean>;
   /**
-   * Flip the pipeline switch if it is still in `expectPaused`, moving any
-   * listed past-due rows that still hold their `from` time. One transaction.
+   * If the switch is still in `expectPaused`: move the listed rows that still
+   * hold their `from` time (each blog together with its LinkedIn posts, the
+   * blog only if none of them stays before its new time), then flip the
+   * switch when `flip` is set. One transaction.
    */
   setPipelineControl(input: {
     expectPaused: boolean;
+    flip: boolean;
     log: ControlLog;
     reschedule: Reschedule;
   }): Promise<{ ok: boolean; applied: Reschedule }>;
   writeLog(log: ControlLog): Promise<void>;
 }
 
+/** Per resume call; the rest waits for the next call (keeps a run inside the transaction timeout). */
+export const RESUME_BATCH = { blogs: 10, social: 25 };
+
 export type PastDue = {
-  blogs: Array<{ id: string; slug: string; publishAt: Date }>;
+  blogs: Array<{
+    id: string;
+    slug: string;
+    publishAt: Date;
+    /** Every scheduled LinkedIn post of this blog, whatever its time. */
+    social: Array<{ id: string; scheduledFor: Date }>;
+  }>;
   social: Array<{
     id: string;
     scheduledFor: Date;
@@ -196,9 +214,13 @@ export type PastDue = {
   }>;
   /** Latest future publishAt among approved blogs, so the backlog queues after it. */
   lastScheduledBlogAt: Date | null;
+  /** Past-due blogs left alone because a LinkedIn post of theirs is publishing right now. */
+  held: string[];
+  more: boolean;
 };
 
-export type Move = { id: string; from: Date; to: Date };
+/** A time move; a LinkedIn move made for a moved blog carries its blogId. */
+export type Move = { id: string; from: Date; to: Date; blogId?: string };
 export type Reschedule = { blogs: Move[]; social: Move[] };
 
 export type BlogGuard = {

@@ -19,7 +19,7 @@ Code: `lib/jarvis/` (use cases in `service.ts`, HTTP in `handlers.ts`, gates in 
 | Token | `Authorization: Bearer <token>`. The value comes from the `JARVIS_CONTROL_TOKEN` env var, which **Ali sets in Vercel** (Production, and Preview only if wanted). Use 32 or more random characters, the same value in Jarvis's own Vercel project. Never commit it. |
 | Disabled | If `JARVIS_CONTROL_TOKEN` is missing or shorter than 32 characters, every route answers `503 disabled`, whatever the request carries. |
 | Compare | SHA-256 digests compared with `timingSafeEqual`. The token is never logged or echoed. |
-| Cron routes | `/api/cron/*` use the same constant-time compare (`lib/security/bearer.ts`) against `Bearer $CRON_SECRET`. An unset `CRON_SECRET`, or one under 16 characters, refuses every cron call (`401`), so `Bearer undefined` never passes. |
+| Cron routes | `/api/cron/*` use the same constant-time compare (`lib/security/bearer.ts`) against `Bearer $CRON_SECRET`. An unset or blank `CRON_SECRET` refuses every cron call (`401`), so `Bearer undefined` never passes. There is no length minimum for `CRON_SECRET` (a short live value keeps working); `JARVIS_CONTROL_TOKEN` keeps its 32-character minimum. |
 | Rate limit | 60 requests per minute per IP (first `x-forwarded-for` hop), in memory per serverless instance, like the contact form. It slows guessing; the token is the real control. `429` carries `Retry-After`. |
 | Caching | Every response has `Cache-Control: no-store, max-age=0`. |
 | Validation | Zod on every query, route param and body. Unknown body keys are refused. Bodies over 16 KB get `413`. |

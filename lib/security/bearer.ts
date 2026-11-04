@@ -7,8 +7,12 @@ import { createHash, timingSafeEqual } from "node:crypto";
  */
 
 export const CRON_SECRET_ENV = "CRON_SECRET";
-/** A shorter (or unset) CRON_SECRET refuses every cron call. */
-export const MIN_CRON_SECRET_LENGTH = 16;
+/**
+ * An unset or blank CRON_SECRET refuses every cron call. There is no length
+ * minimum: the live value is not visible here, and refusing a short one would
+ * silently stop scheduled publishing.
+ */
+export const MIN_CRON_SECRET_LENGTH = 1;
 
 function digest(value: string): Buffer {
   return createHash("sha256").update(value, "utf8").digest();
@@ -49,7 +53,7 @@ export function cronAuthorized(
   const secret = env[CRON_SECRET_ENV];
   const ok = bearerHeaderMatches(req.headers.get("authorization"), secret, MIN_CRON_SECRET_LENGTH);
   if (!ok && usableSecret(secret, MIN_CRON_SECRET_LENGTH) === null) {
-    console.error(`cron: ${CRON_SECRET_ENV} is unset or shorter than ${MIN_CRON_SECRET_LENGTH} characters; refusing`);
+    console.error(`cron: ${CRON_SECRET_ENV} is unset or blank; refusing`);
   }
   return ok;
 }

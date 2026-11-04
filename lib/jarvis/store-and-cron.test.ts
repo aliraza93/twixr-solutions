@@ -610,12 +610,12 @@ describe("cron routes: CRON_SECRET", () => {
     }
   });
 
-  it("refuses everything, even Bearer undefined, when the secret is unset or short", async () => {
+  it("refuses everything, even Bearer undefined, when the secret is unset or blank", async () => {
     const saved = process.env.CRON_SECRET;
     const originalError = console.error;
     console.error = () => undefined;
     try {
-      for (const secret of [undefined, "", "short-secret", "               x"]) {
+      for (const secret of [undefined, "", "   "]) {
         if (secret === undefined) delete process.env.CRON_SECRET;
         else process.env.CRON_SECRET = secret;
         for (const [name, handler] of routes()) {
@@ -629,6 +629,19 @@ describe("cron routes: CRON_SECRET", () => {
     } finally {
       process.env.CRON_SECRET = saved;
       console.error = originalError;
+    }
+  });
+
+  it("accepts a short secret, so a short live value keeps publishing", async () => {
+    const saved = process.env.CRON_SECRET;
+    process.env.CRON_SECRET = "short";
+    try {
+      for (const [name, handler] of routes()) {
+        assert.equal((await call(handler, "Bearer short")).status, 200, name);
+        assert.equal((await call(handler, "Bearer undefined")).status, 401, name);
+      }
+    } finally {
+      process.env.CRON_SECRET = saved;
     }
   });
 });

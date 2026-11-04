@@ -32,14 +32,19 @@ describe("bearer secrets", () => {
     }
   });
 
-  it("refuses everything when the secret is unset, blank or short", () => {
-    for (const secret of [undefined, "", "   ", "x".repeat(MIN_CRON_SECRET_LENGTH - 1), ` ${"x".repeat(14)} `]) {
+  it("refuses everything when the cron secret is unset or blank", () => {
+    for (const secret of [undefined, "", "   "]) {
       assert.equal(usableSecret(secret, MIN_CRON_SECRET_LENGTH), null);
       for (const header of ["Bearer undefined", `Bearer ${secret}`, "Bearer ", "Bearer null", null]) {
         assert.equal(bearerHeaderMatches(header, secret, MIN_CRON_SECRET_LENGTH), false, `${secret} / ${header}`);
       }
     }
-    assert.equal(usableSecret("x".repeat(MIN_CRON_SECRET_LENGTH), MIN_CRON_SECRET_LENGTH), "x".repeat(16));
+    assert.equal(usableSecret("x", MIN_CRON_SECRET_LENGTH), "x");
+  });
+
+  it("still honours a longer minimum when one is given", () => {
+    assert.equal(usableSecret("x".repeat(15), 16), null);
+    assert.equal(bearerHeaderMatches(`Bearer ${"x".repeat(15)}`, "x".repeat(15), 16), false);
   });
 
   it("cronAuthorized reads CRON_SECRET from the given env", () => {
@@ -50,10 +55,13 @@ describe("bearer secrets", () => {
     console.error = () => undefined;
     try {
       assert.equal(cronAuthorized(req("Bearer undefined"), {}), false);
-      assert.equal(cronAuthorized(req("Bearer short"), { CRON_SECRET: "short" }), false);
+      assert.equal(cronAuthorized(req("Bearer "), { CRON_SECRET: "  " }), false);
     } finally {
       console.error = originalError;
     }
+    // A short secret is accepted: refusing it would stop scheduled publishing.
+    assert.equal(cronAuthorized(req("Bearer short"), { CRON_SECRET: "short" }), true);
+    assert.equal(cronAuthorized(req("Bearer shorx"), { CRON_SECRET: "short" }), false);
   });
 });
 
@@ -256,9 +264,16 @@ describe("safeFetch", () => {
   it("times out a slow lookup", async () => {
     const slow: HostResolver = () => new Promise(() => undefined);
     const net = network({});
-    await assert.rejects(safeFetch("https://slow.example/", { resolver: slow, fetchImpl: net.fetchImpl, timeoutMs: 20 }), (e: unknown) =>
-      e instanceof Error && /timeout|abort/i.test(`${e.name} ${e.message}`)
-    );
+    // AbortSignal.timeout timers are unref'd: hold the event loop open so the
+    // runner does not exit before the timeout fires.
+    const keepAlive = setTimeout(() => undefined, 5000);
+    try {
+      await assert.rejects(safeFetch("https://slow.example/", { resolver: slow, fetchImpl: net.fetchImpl, timeoutMs: 20 }), (e: unknown) =>
+        e instanceof Error && /timeout|abort/i.test(`${e.name} ${e.message}`)
+      );
+    } finally {
+      clearTimeout(keepAlive);
+    }
     assert.equal(net.calls.length, 0);
   });
 });

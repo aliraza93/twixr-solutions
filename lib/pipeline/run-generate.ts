@@ -11,7 +11,11 @@ import {
 } from "@/lib/pipeline/briefs";
 import { pipeline } from "@/lib/pipeline/config";
 import { isPipelinePaused } from "@/lib/jarvis/pause";
-import { generationSkipMessage, siteMayGenerate } from "@/lib/jarvis/generator";
+import {
+  generationSkipMessage,
+  siteMayGenerate,
+  writeIfSiteGenerates,
+} from "@/lib/jarvis/generator";
 import { criticBlog, criticLinkedIn, type CriticResult } from "@/lib/pipeline/critic";
 import { generateBlog, reviseBlogDraft } from "@/lib/pipeline/generate-blog";
 import { generateLinkedIn } from "@/lib/pipeline/generate-linkedin";
@@ -114,6 +118,9 @@ export type RunGenerateResult = {
   title?: string;
   seoScore?: number;
 };
+
+/** Review reason on a cron post whose generator moved to Jarvis mid-run. */
+export const GENERATOR_MOVED_REASON = "Generator moved to Jarvis during this run";
 
 function todayDate(): string {
   return new Date().toISOString().slice(0, 10);
@@ -317,9 +324,11 @@ export type RunGenerateFromBriefOptions = RunGenerateOptions & {
   opportunityId?: string;
   opportunityPriority?: number;
   /**
-   * Re-check the generator switch just before the first write, so a switch
-   * to Jarvis while this run was drafting writes nothing. Set by the cron's
-   * runGenerate; the admin's own manual generate does not set it.
+   * Guard this run with the generator switch: checked before any image is
+   * drawn, checked again with the first insert in one locked transaction,
+   * and once more before approving (a late switch leaves the post in
+   * needs_review). Set by the cron's runGenerate; the admin's own manual
+   * generate does not set it.
    */
   siteGeneratorOnly?: boolean;
 };
@@ -629,6 +638,24 @@ export async function runGenerateFromBrief(
       },
     });
 
+    // Before any image is drawn: a run whose generator moved to Jarvis while
+    // it was drafting spends nothing more and writes nothing.
+    if (options.siteGeneratorOnly) {
+      const generation = await siteMayGenerate();
+      if (!generation.allowed) {
+        const message = generationSkipMessage(generation.reason);
+        await logStage({
+          runId,
+          stage: "blog",
+          status: "skip",
+          refType: "Brief",
+          refId: brief.id,
+          message: `${message}; draft discarded before images and writing, brief left queued`,
+        });
+        return { runId, status: "skip", message };
+      }
+    }
+
     let coverUrl = "";
     let coverStyleId = "";
     if (!shouldGenerateImages) {
@@ -727,30 +754,23 @@ export async function runGenerateFromBrief(
       }
     }
 
-    if (options.siteGeneratorOnly) {
-      const generation = await siteMayGenerate();
-      if (!generation.allowed) {
-        const message = generationSkipMessage(generation.reason);
-        await logStage({
-          runId,
-          stage: "blog",
-          status: "skip",
-          refType: "Brief",
-          refId: brief.id,
-          message: `${message}; draft discarded before writing, brief left queued`,
-        });
-        return { runId, status: "skip", message };
-      }
-    }
-
-    const order = await nextSortOrder();
     const clusterLabel =
       draft.contentCluster ||
       brief.pillar.split("/")[1]?.trim() ||
       brief.pillar;
     const keywordLabel = draft.primaryKeyword || brief.targetKeyword || brief.topic;
 
-    const blogPostId = await upsertBlogPost({
+    // The cron's first write and its generator check share one transaction
+    // under the switch's lock (shared here, exclusive in setGenerator), so a
+    // switch to Jarvis cannot land between them. The admin's manual generate
+    // writes without the guard.
+    const insertDraft = async (db?: Prisma.TransactionClient) => {
+      const order = db
+        ? ((await db.blogPost.aggregate({ _max: { sortOrder: true } }))._max.sortOrder ?? 0) + 1
+        : await nextSortOrder();
+      return { id: await upsertBlogPost(firstWrite(order), db), order };
+    };
+    const firstWrite = (order: number) => ({
       slug: draft.slug,
       title: draft.title,
       excerpt: draft.excerpt,
@@ -773,6 +793,27 @@ export async function runGenerateFromBrief(
       contentCluster: clusterLabel,
       targetKeyword: keywordLabel,
     });
+
+    let blogPostId: string;
+    let order: number;
+    if (options.siteGeneratorOnly) {
+      const written = await writeIfSiteGenerates((tx) => insertDraft(tx));
+      if (!written.ok) {
+        const message = generationSkipMessage(written.reason);
+        await logStage({
+          runId,
+          stage: "blog",
+          status: "skip",
+          refType: "Brief",
+          refId: brief.id,
+          message: `${message}; draft discarded before writing, brief left queued`,
+        });
+        return { runId, status: "skip", message };
+      }
+      ({ id: blogPostId, order } = written.value);
+    } else {
+      ({ id: blogPostId, order } = await insertDraft());
+    }
 
     const draftForValidation = { ...draft, body: inline.body };
     const vBlog = await validateBlog(draftForValidation, brief, {
@@ -901,12 +942,29 @@ export async function runGenerateFromBrief(
       qualityReasons.length > 0 ||
       criticHardFail;
 
+    // Last look before approving or scheduling: if the switch moved to Jarvis
+    // after the insert, the post stays a needs_review draft for Ali.
+    let generatorMoved = false;
+    if (options.siteGeneratorOnly && !dryRun) {
+      generatorMoved = !(await siteMayGenerate()).allowed;
+      if (generatorMoved) {
+        await logStage({
+          runId,
+          stage: "blog",
+          status: "warn",
+          refType: "BlogPost",
+          refId: blogPostId,
+          message: "Generator moved to Jarvis during this run; the post is held for review, not scheduled",
+        });
+      }
+    }
+
     // Auto-publish by default: validators/critic still run and log, but do not block.
     // publishMode: auto | draft | publish_now (admin manual controls).
     let approved = false;
     let blogPublishAt: Date | null = null;
     let publishNow = false;
-    if (!dryRun && !seoHardFail) {
+    if (!dryRun && !seoHardFail && !generatorMoved) {
       if (publishMode === "draft") {
         approved = false;
       } else if (publishMode === "publish_now") {
@@ -924,6 +982,7 @@ export async function runGenerateFromBrief(
     }
 
     const reviewReasons = [
+      ...(generatorMoved ? [GENERATOR_MOVED_REASON] : []),
       ...imageReasons,
       ...vBlog.reasons,
       ...(criticHardFail

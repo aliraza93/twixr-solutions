@@ -27,6 +27,7 @@ export const jarvisHandlers = makeHandlers({
         criticFloor: pipeline.criticHardFloor,
         criticMinScore: pipeline.criticMinScore,
         minGapHours: pipeline.variety.minGapHoursMin,
+        maxPerDay: Math.max(1, pipeline.variety.maxPerDay),
         timezone: pipeline.timezone,
         crons: vercelConfig.crons,
       },

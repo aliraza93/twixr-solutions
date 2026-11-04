@@ -144,6 +144,14 @@ class FakeStore implements ControlStore {
   /** A slug a CMS post took between the pre-check and the write. */
   hiddenSlug: string | null = null;
   latestScheduled: Date | null = null;
+  /** Simulate the switch moving back to site between the pre-check and the locked write. */
+  generatorFlipsInWrite = false;
+  /** A twin submit of the same key that commits right after the first key lookup. */
+  pendingIntake: IntakeRecord | null = null;
+  /** A twin that committed under the lock just before this write, reported by the write as a duplicate. */
+  twinOnWrite: IntakeRecord | null = null;
+  /** Run during the link check: lets a test move the clock. */
+  duringLinkCheck: (() => void) | null = null;
   /** URLs the fake dead-link check reports dead; every call is recorded. */
   deadUrls = new Set<string>();
   linkChecks: string[][] = [];
@@ -170,7 +178,12 @@ class FakeStore implements ControlStore {
     return { ok: true };
   }
   async findIntake(key: string) {
-    return this.intakes.get(key) ?? null;
+    const found = this.intakes.get(key) ?? null;
+    if (this.pendingIntake) {
+      this.intakes.set(this.pendingIntake.key, this.pendingIntake);
+      this.pendingIntake = null;
+    }
+    return found;
   }
   async findBlogMatches({ slug, title }: { slug: string; title: string }): Promise<IntakeMatch[]> {
     return [...this.blogs.values()]
@@ -185,19 +198,49 @@ class FakeStore implements ControlStore {
       this.intakes.set(this.hiddenIntake.key, this.hiddenIntake);
       this.hiddenIntake = null;
     }
+    if (this.generatorFlipsInWrite) this.generator = { generator: "site", at: NOW, reason: "" };
+    const generator = this.generator?.generator ?? "site";
+    if (generator !== "jarvis") return { ok: false, reason: "generator", generator };
     const prior = this.intakes.get(data.key);
     if (prior) return { ok: false, reason: "replay", record: prior };
+    if (this.twinOnWrite) {
+      this.intakes.set(this.twinOnWrite.key, this.twinOnWrite);
+      this.twinOnWrite = null;
+      return { ok: false, reason: "duplicate", matches: [{ kind: "slug", id: "twin-blog", slug: data.blog.slug, title: data.blog.title }] };
+    }
     if (this.hiddenSlug === data.blog.slug) {
       return { ok: false, reason: "duplicate", matches: [{ kind: "slug", id: "cms1", slug: data.blog.slug, title: "CMS post" }] };
     }
     const matches = await this.findBlogMatches(data.blog);
     if (matches.length) return { ok: false, reason: "duplicate", matches };
+    const accepted = this.logs.filter(
+      (l) => l.refType === "Intake" && l.status === "ok" && l.createdAt >= data.limits.dayStart
+    ).length;
+    if (accepted >= data.limits.maxPerDay) return { ok: false, reason: "daily_cap", accepted };
+    let publishAt = data.blog.publishAt;
+    let scheduledFor = data.social?.scheduledFor ?? null;
+    if (data.blog.reviewState === "approved" && publishAt) {
+      const at = publishAt.getTime();
+      const scheduled = [...this.blogs.values()].filter((b) => !b.published && b.reviewState === "approved" && b.publishAt);
+      const near = scheduled.find((b) => Math.abs((b.publishAt as Date).getTime() - at) < data.limits.minGapMs);
+      if (near) {
+        if (!data.limits.redraw) return { ok: false, reason: "gap", near: near.publishAt as Date };
+        const latest = scheduled.reduce<Date | null>(
+          (acc, b) => (!acc || (b.publishAt as Date) > acc ? (b.publishAt as Date) : acc),
+          null
+        );
+        const redrawn = data.limits.redraw(latest);
+        publishAt = redrawn.publishAt;
+        scheduledFor = data.social ? redrawn.scheduledFor : null;
+      }
+    }
     const id = `intake-blog${this.blogs.size + 1}`;
     const { date: _date, image, ...rest } = data.blog;
     void _date;
     this.blogs.set(id, {
       ...blog(),
       ...rest,
+      publishAt,
       id,
       image,
       origin: "pipeline",
@@ -214,6 +257,7 @@ class FakeStore implements ControlStore {
       this.socials.set(socialId, {
         ...social(),
         ...data.social,
+        scheduledFor: scheduledFor ?? data.social.scheduledFor,
         id: socialId,
         blogPostId: id,
         blog: { published: false, reviewState: data.blog.reviewState, publishAt: data.blog.publishAt },
@@ -231,7 +275,13 @@ class FakeStore implements ControlStore {
       gates: data.log.meta.gates,
       createdAt: NOW,
     });
-    return { ok: true, blogPostId: id, socialPostId: socialId };
+    return {
+      ok: true,
+      blogPostId: id,
+      socialPostId: socialId,
+      publishAt,
+      scheduledFor: socialId ? scheduledFor ?? data.social?.scheduledFor ?? null : null,
+    };
   }
   async recentRuns() {
     return [
@@ -374,6 +424,7 @@ class FakeStore implements ControlStore {
 /* ------------------------------------------------------------------ */
 
 let store: FakeStore;
+let clockNow = NOW;
 let token: string | null;
 let handlers: JarvisHandlers;
 
@@ -385,13 +436,14 @@ function build(limiter = new SlidingWindowLimiter(1000, 60_000)) {
     service: () =>
       createControlService({
         store,
-        now: () => NOW,
+        now: () => clockNow,
         config: {
           enabled: true,
           autoPublish: true,
           criticFloor: 60,
           criticMinScore: 78,
           minGapHours: 5,
+          maxPerDay: 5,
           timezone: "Asia/Karachi",
           crons: [{ path: "/api/cron/tick", schedule: "*/10 * * * *" }],
         },
@@ -400,6 +452,7 @@ function build(limiter = new SlidingWindowLimiter(1000, 60_000)) {
         drawLinkedInAt: drawLi,
         checkLinks: async (urls) => {
           store.linkChecks.push(urls);
+          store.duringLinkCheck?.();
           return urls.filter((u) => store.deadUrls.has(u)).map((u) => `Dead or unreachable link: ${u}`);
         },
       }),
@@ -407,6 +460,7 @@ function build(limiter = new SlidingWindowLimiter(1000, 60_000)) {
 }
 
 beforeEach(() => {
+  clockNow = NOW;
   store = new FakeStore();
   token = TOKEN;
   build();
@@ -1637,7 +1691,7 @@ describe("intake: storing and scheduling", () => {
     ["a critic score under the hard floor", { criticScore: 40 }, /below hard floor 60/, "reasons"],
     ["a critic score under the minimum", { criticScore: 70 }, /below minimum 78/, "needsOverride"],
     ["no cover image", { coverImageUrl: undefined }, /Cover image missing/, "reasons"],
-    ["a dash character", { body: `${GOOD_BODY} One more ${EM_DASH} line.` }, /em\/en dash/, "reasons"],
+    ["a markdown H1 inside the body", { body: `${GOOD_BODY}\n\n# A second title` }, /markdown H1/, "reasons"],
     ["a banned phrase", { excerpt: "In today's fast-paced world, queues matter for every single team out there." }, /Banned phrase/, "reasons"],
     ["a short body", { body: "## Short\n\nToo short to publish." }, /too short/, "reasons"],
     ["a live-source brief without sources", { requiresLiveSource: true }, /needs at least one source/, "reasons"],
@@ -1692,7 +1746,27 @@ describe("intake: storing and scheduling", () => {
     const dashed = await intake(
       intakeBody({ idempotencyKey: "jv-content-li-dash", slug: "li-dash", title: "LinkedIn dash check post title", approve: true, linkedin: { body: `${LI_BODY} ${EM_DASH}`, criticScore: 90 } })
     );
-    assert.equal(dashed.json.social.state, "needs_review");
+    assert.equal(dashed.json.social.state, "scheduled", "the dash is normalised away, as the pipeline does");
+    assert.doesNotMatch(store.socials.get(dashed.json.social.id)?.body ?? "", new RegExp(EM_DASH));
+  });
+
+  it("stores the normalised text (no dashes, no leading H1) and gates exactly that", async () => {
+    const en = String.fromCodePoint(0x2013);
+    const r = await intake(
+      intakeBody({
+        approve: true,
+        title: `Laravel queue retries ${EM_DASH} after a lock timeout`,
+        excerpt: `How a queue retry recovered ${en} without losing a single job in production.`,
+        body: `# Laravel queue retries\n\n${GOOD_BODY} One more ${EM_DASH} line.`,
+        faqs: [{ question: `Does it retry ${EM_DASH} always?`, answer: `Yes ${en} ${SENTENCE}` }],
+      })
+    );
+    assert.equal(r.json.blog.state, "scheduled", JSON.stringify(r.json.gates));
+    const b = store.blogs.get(r.json.blog.id);
+    const stored = JSON.stringify([b?.title, b?.excerpt, b?.body, b?.faqs]);
+    assert.doesNotMatch(stored, new RegExp(`[${EM_DASH}${en}]`));
+    assert.doesNotMatch(b?.body ?? "", /^# /);
+    assert.equal(b?.title, "Laravel queue retries - after a lock timeout");
   });
 });
 
@@ -1808,5 +1882,125 @@ describe("intake: idempotency", () => {
     assert.equal(r.json.intake.replayed, true);
     assert.equal(r.json.blog.id, "blog-parallel");
     assert.equal(store.blogs.size, 1);
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* Review fixes                                                        */
+/* ------------------------------------------------------------------ */
+
+describe("intake: unsafe markup is refused at the door and by the gate", () => {
+  beforeEach(() => {
+    store.generator = { generator: "jarvis", at: NOW, reason: "" };
+  });
+
+  const cases: Array<[string, Record<string, unknown>, string]> = [
+    ["a </script> title", { title: "Queues</script><script>alert(1)</script>" }, "title"],
+    ["a <script> excerpt", { excerpt: "Read this <script src=//x.example></script> now" }, "excerpt"],
+    ["a </script> FAQ question", { faqs: [{ question: "Why </script><script>x()</script>?", answer: SENTENCE }] }, "faqs.0.question"],
+    ["an event handler in an FAQ answer", { faqs: [{ question: "Why?", answer: `<img src=x onerror="x()"> ${SENTENCE}` }] }, "faqs.0.answer"],
+    ["a javascript: URL in the title", { title: "Click javascript:alert(1)" }, "title"],
+  ];
+  for (const [name, over, path] of cases) {
+    it(`refuses ${name} with 400`, async () => {
+      const r = await intake(intakeBody(over));
+      assert.equal(r.status, 400);
+      assert.ok(r.json.error.details.issues.some((i: { path: string }) => i.path === path), JSON.stringify(r.json));
+      assert.equal(store.blogs.size, 0);
+    });
+  }
+
+  it("the drafts gate refuses to schedule a stored draft with a script tag in its title or FAQ", async () => {
+    store.blogs.set("blog1", blog({ title: "Queues</script><script>x()</script>", faqs: [{ question: "<script>", answer: SENTENCE }] }));
+    const r = await act("blog", "blog1", { action: "approve" });
+    assert.equal(r.status, 422);
+    assert.ok(r.json.error.details.reasons.includes("Unsafe markup in title"));
+    assert.ok(r.json.error.details.reasons.includes("Unsafe markup in FAQ 1 question"));
+  });
+});
+
+describe("intake: races under the lock", () => {
+  beforeEach(() => {
+    store.generator = { generator: "jarvis", at: NOW, reason: "" };
+  });
+
+  it("a switch back to site before the locked write is refused and stores nothing", async () => {
+    store.generatorFlipsInWrite = true;
+    const r = await intake(intakeBody({ approve: true }));
+    assert.equal(r.status, 409);
+    assert.equal(r.json.error.code, "generator_mismatch");
+    assert.equal(store.blogs.size, 0);
+  });
+
+  const twin = (body: Record<string, unknown>, blogId: string): IntakeRecord => ({
+    key: String(body.idempotencyKey),
+    payloadHash: intakePayloadHash(intakeSchema.parse(body)),
+    blogPostId: blogId,
+    socialPostId: null,
+    gates: { approveRequested: false },
+    createdAt: NOW,
+  });
+
+  it("a duplicate slug that is this submission's own twin (pre-check) is replayed, not refused", async () => {
+    const body = intakeBody();
+    store.blogs.set("twin-blog", blog({ id: "twin-blog", slug: String(body.slug), title: "Twin" }));
+    store.pendingIntake = twin(body, "twin-blog");
+    const r = await intake(body);
+    assert.equal(r.status, 200, JSON.stringify(r.json));
+    assert.equal(r.json.intake.replayed, true);
+    assert.equal(r.json.blog.id, "twin-blog");
+    assert.ok(!store.logs.some((l) => l.status === "warn"), "no refusal logged");
+  });
+
+  it("a duplicate reported by the locked write whose key is now recorded is replayed too", async () => {
+    const body = intakeBody();
+    store.blogs.set("twin-blog", blog({ id: "twin-blog", slug: "other-slug", title: "Twin" }));
+    store.twinOnWrite = twin(body, "twin-blog");
+    const r = await intake(body);
+    assert.equal(r.status, 200);
+    assert.equal(r.json.blog.id, "twin-blog");
+  });
+
+  it("a next-slot time is redrawn under the lock when another blog took that slot meanwhile", async () => {
+    // The pre-check saw nothing scheduled; under the lock a blog sits at the drawn time.
+    store.blogs.set("other", blog({ id: "other", slug: "other", title: "Other", reviewState: "approved", publishAt: DRAWN_BLOG_AT }));
+    const r = await intake(intakeBody({ approve: true, linkedin: { body: LI_BODY, criticScore: 84 } }));
+    assert.equal(r.status, 201);
+    const expected = drawBlog(new Date(DRAWN_BLOG_AT.getTime() + 5 * HOUR));
+    assert.equal(r.json.blog.publishAt, expected.toISOString());
+    assert.equal(r.json.social.scheduledFor, drawLi(expected).toISOString(), "LinkedIn redrawn after the blog");
+    assert.equal(store.blogs.get(r.json.blog.id)?.publishAt?.getTime(), expected.getTime());
+  });
+
+  it("an explicit time inside the minimum gap of another scheduled blog is refused with 400", async () => {
+    const at = new Date(NOW.getTime() + 30 * HOUR);
+    store.blogs.set("other", blog({ id: "other", slug: "other", title: "Other", reviewState: "approved", publishAt: new Date(at.getTime() + 2 * HOUR) }));
+    const r = await intake(intakeBody({ approve: true, publishAt: at.toISOString() }));
+    assert.equal(r.status, 400);
+    assert.equal(r.json.error.details.field, "publishAt");
+    assert.equal(r.json.error.details.minGapHours, 5);
+    assert.equal(store.intakes.size, 0);
+  });
+
+  it("refuses past the daily cap (PIPELINE_MAX_PER_DAY)", async () => {
+    for (let i = 0; i < 5; i++) {
+      const r = await intake(intakeBody({ idempotencyKey: `jv-content-cap-${i}`, slug: `cap-post-${i}`, title: `Cap post number ${i} about queues` }));
+      assert.equal(r.status, 201, JSON.stringify(r.json));
+    }
+    const over = await intake(intakeBody({ idempotencyKey: "jv-content-cap-5", slug: "cap-post-5", title: "Cap post number 5 about queues" }));
+    assert.equal(over.status, 409);
+    assert.equal(over.json.error.code, "daily_cap");
+    assert.deepEqual(over.json.error.details, { cap: 5, accepted: 5 });
+  });
+
+  it("re-checks an explicit publishAt after the link checks, which take time", async () => {
+    const at = new Date(NOW.getTime() + 90_000);
+    store.duringLinkCheck = () => {
+      clockNow = new Date(NOW.getTime() + 60_000);
+    };
+    const r = await intake(intakeBody({ approve: true, publishAt: at.toISOString() }));
+    assert.equal(r.status, 400);
+    assert.equal(r.json.error.details.field, "publishAt");
+    assert.equal(store.blogs.size, 0);
   });
 });

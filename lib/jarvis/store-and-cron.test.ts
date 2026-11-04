@@ -123,6 +123,7 @@ beforeEach(() => {
 });
 
 const TX = { timeout: 10_000, maxWait: 5_000 };
+type NewIntake = import("@/lib/jarvis/store").NewIntake;
 
 const store = () => m.store.createPrismaControlStore(() => fake as never);
 
@@ -653,10 +654,11 @@ describe("cron routes: CRON_SECRET", () => {
 /* ------------------------------------------------------------------ */
 
 /** Control reads by refType: the pause row and the generator row are separate. */
-function controlRows(rows: { pause?: unknown; generator?: unknown; generatorError?: boolean }) {
+function controlRows(rows: { pause?: unknown; generator?: unknown; generatorError?: boolean; intake?: unknown }) {
   fake.handlers["generationLog.findFirst"] = (args) => {
     const where = (args as { where: { refType?: string } }).where;
     if (where.refType === "Pipeline") return rows.pause ?? null;
+    if (where.refType === "Intake") return rows.intake ?? null;
     if (where.refType === "PipelineGenerator") {
       if (rows.generatorError) throw new Error("db down");
       return rows.generator ?? null;
@@ -790,7 +792,7 @@ describe("prisma store: generator switch and intake", () => {
     assert.deepEqual(fake.txOptions[0], TX);
   });
 
-  const intakeData = (social = true) => ({
+  const intakeData = (social = true, limits: Partial<NewIntake["limits"]> = {}): NewIntake => ({
     key: "jv-content-01JBXK2M3N",
     payloadHash: "hash1",
     blog: {
@@ -822,16 +824,30 @@ describe("prisma store: generator switch and intake", () => {
         }
       : null,
     log: { message: "intake", meta: { state: "scheduled" } },
+    limits: { dayStart: new Date(NOW.getTime() - HOUR), maxPerDay: 1, minGapMs: 5 * HOUR, now: NOW, ...limits },
   });
 
   it("createIntake: lock, re-check key, slug and title, then insert blog, LinkedIn and three log rows", async () => {
+    controlRows({ generator: jarvisGenerates });
     fake.handlers["blogPost.aggregate"] = () => ({ _max: { sortOrder: 41 } });
     fake.handlers["blogPost.create"] = () => ({ id: "b9" });
     fake.handlers["socialPost.create"] = () => ({ id: "li9" });
     const r = await store().createIntake(intakeData());
-    assert.deepEqual(r, { ok: true, blogPostId: "b9", socialPostId: "li9" });
-    assert.deepEqual(fake.raw()[0].args, ["jarvis:intake"]);
-    const keyRead = fake.of("generationLog", "findFirst")[0].args as { where: unknown };
+    assert.deepEqual(r, {
+      ok: true,
+      blogPostId: "b9",
+      socialPostId: "li9",
+      publishAt: new Date(NOW.getTime() + 20 * HOUR),
+      scheduledFor: new Date(NOW.getTime() + 30 * HOUR),
+    });
+    assert.deepEqual(
+      fake.raw().map((c) => c.args),
+      [["jarvis:pipeline-generator"], ["jarvis:intake"]],
+      "generator lock first, then the intake lock"
+    );
+    const reads = fake.of("generationLog", "findFirst").map((c) => (c.args as { where: { refType: string } }).where);
+    assert.equal(reads[0].refType, "PipelineGenerator", "the generator is re-read under the lock");
+    const keyRead = fake.of("generationLog", "findFirst")[1].args as { where: unknown };
     assert.deepEqual(keyRead.where, { stage: "jarvis", refType: "Intake", refId: "jv-content-01JBXK2M3N", status: "ok" });
     const dupRead = fake.of("blogPost", "findMany")[0].args as { where: unknown };
     assert.deepEqual(dupRead.where, {
@@ -854,9 +870,9 @@ describe("prisma store: generator switch and intake", () => {
   });
 
   it("createIntake replays a key already recorded and writes nothing", async () => {
-    fake.handlers["generationLog.findFirst"] = () => ({
-      createdAt: NOW,
-      meta: { payloadHash: "hash1", blogPostId: "b1", socialPostId: null, gates: { approveRequested: true } },
+    controlRows({
+      generator: jarvisGenerates,
+      intake: { createdAt: NOW, meta: { payloadHash: "hash1", blogPostId: "b1", socialPostId: null, gates: { approveRequested: true } } },
     });
     const r = await store().createIntake(intakeData());
     assert.equal(r.ok, false);
@@ -866,6 +882,7 @@ describe("prisma store: generator switch and intake", () => {
   });
 
   it("createIntake refuses a slug or title found under the lock", async () => {
+    controlRows({ generator: jarvisGenerates });
     fake.handlers["blogPost.findMany"] = () => [{ id: "b1", slug: "laravel-queue-retries", title: "x" }];
     const r = await store().createIntake(intakeData(false));
     assert.deepEqual(r, { ok: false, reason: "duplicate", matches: [{ kind: "slug", id: "b1", slug: "laravel-queue-retries", title: "x" }] });
@@ -889,5 +906,256 @@ describe("prisma store: generator switch and intake", () => {
     });
     const r = await store().findIntake("jv-content-key1");
     assert.deepEqual(r, { key: "jv-content-key1", payloadHash: "h", blogPostId: "b1", socialPostId: "li1", gates: null, createdAt: NOW });
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* Review fixes: guarded cron insert, generator re-read, cap and gap   */
+/* ------------------------------------------------------------------ */
+
+describe("cron: the first write and the generator check share one locked transaction", () => {
+  const SENT = "The queue worker retried the job after the database lock cleared, and the retry finished fast. ";
+  const draft = {
+    slug: "laravel-queue-retries",
+    title: "Laravel queue retries after a lock timeout",
+    excerpt: "How a queue retry recovered from a database lock without losing a job.",
+    category: "Laravel",
+    tags: ["Laravel"],
+    readingTime: "4 min read",
+    body: `## Why\n\n${SENT.repeat(30)}`,
+    faqs: [],
+    coverAlt: "cover",
+    inlineImagePrompts: [],
+    sources: [],
+  };
+  const brief = {
+    id: "brief1",
+    pillar: "Build/Laravel",
+    topic: "Laravel queue retries",
+    targetKeyword: "laravel queue retries",
+    angle: "",
+    realExample: "",
+    requiresLiveSource: false,
+    status: "queued",
+    scheduledFor: null,
+    usedAt: null,
+    origin: "topic-bank",
+    sourceUrl: "",
+    formatHint: "",
+    extraInstructions: "",
+    createdAt: NOW,
+  };
+  const opts = { siteGeneratorOnly: true, generateImages: false, generateLinkedIn: false, generateX: false, notify: false };
+
+  /** The generator row answers site for the first `siteReads` reads, then jarvis. */
+  function generatorSequence(siteReads: number) {
+    let reads = 0;
+    fake.handlers["generationLog.findFirst"] = (args) => {
+      const where = (args as { where: { refType?: string } }).where;
+      if (where.refType !== "PipelineGenerator") return null;
+      reads += 1;
+      const generator = reads <= siteReads ? "site" : "jarvis";
+      return { createdAt: NOW, meta: { action: "set_generator", generator } };
+    };
+    return () => reads;
+  }
+
+  let savedKey: string | undefined;
+  beforeEach(() => {
+    savedKey = process.env.ANTHROPIC_API_KEY;
+    process.env.ANTHROPIC_API_KEY = "test-key";
+    // Every model call answers with the draft tool; the critic's parse fails and is logged, which is fine here.
+    linkedInReply = () =>
+      new Response(
+        JSON.stringify({
+          id: "msg1",
+          type: "message",
+          role: "assistant",
+          model: "claude-sonnet-4-6",
+          content: [{ type: "tool_use", id: "t1", name: "submit_blog_draft", input: draft }],
+          stop_reason: "tool_use",
+          stop_sequence: null,
+          usage: { input_tokens: 1, output_tokens: 1 },
+        }),
+        { status: 200, headers: { "content-type": "application/json" } }
+      );
+    fake.handlers["blogPost.upsert"] = () => ({ id: "b1" });
+    fake.handlers["blogPost.aggregate"] = () => ({ _max: { sortOrder: 3 } });
+  });
+  const restore = () => {
+    if (savedKey === undefined) delete process.env.ANTHROPIC_API_KEY;
+    else process.env.ANTHROPIC_API_KEY = savedKey;
+  };
+
+  const quietly = async <T>(fn: () => Promise<T>) => {
+    const saved = [console.error, console.warn];
+    console.error = () => undefined;
+    console.warn = () => undefined;
+    try {
+      return await fn();
+    } finally {
+      [console.error, console.warn] = saved;
+      restore();
+    }
+  };
+
+  it("site at the early check, jarvis under the lock: nothing is written, the brief stays queued", async () => {
+    const reads = generatorSequence(1);
+    const r = await quietly(() => m.generate.runGenerateFromBrief(brief as never, opts));
+    assert.equal(r.status, "skip", r.message);
+    assert.equal(r.message, "Generation handed to Jarvis");
+    assert.equal(reads(), 2);
+    assert.equal(fake.of("blogPost", "upsert").length, 0, "no post written");
+    assert.equal(fake.of("brief", "update").length, 0, "brief not marked used");
+    const lock = fake.raw().find((c) => /pg_advisory_xact_lock_shared/.test(c.op));
+    assert.ok(lock, "the insert transaction took the shared generator lock");
+    assert.deepEqual(lock?.args, ["jarvis:pipeline-generator"]);
+  });
+
+  it("site until the insert, jarvis before approval: the post is written but held in needs_review", async () => {
+    const reads = generatorSequence(2);
+    const r = await quietly(() => m.generate.runGenerateFromBrief(brief as never, opts));
+    assert.equal(r.status, "ok", r.message);
+    assert.equal(r.message, "Generated, needs review");
+    assert.equal(reads(), 3);
+    // The second write goes through upsertBlogPost again (update by id, or upsert by slug).
+    const writes = [
+      ...fake.of("blogPost", "update").map((c) => (c.args as { data: Record<string, unknown> }).data),
+      ...fake.of("blogPost", "upsert").slice(1).map((c) => (c.args as { create: Record<string, unknown> }).create),
+    ];
+    assert.equal(writes.length, 1);
+    const last = writes[0];
+    assert.equal(last.reviewState, "needs_review");
+    assert.equal(last.published, false);
+    assert.equal(last.publishAt, null);
+    assert.ok((last.reviewReasons as string[]).includes(m.generate.GENERATOR_MOVED_REASON));
+    const first = (fake.of("blogPost", "upsert")[0].args as { create: Record<string, unknown> }).create;
+    assert.equal(first.sortOrder, 4, "sort order read inside the transaction");
+  });
+
+  it("jarvis at the early check: stops before any image or write", async () => {
+    generatorSequence(0);
+    const r = await quietly(() =>
+      m.generate.runGenerateFromBrief(brief as never, { ...opts, generateImages: true })
+    );
+    assert.equal(r.status, "skip");
+    assert.equal(fake.of("blogPost", "upsert").length, 0);
+    const msgs = fake.of("generationLog", "create").map((c) => (c.args as { data: { message: string } }).data.message);
+    assert.ok(msgs.some((x) => /before images and writing/.test(x)));
+    assert.ok(!msgs.some((x) => /^Cover via|Inline images/.test(x)), "no image stage ran");
+  });
+
+  it("writeIfSiteGenerates: unreadable fails closed, an error from the write is rethrown", async () => {
+    const originalError = console.error;
+    console.error = () => undefined;
+    try {
+      controlRows({ generatorError: true });
+      assert.deepEqual(await m.generator.writeIfSiteGenerates(async () => 1, fake as never), { ok: false, reason: "unreadable" });
+      controlRows({});
+      assert.deepEqual(await m.generator.writeIfSiteGenerates(async () => 1, fake as never), { ok: true, value: 1 });
+      await assert.rejects(
+        m.generator.writeIfSiteGenerates(async () => {
+          throw new Error("unique slug");
+        }, fake as never),
+        /unique slug/
+      );
+    } finally {
+      console.error = originalError;
+    }
+  });
+
+  it("setGenerator holds the generator lock exclusively", async () => {
+    controlRows({});
+    await store().setGenerator({
+      expect: "site",
+      log: { refType: "PipelineGenerator", refId: "generator", status: "ok", message: "m", meta: { generator: "jarvis" } },
+    });
+    assert.equal(fake.raw().length, 1);
+    assert.match(fake.raw()[0].op, /pg_advisory_xact_lock\(hashtext/);
+    assert.doesNotMatch(fake.raw()[0].op, /shared/);
+  });
+});
+
+describe("prisma store: createIntake re-checks the generator, the daily cap and the gap under its locks", () => {
+  const base = (over: Record<string, unknown> = {}) =>
+    ({
+      key: "jv-content-01JBXK2M3N",
+      payloadHash: "h",
+      blog: {
+        slug: "s",
+        title: "t",
+        excerpt: "e",
+        image: "",
+        category: "",
+        tags: [],
+        readingTime: "1 min read",
+        body: "b",
+        faqs: [],
+        reviewState: "approved",
+        reviewReasons: [],
+        criticScore: 90,
+        publishAt: new Date(NOW.getTime() + 20 * HOUR),
+        contentCluster: "",
+        targetKeyword: "",
+        date: "2026-11-04",
+      },
+      social: { body: "li", imageUrl: "", status: "scheduled", reviewReasons: [], criticScore: 90, scheduledFor: new Date(NOW.getTime() + 22 * HOUR) },
+      log: { message: "m", meta: {} },
+      limits: { dayStart: new Date(NOW.getTime() - HOUR), maxPerDay: 2, minGapMs: 5 * HOUR, now: NOW },
+      ...over,
+    }) as never;
+
+  beforeEach(() => {
+    fake.handlers["blogPost.aggregate"] = () => ({ _max: { sortOrder: 1 } });
+  });
+
+  it("refuses when the generator under the lock is site", async () => {
+    controlRows({});
+    assert.deepEqual(await store().createIntake(base()), { ok: false, reason: "generator", generator: "site" });
+    assert.equal(fake.of("blogPost", "create").length, 0);
+  });
+
+  it("refuses at the daily cap, counting today's accepted intakes", async () => {
+    controlRows({ generator: jarvisGenerates });
+    fake.handlers["generationLog.count"] = () => 2;
+    assert.deepEqual(await store().createIntake(base()), { ok: false, reason: "daily_cap", accepted: 2 });
+    const where = (fake.of("generationLog", "count")[0].args as { where: Record<string, unknown> }).where;
+    assert.deepEqual(where, { stage: "jarvis", refType: "Intake", status: "ok", createdAt: { gte: new Date(NOW.getTime() - HOUR) } });
+    assert.equal(fake.of("blogPost", "create").length, 0);
+  });
+
+  it("an explicit time inside the gap is refused; a next-slot time is redrawn after the latest scheduled blog", async () => {
+    controlRows({ generator: jarvisGenerates });
+    const near = new Date(NOW.getTime() + 21 * HOUR);
+    const latest = new Date(NOW.getTime() + 40 * HOUR);
+    fake.handlers["blogPost.findFirst"] = (args) =>
+      (args as { orderBy?: unknown }).orderBy ? { publishAt: latest } : { publishAt: near };
+    assert.deepEqual(await store().createIntake(base()), { ok: false, reason: "gap", near });
+
+    fake.calls = [];
+    fake.handlers["blogPost.create"] = () => ({ id: "b9" });
+    fake.handlers["socialPost.create"] = () => ({ id: "li9" });
+    const seen: Array<Date | null> = [];
+    const to = new Date(NOW.getTime() + 46 * HOUR);
+    const liTo = new Date(NOW.getTime() + 50 * HOUR);
+    const redraw = (l: Date | null) => {
+      seen.push(l);
+      return { publishAt: to, scheduledFor: liTo };
+    };
+    const r = await store().createIntake(base({ limits: { dayStart: NOW, maxPerDay: 2, minGapMs: 5 * HOUR, now: NOW, redraw } }));
+    assert.equal(r.ok, true);
+    assert.deepEqual(seen, [latest]);
+    assert.equal((fake.of("blogPost", "create")[0].args as { data: { publishAt: Date } }).data.publishAt, to);
+    assert.equal((fake.of("socialPost", "create")[0].args as { data: { scheduledFor: Date } }).data.scheduledFor, liTo);
+    const gapWhere = (fake.of("blogPost", "findFirst")[0].args as { where: { publishAt: unknown } }).where.publishAt;
+    assert.deepEqual(gapWhere, { gt: new Date(NOW.getTime() + 15 * HOUR), lt: new Date(NOW.getTime() + 25 * HOUR) });
+  });
+
+  it("a needs_review blog skips the gap check", async () => {
+    controlRows({ generator: jarvisGenerates });
+    fake.handlers["blogPost.create"] = () => ({ id: "b9" });
+    fake.handlers["blogPost.findFirst"] = () => ({ publishAt: new Date(NOW.getTime() + 20 * HOUR) });
+    const r = await store().createIntake(base({ social: null, blog: { ...(base() as { blog: object }).blog, reviewState: "needs_review" } }));
+    assert.equal(r.ok, true);
   });
 });

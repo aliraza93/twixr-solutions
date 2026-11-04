@@ -51,6 +51,8 @@ export type ControlConfig = {
   criticMinScore: number;
   /** Minimum hours between two pipeline blogs (PIPELINE_MIN_GAP_HOURS_MIN). */
   minGapHours: number;
+  /** Pipeline blogs per day (PIPELINE_MAX_PER_DAY); also the intake's daily cap. */
+  maxPerDay: number;
   timezone: string;
   crons: Array<{ path: string; schedule: string }>;
 };

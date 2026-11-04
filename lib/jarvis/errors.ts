@@ -14,6 +14,7 @@ export type ControlErrorCode =
   | "override_required"
   | "idempotency_mismatch"
   | "generator_mismatch"
+  | "daily_cap"
   | "internal";
 
 export class ControlError extends Error {

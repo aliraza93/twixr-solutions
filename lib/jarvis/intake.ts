@@ -1,4 +1,6 @@
 import { createHash } from "node:crypto";
+import { normalizeBlogText } from "@/lib/cms/blog";
+import { stripEmDashes } from "@/lib/content/strip-em-dashes";
 import { ControlError } from "@/lib/jarvis/errors";
 import { blogGate, socialGate, type GateOptions } from "@/lib/jarvis/gates";
 import { DEFAULT_GENERATOR } from "@/lib/jarvis/generator";
@@ -23,8 +25,12 @@ import { SITE_URL } from "@/lib/seo";
  * still the only publisher.
  *
  * Refused outright (nothing stored): the generator is not Jarvis, a metadata
- * hard fail (the slug becomes the URL), a duplicate slug, title or topic.
- * Any other gate failure is stored as needs_review with its reasons.
+ * hard fail (the slug becomes the URL), a duplicate slug, title or topic, the
+ * daily cap, an explicit time inside the minimum gap of another scheduled
+ * blog. Any other gate failure is stored as needs_review with its reasons.
+ *
+ * Text goes through the same normalisers as every stored post (no em dashes,
+ * no leading H1) before the gates run, so the gates judge what is stored.
  */
 
 /** Unique external URLs checked per intake; more is a review reason, not a fetch storm. */
@@ -42,6 +48,22 @@ export function intakePayloadHash(input: IntakeInput): string {
 
 function siteHost(): string {
   return new URL(SITE_URL).hostname.replace(/^www\./, "");
+}
+
+/** The stored form of the submission: upsertBlogPost's normalisers, plus the LinkedIn copy's. */
+export function normalizeIntake(input: IntakeInput): IntakeInput {
+  const text = normalizeBlogText({ title: input.title, excerpt: input.excerpt, body: input.body, faqs: input.faqs });
+  return {
+    ...input,
+    ...text,
+    targetKeyword: stripEmDashes(input.targetKeyword),
+    ...(input.topic !== undefined ? { topic: stripEmDashes(input.topic) } : {}),
+    ...(input.linkedin ? { linkedin: { ...input.linkedin, body: stripEmDashes(input.linkedin.body) } } : {}),
+  };
+}
+
+function utcDayStart(at: Date): Date {
+  return new Date(Date.UTC(at.getUTCFullYear(), at.getUTCMonth(), at.getUTCDate()));
 }
 
 /** External http(s) URLs in the body, the declared sources and the images; site links are checked by the allowlist. */
@@ -76,6 +98,15 @@ function matchesView(matches: IntakeMatch[]) {
     score: 1,
     reason: m.kind === "slug" ? `Slug already exists: ${m.slug}` : `Duplicate title: ${m.title}`,
   }));
+}
+
+function generatorMismatch(generator: string): ControlError {
+  return new ControlError(
+    409,
+    "generator_mismatch",
+    "The site still generates its own posts; set the generator to jarvis before submitting",
+    { generator }
+  );
 }
 
 export function createIntakeUseCase(deps: ControlDeps, gateOptions: Omit<GateOptions, "internalAllowlist">) {
@@ -131,32 +162,31 @@ export function createIntakeUseCase(deps: ControlDeps, gateOptions: Omit<GateOpt
   }
 
   /** The pipeline's own next slot: its human-hour draw, after the minimum gap behind the last scheduled blog. */
-  async function nextSlot(current: Date): Promise<Date> {
-    const last = await store.latestScheduledBlogAt(current);
+  function slotAfter(last: Date | null, current: Date): Date {
     const from = last
       ? new Date(Math.max(current.getTime(), last.getTime() + config.minGapHours * HOUR_MS))
       : current;
     return deps.drawBlogPublishAt(from);
   }
 
+  /** A refused submission whose key was meanwhile recorded (a parallel twin) answers as a replay. */
+  async function replayIfRecorded(key: string, payloadHash: string) {
+    const now = await store.findIntake(key);
+    return now ? replay(now, payloadHash) : null;
+  }
+
   return {
-    async submit(input: IntakeInput): Promise<{ status: number; body: unknown }> {
-      const key = input.idempotencyKey;
-      const payloadHash = intakePayloadHash(input);
+    async submit(raw: IntakeInput): Promise<{ status: number; body: unknown }> {
+      const key = raw.idempotencyKey;
+      const payloadHash = intakePayloadHash(raw);
+      const input = normalizeIntake(raw);
 
       const prior = await store.findIntake(key);
       if (prior) return replay(prior, payloadHash);
 
       // D-046: only one side writes posts. Jarvis flips the switch first.
       const generator = (await store.generatorControl())?.generator ?? DEFAULT_GENERATOR;
-      if (generator !== "jarvis") {
-        throw new ControlError(
-          409,
-          "generator_mismatch",
-          "The site still generates its own posts; set the generator to jarvis before submitting",
-          { generator }
-        );
-      }
+      if (generator !== "jarvis") throw generatorMismatch(generator);
 
       const current = deps.now();
       const explicitAt = input.publishAt === "next_slot" ? null : checkWindow(new Date(input.publishAt), current, "publishAt");
@@ -186,6 +216,9 @@ export function createIntakeUseCase(deps: ControlDeps, gateOptions: Omit<GateOpt
         store.duplicateCheck({ topic, angle: input.excerpt, pillar: input.pillar ?? "Jarvis" }),
       ]);
       if (blogMatches.length || topicCheck.blocked) {
+        // The duplicate may be this very submission, recorded by a parallel twin.
+        const replayed = await replayIfRecorded(key, payloadHash);
+        if (replayed) return replayed;
         await refuse(
           key,
           409,
@@ -225,7 +258,9 @@ export function createIntakeUseCase(deps: ControlDeps, gateOptions: Omit<GateOpt
         needsOverride: gate.needsOverride,
       };
       const scheduleBlog = input.approve && blogGateView.passed;
-      const publishAt = scheduleBlog ? explicitAt ?? (await nextSlot(current)) : explicitAt;
+      const publishAt = scheduleBlog
+        ? explicitAt ?? slotAfter(await store.latestScheduledBlogAt(current), current)
+        : explicitAt;
 
       let social: NewIntakeSocial | null = null;
       let socialGateView: GateView | null = null;
@@ -262,9 +297,26 @@ export function createIntakeUseCase(deps: ControlDeps, gateOptions: Omit<GateOpt
       const state = scheduleBlog ? "scheduled" : "needs_review";
       const contentCluster = input.pillar?.split("/")[1]?.trim() || input.pillar || "";
 
+      // The link checks took time: the explicit time must still be a minute ahead.
+      if (explicitAt) checkWindow(explicitAt, deps.now(), "publishAt");
+
       const result = await store.createIntake({
         key,
         payloadHash,
+        limits: {
+          dayStart: utcDayStart(current),
+          maxPerDay: config.maxPerDay,
+          minGapMs: config.minGapHours * HOUR_MS,
+          now: current,
+          ...(scheduleBlog && !explicitAt
+            ? {
+                redraw: (latest: Date | null) => {
+                  const at = slotAfter(latest, current);
+                  return { publishAt: at, scheduledFor: input.linkedin ? deps.drawLinkedInAt(at) : null };
+                },
+              }
+            : {}),
+        },
         blog: {
           slug: input.slug,
           title: input.title,
@@ -300,12 +352,34 @@ export function createIntakeUseCase(deps: ControlDeps, gateOptions: Omit<GateOpt
       });
 
       if (!result.ok) {
-        if (result.reason === "replay") return replay(result.record, payloadHash);
-        if (result.reason === "duplicate") {
-          await refuse(key, 409, "duplicate", "A blog with this slug or title already exists", {
-            risk: 1,
-            matches: matchesView(result.matches),
-          });
+        switch (result.reason) {
+          case "replay":
+            return replay(result.record, payloadHash);
+          case "generator":
+            throw generatorMismatch(result.generator);
+          case "daily_cap":
+            throw new ControlError(
+              409,
+              "daily_cap",
+              `The site already accepted ${result.accepted} intake(s) today (UTC), its daily cap of ${config.maxPerDay}`,
+              { cap: config.maxPerDay, accepted: result.accepted }
+            );
+          case "gap":
+            throw new ControlError(
+              400,
+              "invalid_request",
+              `publishAt must be at least ${config.minGapHours} hours from every other scheduled blog`,
+              { field: "publishAt", near: result.near, minGapHours: config.minGapHours }
+            );
+          case "duplicate": {
+            const replayed = await replayIfRecorded(key, payloadHash);
+            if (replayed) return replayed;
+            await refuse(key, 409, "duplicate", "A blog with this slug or title already exists", {
+              risk: 1,
+              matches: matchesView(result.matches),
+            });
+            break;
+          }
         }
         throw new ControlError(409, "conflict", "Another write raced this one; try again with the same key");
       }
@@ -314,10 +388,10 @@ export function createIntakeUseCase(deps: ControlDeps, gateOptions: Omit<GateOpt
         status: 201,
         body: {
           intake: { key, replayed: false, receivedAt: current },
-          blog: { id: result.blogPostId, slug: input.slug, state, publishAt },
+          blog: { id: result.blogPostId, slug: input.slug, state, publishAt: result.publishAt },
           social:
             result.socialPostId && social
-              ? { id: result.socialPostId, state: social.status, scheduledFor: social.scheduledFor }
+              ? { id: result.socialPostId, state: social.status, scheduledFor: result.scheduledFor }
               : null,
           gates,
         },

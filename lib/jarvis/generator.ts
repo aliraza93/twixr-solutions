@@ -1,3 +1,4 @@
+import type { Prisma, PrismaClient } from "@prisma/client";
 import { requireDb } from "@/lib/cms/db";
 import { isDatabaseConfigured } from "@/lib/cms/env";
 import { JARVIS_STAGE, type LogReader } from "@/lib/jarvis/pause";
@@ -18,6 +19,19 @@ export const GENERATOR_REF_ID = "generator";
 export const GENERATORS = ["site", "jarvis"] as const;
 export type Generator = (typeof GENERATORS)[number];
 export const DEFAULT_GENERATOR: Generator = "site";
+
+/**
+ * Advisory lock key for the switch. setGenerator holds it exclusively; a site
+ * generation writing its first row and an intake hold it, so a switch cannot
+ * land between their generator check and their insert.
+ */
+export const GENERATOR_LOCK_KEY = "jarvis:pipeline-generator";
+
+type Tx = Prisma.TransactionClient;
+
+export async function lockGeneratorShared(tx: Tx): Promise<void> {
+  await tx.$queryRaw`SELECT 1 AS locked FROM (SELECT pg_advisory_xact_lock_shared(hashtext(${GENERATOR_LOCK_KEY}))) AS l`;
+}
 
 export type GeneratorControl = {
   generator: Generator;
@@ -86,4 +100,44 @@ export function generationSkipMessage(reason: "jarvis" | "unreadable"): string {
   return reason === "jarvis"
     ? "Generation handed to Jarvis"
     : "Generator setting unreadable; generation skipped, publishing continues";
+}
+
+/** The generator could not be read inside the write transaction. */
+class GeneratorReadError extends Error {}
+
+export type GuardedWrite<T> = { ok: true; value: T } | { ok: false; reason: "jarvis" | "unreadable" };
+
+/**
+ * Runs `write` in one transaction that holds the generator lock (shared) and
+ * re-reads the switch first: it writes only while the site still generates.
+ * A failed read or a lock timeout counts as "unreadable" and writes nothing
+ * (fail closed); an error from `write` itself is thrown as before.
+ */
+export async function writeIfSiteGenerates<T>(
+  write: (tx: Tx) => Promise<T>,
+  db: Pick<PrismaClient, "$transaction"> = requireDb()
+): Promise<GuardedWrite<T>> {
+  try {
+    return await db.$transaction(
+      async (tx): Promise<GuardedWrite<T>> => {
+        let control: GeneratorControl | null;
+        try {
+          await lockGeneratorShared(tx);
+          control = await getGeneratorControl(tx);
+        } catch (error) {
+          throw new GeneratorReadError(error instanceof Error ? error.message : "unknown");
+        }
+        if ((control?.generator ?? DEFAULT_GENERATOR) !== "site") return { ok: false, reason: "jarvis" };
+        return { ok: true, value: await write(tx) };
+      },
+      { timeout: 10_000, maxWait: 5_000 }
+    );
+  } catch (error) {
+    const code = (error as { code?: unknown } | null)?.code;
+    if (error instanceof GeneratorReadError || code === "P2028" || code === "P2034") {
+      console.error("jarvis generator check failed inside the write, writing nothing:", (error as Error).message);
+      return { ok: false, reason: "unreadable" };
+    }
+    throw error;
+  }
 }

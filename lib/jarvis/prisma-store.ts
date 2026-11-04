@@ -5,7 +5,7 @@ import { createRunId } from "@/lib/pipeline/log";
 import { checkManualTopicDuplicate } from "@/lib/pipeline/manual/duplicate-check";
 import { getSiteContentInventory, inventoryUrlAllowlist } from "@/lib/pipeline/seo/inventory";
 import { pipeline } from "@/lib/pipeline/config";
-import { DEFAULT_GENERATOR, getGeneratorControl } from "@/lib/jarvis/generator";
+import { DEFAULT_GENERATOR, GENERATOR_LOCK_KEY, getGeneratorControl } from "@/lib/jarvis/generator";
 import { JARVIS_SOURCE, JARVIS_STAGE, getPipelineControl } from "@/lib/jarvis/pause";
 import { PAUSE_MARKER, blogStateOf, socialStateOf } from "@/lib/jarvis/states";
 import type {
@@ -205,6 +205,8 @@ async function locked<T>(db: PrismaClient, fn: (tx: Tx) => Promise<T>, onConflic
     throw error;
   }
 }
+
+const SCHEDULED_BLOG = { origin: "pipeline", published: false, reviewState: "approved" } as const;
 
 /** refType of the generation_logs row that records an accepted intake under its key (refId). */
 export const INTAKE_REF_TYPE = "Intake";
@@ -662,7 +664,7 @@ export function createPrismaControlStore(getDb: () => PrismaClient = requireDb):
         db(),
         async (tx) => {
           // One switch writer at a time; the re-read below sees the latest row.
-          await advisoryLock(tx, "jarvis:pipeline-generator");
+          await advisoryLock(tx, GENERATOR_LOCK_KEY);
           const control = await getGeneratorControl(tx);
           if ((control?.generator ?? DEFAULT_GENERATOR) !== expect) return { ok: false };
           await tx.generationLog.create({ data: logData(log) });
@@ -695,19 +697,55 @@ export function createPrismaControlStore(getDb: () => PrismaClient = requireDb):
         return await locked<CreateIntakeResult>(
           db(),
           async (tx) => {
-            // Every intake write takes this lock, so the key, slug and title
+            // The generator lock first (the order setGenerator and the cron's
+            // guarded insert also use), so the switch cannot move under this
+            // write; then the intake lock, so the key, slug, title, cap and gap
             // re-checks below and the inserts are atomic against each other.
+            await advisoryLock(tx, GENERATOR_LOCK_KEY);
             await advisoryLock(tx, "jarvis:intake");
+            const generator = (await getGeneratorControl(tx))?.generator ?? DEFAULT_GENERATOR;
+            if (generator !== "jarvis") return { ok: false, reason: "generator", generator };
             const prior = await readIntake(tx, data.key);
             if (prior) return { ok: false, reason: "replay", record: prior };
             const matches = await blogMatches(tx, data.blog.slug, data.blog.title);
             if (matches.length) return { ok: false, reason: "duplicate", matches };
+
+            const { limits } = data;
+            const accepted = await tx.generationLog.count({
+              where: { stage: JARVIS_STAGE, refType: INTAKE_REF_TYPE, status: "ok", createdAt: { gte: limits.dayStart } },
+            });
+            if (accepted >= limits.maxPerDay) return { ok: false, reason: "daily_cap", accepted };
+
+            let publishAt = data.blog.publishAt;
+            let scheduledFor = data.social?.scheduledFor ?? null;
+            if (data.blog.reviewState === "approved" && publishAt) {
+              const at = publishAt.getTime();
+              const near = await tx.blogPost.findFirst({
+                where: {
+                  ...SCHEDULED_BLOG,
+                  publishAt: { gt: new Date(at - limits.minGapMs), lt: new Date(at + limits.minGapMs) },
+                },
+                select: { publishAt: true },
+              });
+              if (near?.publishAt) {
+                if (!limits.redraw) return { ok: false, reason: "gap", near: near.publishAt };
+                const latest = await tx.blogPost.findFirst({
+                  where: { ...SCHEDULED_BLOG, publishAt: { gt: limits.now } },
+                  orderBy: { publishAt: "desc" },
+                  select: { publishAt: true },
+                });
+                const redrawn = limits.redraw(latest?.publishAt ?? null);
+                publishAt = redrawn.publishAt;
+                scheduledFor = data.social ? redrawn.scheduledFor : null;
+              }
+            }
 
             const order = await tx.blogPost.aggregate({ _max: { sortOrder: true } });
             const { faqs, reviewReasons, ...blog } = data.blog;
             const created = await tx.blogPost.create({
               data: {
                 ...blog,
+                publishAt,
                 faqs: faqs as Prisma.InputJsonValue,
                 reviewReasons: reviewReasons as Prisma.InputJsonValue,
                 published: false,
@@ -726,6 +764,7 @@ export function createPrismaControlStore(getDb: () => PrismaClient = requireDb):
                 data: {
                   ...social,
                   reviewReasons: socialReasons as Prisma.InputJsonValue,
+                  scheduledFor: scheduledFor ?? social.scheduledFor,
                   channel: "linkedin",
                   visibility: "PUBLIC",
                   blogPostId: created.id,
@@ -743,6 +782,8 @@ export function createPrismaControlStore(getDb: () => PrismaClient = requireDb):
               key: data.key,
               blogPostId: created.id,
               socialPostId,
+              publishAt: publishAt?.toISOString() ?? null,
+              scheduledFor: socialPostId ? (scheduledFor ?? data.social?.scheduledFor)?.toISOString() ?? null : null,
             };
             const row = (refType: ControlLog["refType"], refId: string, message: string, extra = {}) => ({
               data: { ...logData({ refType, refId, status: "ok", message, meta: { ...meta, ...extra } }), runId },
@@ -757,7 +798,13 @@ export function createPrismaControlStore(getDb: () => PrismaClient = requireDb):
             await tx.generationLog.create(
               row("Intake", data.key, data.log.message, { payloadHash: data.payloadHash })
             );
-            return { ok: true, blogPostId: created.id, socialPostId };
+            return {
+              ok: true,
+              blogPostId: created.id,
+              socialPostId,
+              publishAt,
+              scheduledFor: socialPostId ? scheduledFor ?? data.social?.scheduledFor ?? null : null,
+            };
           },
           { ok: false, reason: "conflict" }
         );

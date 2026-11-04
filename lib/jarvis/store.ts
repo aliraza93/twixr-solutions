@@ -180,13 +180,31 @@ export type NewIntake = {
   payloadHash: string;
   blog: NewIntakeBlog;
   social: NewIntakeSocial | null;
+  /** Re-checked under the lock, against what other writers committed meanwhile. */
+  limits: {
+    /** Accepted intakes since this time (UTC day start) may not reach maxPerDay. */
+    dayStart: Date;
+    maxPerDay: number;
+    /** A scheduled blog keeps at least this far from every other scheduled blog. */
+    minGapMs: number;
+    now: Date;
+    /**
+     * Set for a next-slot time: redraws the blog (and its LinkedIn post)
+     * after the latest scheduled blog. Unset for an explicit time, which is
+     * refused instead of moved.
+     */
+    redraw?: (latestScheduled: Date | null) => { publishAt: Date; scheduledFor: Date | null };
+  };
   /** Written with the new ids filled in, in the same transaction. */
   log: { message: string; meta: Record<string, unknown> };
 };
 
 export type CreateIntakeResult =
-  | { ok: true; blogPostId: string; socialPostId: string | null }
+  | { ok: true; blogPostId: string; socialPostId: string | null; publishAt: Date | null; scheduledFor: Date | null }
   | { ok: false; reason: "replay"; record: IntakeRecord }
+  | { ok: false; reason: "generator"; generator: Generator }
+  | { ok: false; reason: "daily_cap"; accepted: number }
+  | { ok: false; reason: "gap"; near: Date }
   | { ok: false; reason: "duplicate"; matches: IntakeMatch[] }
   | { ok: false; reason: "conflict" };
 
@@ -265,9 +283,11 @@ export interface ControlStore {
   /** Latest future publishAt among approved pipeline blogs, so a next-slot draw queues after it. */
   latestScheduledBlogAt(now: Date): Promise<Date | null>;
   /**
-   * One transaction under the intake advisory lock: re-check the key (replay),
-   * the slug and the title (duplicate), then insert the blog, its LinkedIn
-   * post and their log rows, and the Intake row that records the key.
+   * One transaction under the generator lock, then the intake lock: re-check
+   * the generator (must be jarvis), the key (replay), the slug and the title
+   * (duplicate), the daily cap and, for a scheduled blog, the minimum gap
+   * (redraw a next-slot time, refuse an explicit one), then insert the blog,
+   * its LinkedIn post and their log rows, and the Intake row for the key.
    */
   createIntake(data: NewIntake): Promise<CreateIntakeResult>;
 

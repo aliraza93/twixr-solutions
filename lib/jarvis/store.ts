@@ -1,5 +1,6 @@
 import type { DuplicateCheckResult } from "@/lib/pipeline/manual/duplicate-check";
 import type { PipelineControl } from "@/lib/jarvis/pause";
+import type { BlogState, SocialState } from "@/lib/jarvis/states";
 
 /**
  * Everything the control API reads or writes, behind one interface so the
@@ -176,7 +177,10 @@ export interface ControlStore {
     data: NewBrief,
     log: Omit<ControlLog, "refId">
   ): Promise<{ ok: true; brief: BriefRow } | { ok: false; reason: "duplicate"; id: string } | { ok: false; reason: "conflict" }>;
-  /** Conditional on the row and its links still matching `guard`; false means it moved. */
+  /**
+   * Conditional on the row and its links still matching `guard` (and
+   * `guard.expect`, checked under the lock); false means it moved.
+   */
   updateBlog(id: string, guard: BlogGuard, data: BlogUpdate, log: ControlLog): Promise<boolean>;
   updateSocial(id: string, guard: SocialGuard, data: SocialUpdate, log: ControlLog): Promise<boolean>;
   /**
@@ -225,6 +229,8 @@ export type Reschedule = { blogs: Move[]; social: Move[] };
 
 export type BlogGuard = {
   updatedAt: Date;
+  /** Jarvis's conditional write: re-checked after the row lock, before the update. */
+  expect?: { state: BlogState; updatedAt: Date };
   /**
    * Moving to scheduled: no LinkedIn post of this blog may be scheduled
    * before `noneScheduledBefore`. Pausing: none may be scheduled at all.
@@ -237,4 +243,6 @@ export type SocialGuard = {
   scheduledFor: Date;
   /** Moving to scheduled: the linked blog must be published or approved to go live by this time. */
   blogLiveBy?: Date;
+  /** Jarvis's conditional write: re-checked after the row lock, before the update. */
+  expect?: { state: SocialState; scheduledFor: Date };
 };

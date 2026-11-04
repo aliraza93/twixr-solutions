@@ -201,6 +201,58 @@ describe("prisma store: guarded writes", () => {
     await assert.rejects(write, /connection lost/);
   });
 
+  it("updateBlog with expect reads the row after the locks and writes only if it still matches", async () => {
+    const updatedAt = new Date(NOW.getTime() - HOUR);
+    const at = new Date(NOW.getTime() + 5 * HOUR);
+    const write = () =>
+      store().updateBlog(
+        "b1",
+        { updatedAt, expect: { state: "needs_review", updatedAt }, social: { noneScheduledBefore: at } },
+        { reviewState: "approved", reviewReasons: [], publishAt: at },
+        log
+      );
+    fake.handlers["blogPost.updateMany"] = () => ({ count: 1 });
+    fake.handlers["blogPost.findUnique"] = () => ({ published: false, reviewState: "needs_review", reviewReasons: ["Paused by Jarvis"], updatedAt });
+    assert.equal(await write(), false, "paused is not needs_review");
+    assert.equal(fake.of("blogPost", "updateMany").length, 0);
+    assert.equal(fake.of("generationLog", "create").length, 0);
+
+    fake.reset();
+    fake.handlers["blogPost.updateMany"] = () => ({ count: 1 });
+    fake.handlers["blogPost.findUnique"] = () => ({ published: false, reviewState: "needs_review", reviewReasons: [], updatedAt });
+    assert.equal(await write(), true);
+    const order = fake.calls.map((c) => (c.model === "$raw" ? "lock" : `${c.model}.${c.op}`));
+    assert.deepEqual(order.slice(0, 4), ["lock", "lock", "blogPost.findUnique", "blogPost.updateMany"]);
+  });
+
+  it("updateSocial with expect compares the derived state and time under the lock", async () => {
+    const was = new Date(NOW.getTime() - HOUR);
+    const write = () =>
+      store().updateSocial(
+        "li1",
+        { status: "scheduled", scheduledFor: was, expect: { state: "scheduled", scheduledFor: was } },
+        { status: "needs_review", reviewReasons: ["Paused by Jarvis"], scheduledFor: was },
+        { ...log, refType: "SocialPost", refId: "li1" }
+      );
+    fake.handlers["socialPost.updateMany"] = () => ({ count: 1 });
+    fake.handlers["socialPost.findUnique"] = () => ({ status: "scheduled", reviewReasons: [], scheduledFor: new Date(was.getTime() + 1) });
+    assert.equal(await write(), false);
+    assert.equal(fake.of("socialPost", "updateMany").length, 0);
+    fake.handlers["socialPost.findUnique"] = () => ({ status: "scheduled", reviewReasons: [], scheduledFor: was });
+    assert.equal(await write(), true);
+    assert.equal(fake.of("socialPost", "updateMany").length, 1);
+  });
+
+  it("updateBlog without expect does not read the row first", async () => {
+    await store().updateBlog(
+      "b1",
+      { updatedAt: NOW, social: { noneScheduled: true } },
+      { reviewState: "needs_review", reviewReasons: [], publishAt: null },
+      log
+    );
+    assert.equal(fake.of("blogPost", "findUnique").length, 0);
+  });
+
   it("updateSocial to scheduled locks its blog first and guards on the blog being live by then", async () => {
     fake.handlers["socialPost.updateMany"] = () => ({ count: 1 });
     fake.rawHandler = (sql) => (sql.startsWith('SELECT "blogPostId"') ? [{ blogPostId: "b1" }] : []);

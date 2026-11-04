@@ -100,30 +100,64 @@ export const createBriefBody = z
 
 export type CreateBriefInput = z.infer<typeof createBriefBody>;
 
+/**
+ * Optional conditional write: the state (and blog updatedAt, or LinkedIn
+ * scheduledFor) Jarvis saw when Ali approved. Checked inside the locked
+ * transaction; a mismatch is 409 conflict with the current values.
+ */
+export const blogExpect = z
+  .object({ state: z.enum(BLOG_STATES), updatedAt: isoDateTime })
+  .strict();
+export const socialExpect = z
+  .object({ state: z.enum(SOCIAL_STATES), scheduledFor: isoDateTime })
+  .strict();
+
+const draftActionFields = {
+  action: z.enum(DRAFT_ACTIONS),
+  at: isoDateTime.optional(),
+  reason: z.string().trim().min(1).max(280).optional(),
+  /**
+   * Passes findings the gate cannot re-check (dead links, duplicates, a
+   * critic score under CRITIC_MIN_SCORE). Jarvis sends it only for a draft
+   * Ali approved himself, never under an autopilot policy.
+   */
+  override: z.boolean().optional(),
+};
+
+function refineDraftAction(
+  value: { action: string; at?: string; override?: boolean },
+  ctx: z.RefinementCtx
+) {
+  if (value.override && value.action === "pause") {
+    ctx.addIssue({ code: "custom", path: ["override"], message: "pause takes no override" });
+  }
+  if (value.action === "schedule" && !value.at) {
+    ctx.addIssue({ code: "custom", path: ["at"], message: "schedule needs at" });
+  }
+  if ((value.action === "pause" || value.action === "resume") && value.at) {
+    ctx.addIssue({ code: "custom", path: ["at"], message: `${value.action} takes no at` });
+  }
+}
+
+/** Either kind's body; the route parses with draftActionBodyFor(kind). */
 export const draftActionBody = z
-  .object({
-    action: z.enum(DRAFT_ACTIONS),
-    at: isoDateTime.optional(),
-    reason: z.string().trim().min(1).max(280).optional(),
-    /**
-     * Passes findings the gate cannot re-check (dead links, duplicates, a
-     * critic score under CRITIC_MIN_SCORE). Jarvis sends it only for a draft
-     * Ali approved himself, never under an autopilot policy.
-     */
-    override: z.boolean().optional(),
-  })
+  .object({ ...draftActionFields, expect: z.union([blogExpect, socialExpect]).optional() })
   .strict()
-  .superRefine((value, ctx) => {
-    if (value.override && value.action === "pause") {
-      ctx.addIssue({ code: "custom", path: ["override"], message: "pause takes no override" });
-    }
-    if (value.action === "schedule" && !value.at) {
-      ctx.addIssue({ code: "custom", path: ["at"], message: "schedule needs at" });
-    }
-    if ((value.action === "pause" || value.action === "resume") && value.at) {
-      ctx.addIssue({ code: "custom", path: ["at"], message: `${value.action} takes no at` });
-    }
-  });
+  .superRefine(refineDraftAction);
+
+export const blogDraftActionBody = z
+  .object({ ...draftActionFields, expect: blogExpect.optional() })
+  .strict()
+  .superRefine(refineDraftAction);
+
+export const socialDraftActionBody = z
+  .object({ ...draftActionFields, expect: socialExpect.optional() })
+  .strict()
+  .superRefine(refineDraftAction);
+
+export function draftActionBodyFor(kind: "blog" | "social"): z.ZodType<DraftActionInput> {
+  return kind === "blog" ? blogDraftActionBody : socialDraftActionBody;
+}
 
 export type DraftActionInput = z.infer<typeof draftActionBody>;
 

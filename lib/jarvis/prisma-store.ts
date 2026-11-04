@@ -5,7 +5,7 @@ import { createRunId } from "@/lib/pipeline/log";
 import { checkManualTopicDuplicate } from "@/lib/pipeline/manual/duplicate-check";
 import { getSiteContentInventory, inventoryUrlAllowlist } from "@/lib/pipeline/seo/inventory";
 import { JARVIS_SOURCE, JARVIS_STAGE, getPipelineControl } from "@/lib/jarvis/pause";
-import { PAUSE_MARKER } from "@/lib/jarvis/states";
+import { PAUSE_MARKER, blogStateOf, socialStateOf } from "@/lib/jarvis/states";
 import type {
   BlogGuard,
   ControlLog,
@@ -463,6 +463,20 @@ export function createPrismaControlStore(getDb: () => PrismaClient = requireDb):
         db(),
         async (tx) => {
           await lockBlog(tx, id);
+          if (guard.expect) {
+            // Read under the lock: nothing can change the row before the update below.
+            const row = await tx.blogPost.findUnique({
+              where: { id },
+              select: { published: true, reviewState: true, reviewReasons: true, updatedAt: true },
+            });
+            if (
+              !row ||
+              blogStateOf(row) !== guard.expect.state ||
+              row.updatedAt.getTime() !== guard.expect.updatedAt.getTime()
+            ) {
+              return false;
+            }
+          }
           const result = await tx.blogPost.updateMany({
             where: {
               id,
@@ -486,6 +500,19 @@ export function createPrismaControlStore(getDb: () => PrismaClient = requireDb):
         db(),
         async (tx) => {
           await lockSocial(tx, id);
+          if (guard.expect) {
+            const row = await tx.socialPost.findUnique({
+              where: { id },
+              select: { status: true, reviewReasons: true, scheduledFor: true },
+            });
+            if (
+              !row ||
+              socialStateOf(row) !== guard.expect.state ||
+              row.scheduledFor.getTime() !== guard.expect.scheduledFor.getTime()
+            ) {
+              return false;
+            }
+          }
           const result = await tx.socialPost.updateMany({
             where: {
               id,

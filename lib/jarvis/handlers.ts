@@ -65,11 +65,33 @@ function query(req: Request): Record<string, string> {
   return Object.fromEntries(new URL(req.url).searchParams);
 }
 
-async function body(req: Request): Promise<unknown> {
-  const text = await req.text();
-  if (Buffer.byteLength(text, "utf8") > MAX_BODY_BYTES) {
-    throw new ControlError(413, "payload_too_large", `Body over ${MAX_BODY_BYTES} bytes`);
+function tooLarge(): ControlError {
+  return new ControlError(413, "payload_too_large", `Body over ${MAX_BODY_BYTES} bytes`);
+}
+
+/** Refuse by Content-Length first, then read the stream with a hard cap. */
+async function readCapped(req: Request): Promise<string> {
+  const declared = Number(req.headers.get("content-length") ?? "");
+  if (Number.isFinite(declared) && declared > MAX_BODY_BYTES) throw tooLarge();
+  if (!req.body) return "";
+  const reader = req.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > MAX_BODY_BYTES) {
+      await reader.cancel().catch(() => undefined);
+      throw tooLarge();
+    }
+    chunks.push(value);
   }
+  return Buffer.concat(chunks).toString("utf8");
+}
+
+async function body(req: Request): Promise<unknown> {
+  const text = await readCapped(req);
   try {
     return JSON.parse(text);
   } catch {

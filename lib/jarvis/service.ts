@@ -17,11 +17,15 @@ import {
   type DraftAction,
 } from "@/lib/jarvis/states";
 import type {
+  BlogGuard,
   BlogRow,
   BriefRow,
   ControlLog,
   ControlStore,
   LogRow,
+  Move,
+  PastDue,
+  Reschedule,
   SocialRow,
   SocialSummary,
 } from "@/lib/jarvis/store";
@@ -38,6 +42,8 @@ export type ControlConfig = {
   autoPublish: boolean;
   criticFloor: number;
   criticMinScore: number;
+  /** Minimum hours between two pipeline blogs (PIPELINE_MIN_GAP_HOURS_MIN). */
+  minGapHours: number;
   timezone: string;
   crons: Array<{ path: string; schedule: string }>;
 };
@@ -54,6 +60,7 @@ export type ControlDeps = {
 export const MIN_LEAD_MS = 60_000;
 export const MAX_AHEAD_MS = 90 * 24 * 3600_000;
 const RUN_WINDOW_MS = 14 * 24 * 3600_000;
+const HOUR_MS = 3600_000;
 
 function socialSummaryView(s: SocialSummary) {
   return {
@@ -185,6 +192,29 @@ export function createControlService(deps: ControlDeps) {
     });
   }
 
+  /** Hard gate first; then earlier findings that only an override passes. */
+  async function enforceGate(
+    log: Omit<ControlLog, "status" | "message">,
+    label: string,
+    gate: GateResult,
+    override: boolean | undefined
+  ): Promise<void> {
+    if (!gate.ok) await refuseGate(log, label, gate);
+    if (gate.needsOverride.length === 0) return;
+    if (!override) {
+      throw new ControlError(
+        422,
+        "override_required",
+        "Earlier checks flagged this draft and cannot be re-run here; approve it with override only after Ali has seen it",
+        { reasons: gate.needsOverride }
+      );
+    }
+    log.meta.override = true;
+    log.meta.overridden = gate.needsOverride;
+  }
+
+  const gateOptions = { criticFloor: config.criticFloor, criticMinScore: config.criticMinScore };
+
   async function actOnBlog(id: string, input: DraftActionInput) {
     const post = await store.getBlog(id);
     if (!post || post.origin !== "pipeline") {
@@ -206,6 +236,7 @@ export function createControlService(deps: ControlDeps) {
 
     let data;
     let message: string;
+    let guard: BlogGuard;
     if (move.to === "scheduled") {
       const at = resolveTime(input.at, post.publishAt, () => deps.drawBlogPublishAt(current), current);
       const early = scheduledSocial.filter((s) => s.scheduledFor.getTime() < at.getTime());
@@ -218,11 +249,12 @@ export function createControlService(deps: ControlDeps) {
         );
       }
       const gate = blogGate(post, post.brief, {
-        criticFloor: config.criticFloor,
+        ...gateOptions,
         internalAllowlist: await store.internalAllowlist(),
       });
-      if (!gate.ok) await refuseGate({ refType: "BlogPost", refId: id, meta }, post.slug, gate);
+      await enforceGate({ refType: "BlogPost", refId: id, meta }, post.slug, gate, input.override);
       meta.publishAt = at.toISOString();
+      guard = { updatedAt: post.updatedAt, social: { noneScheduledBefore: at } };
       data = { reviewState: "approved" as const, reviewReasons: [], publishAt: at };
       message = `Jarvis ${input.action} blog ${post.slug}: publishes at ${at.toISOString()}`;
     } else {
@@ -234,6 +266,7 @@ export function createControlService(deps: ControlDeps) {
           { socialPostIds: scheduledSocial.map((s) => s.id) }
         );
       }
+      guard = { updatedAt: post.updatedAt, social: { noneScheduled: true } };
       data = {
         reviewState: "needs_review" as const,
         reviewReasons: pausedReasons(input.reason),
@@ -242,7 +275,7 @@ export function createControlService(deps: ControlDeps) {
       message = `Jarvis paused blog ${post.slug}`;
     }
 
-    const updated = await store.updateBlog(id, { updatedAt: post.updatedAt }, data, {
+    const updated = await store.updateBlog(id, guard, data, {
       refType: "BlogPost",
       refId: id,
       status: "ok",
@@ -279,13 +312,15 @@ export function createControlService(deps: ControlDeps) {
 
     let data;
     let message: string;
+    let blogLiveBy: Date | undefined;
     if (move.to === "scheduled") {
       const blogAt = post.blog?.publishAt;
       const after = blogAt && blogAt.getTime() > current.getTime() ? blogAt : current;
       const at = resolveTime(input.at, post.scheduledFor, () => deps.drawLinkedInAt(after), current);
-      const gate = await socialGate(post, post.blog, at, { criticFloor: config.criticFloor });
-      if (!gate.ok) await refuseGate({ refType: "SocialPost", refId: id, meta }, id, gate);
+      const gate = await socialGate(post, post.blog, at, gateOptions);
+      await enforceGate({ refType: "SocialPost", refId: id, meta }, id, gate, input.override);
       meta.scheduledFor = at.toISOString();
+      blogLiveBy = at;
       data = { status: "scheduled" as const, reviewReasons: [], scheduledFor: at };
       message = `Jarvis ${input.action} LinkedIn post ${id}: posts at ${at.toISOString()}`;
     } else {
@@ -299,7 +334,7 @@ export function createControlService(deps: ControlDeps) {
 
     const updated = await store.updateSocial(
       id,
-      { status: post.status, scheduledFor: post.scheduledFor },
+      { status: post.status, scheduledFor: post.scheduledFor, blogLiveBy },
       data,
       { refType: "SocialPost", refId: id, status: "ok", message, meta }
     );
@@ -310,7 +345,7 @@ export function createControlService(deps: ControlDeps) {
     return { draft: fresh ? socialView(fresh) : null };
   }
 
-  return {
+  const service = {
     async status() {
       const current = deps.now();
       const day = deps.dayKey(current);
@@ -434,7 +469,7 @@ export function createControlService(deps: ControlDeps) {
       }
 
       const extraSources = input.sources.slice(1);
-      const brief = await store.createBrief(
+      const created = await store.createBrief(
         {
           pillar: normalized.pillar,
           topic: normalized.topic,
@@ -461,8 +496,16 @@ export function createControlService(deps: ControlDeps) {
           },
         }
       );
+      if (!created.ok) {
+        if (created.reason === "duplicate") {
+          throw new ControlError(409, "duplicate", "A queued brief already has this topic", {
+            matches: [{ kind: "brief", id: created.id, title: normalized.topic, score: 1 }],
+          });
+        }
+        throw new ControlError(409, "conflict", "Another write raced this one; try again");
+      }
       return {
-        brief: briefView(brief),
+        brief: briefView(created.brief),
         destinations: input.destinations,
         duplicateCheck: {
           risk: duplicate.risk,
@@ -477,6 +520,7 @@ export function createControlService(deps: ControlDeps) {
     },
 
     async actOnPipeline(input: PipelineActionInput) {
+      const current = deps.now();
       const control = await store.pipelineControl();
       const paused = control?.paused ?? false;
       if (input.action === "pause" && paused) {
@@ -485,25 +529,69 @@ export function createControlService(deps: ControlDeps) {
       if (input.action === "resume" && !paused) {
         throw new ControlError(409, "invalid_transition", "The pipeline is not paused", { state: "running" });
       }
+      const reschedule =
+        input.action === "resume" ? planBacklog(await store.pastDue(current), current) : { blogs: [], social: [] };
       const reason = input.reason ?? "";
-      await store.writeLog({
-        refType: "Pipeline",
-        refId: PIPELINE_REF_ID,
-        status: "ok",
-        message: `Pipeline ${input.action === "pause" ? "paused" : "resumed"} from Jarvis${reason ? `: ${reason}` : ""}`,
-        meta: { source: JARVIS_SOURCE, action: input.action, reason },
+      const result = await store.setPipelineControl({
+        expectPaused: paused,
+        reschedule,
+        log: {
+          refType: "Pipeline",
+          refId: PIPELINE_REF_ID,
+          status: "ok",
+          message: `Pipeline ${input.action === "pause" ? "paused" : "resumed"} from Jarvis${reason ? `: ${reason}` : ""}`,
+          meta: { source: JARVIS_SOURCE, action: input.action, reason },
+        },
       });
+      if (!result.ok) {
+        throw new ControlError(409, "conflict", "The pipeline switch changed while this request ran; read status again");
+      }
       return {
         pipeline: {
           enabled: config.enabled,
           paused: input.action === "pause",
           running: config.enabled && input.action !== "pause",
-          changedAt: deps.now(),
+          changedAt: current,
           reason,
         },
+        rescheduled: result.applied,
       };
     },
   };
+
+  /**
+   * Past-due work after a pause must not all go out on the next tick. Blogs
+   * are redrawn one after another, each at least the pipeline's minimum gap
+   * after the previous (and after anything already scheduled), with the
+   * pipeline's own human-hour draw. LinkedIn posts follow the same spacing
+   * and never land before their blog's (new) time.
+   */
+  function planBacklog(due: PastDue, current: Date): Reschedule {
+    const gapMs = config.minGapHours * HOUR_MS;
+    const blogs: Move[] = [];
+    let prev: Date | null = due.lastScheduledBlogAt;
+    for (const b of due.blogs) {
+      const from = prev ? new Date(Math.max(current.getTime(), prev.getTime() + gapMs)) : current;
+      const to = deps.drawBlogPublishAt(from);
+      blogs.push({ id: b.id, from: b.publishAt, to });
+      prev = to;
+    }
+    const newBlogAt = new Map(blogs.map((m) => [m.id, m.to]));
+    const social: Move[] = [];
+    let prevLi: Date | null = null;
+    for (const p of due.social) {
+      let after = prevLi ? prevLi.getTime() + gapMs : current.getTime();
+      const blogAt =
+        (p.blogPostId && newBlogAt.get(p.blogPostId)) || (!p.blogPublished ? p.blogPublishAt : null);
+      if (blogAt) after = Math.max(after, blogAt.getTime());
+      const to = deps.drawLinkedInAt(new Date(Math.max(after, current.getTime())));
+      social.push({ id: p.id, from: p.scheduledFor, to });
+      prevLi = to;
+    }
+    return { blogs, social };
+  }
+
+  return service;
 }
 
 export type ControlService = ReturnType<typeof createControlService>;

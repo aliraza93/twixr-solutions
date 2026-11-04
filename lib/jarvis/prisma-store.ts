@@ -1,12 +1,20 @@
-import type { Prisma } from "@prisma/client";
+import type { Prisma, PrismaClient } from "@prisma/client";
 import { requireDb } from "@/lib/cms/db";
 import { remainingBriefCount } from "@/lib/pipeline/briefs";
 import { createRunId } from "@/lib/pipeline/log";
 import { checkManualTopicDuplicate } from "@/lib/pipeline/manual/duplicate-check";
 import { getSiteContentInventory, inventoryUrlAllowlist } from "@/lib/pipeline/seo/inventory";
-import { JARVIS_STAGE, getPipelineControl } from "@/lib/jarvis/pause";
+import { JARVIS_SOURCE, JARVIS_STAGE, getPipelineControl } from "@/lib/jarvis/pause";
 import { PAUSE_MARKER } from "@/lib/jarvis/states";
-import type { ControlLog, ControlStore, Page, RunSummary } from "@/lib/jarvis/store";
+import type {
+  BlogGuard,
+  ControlLog,
+  ControlStore,
+  Move,
+  Page,
+  RunSummary,
+  SocialGuard,
+} from "@/lib/jarvis/store";
 
 /** ControlStore over the pipeline's own Prisma tables. */
 
@@ -117,11 +125,58 @@ const socialSelect = {
 
 const SEVERITY: Record<string, number> = { skip: 0, ok: 1, warn: 2, fail: 3 };
 
-export function createPrismaControlStore(): ControlStore {
-  const db = () => requireDb();
+type CreateBriefResult = Awaited<ReturnType<ControlStore["createBrief"]>>;
+
+const SERIALIZABLE = { isolationLevel: "Serializable" as const };
+
+/** Postgres serialization failure or Prisma's write conflict code. */
+export function isSerializationFailure(error: unknown): boolean {
+  const code = (error as { code?: unknown } | null)?.code;
+  return code === "P2034" || code === "40001";
+}
+
+/** Guards for the cross-row LinkedIn link, evaluated inside the write. */
+export function blogLinkWhere(guard: BlogGuard["social"]): Prisma.BlogPostWhereInput {
+  return "noneScheduled" in guard
+    ? { socialPosts: { none: { status: "scheduled" } } }
+    : { socialPosts: { none: { status: "scheduled", scheduledFor: { lt: guard.noneScheduledBefore } } } };
+}
+
+export function socialLinkWhere(blogLiveBy: Date): Prisma.SocialPostWhereInput {
+  return {
+    OR: [
+      { blogPostId: null },
+      { blogPost: { published: true } },
+      { blogPost: { reviewState: "approved", publishAt: { lte: blogLiveBy } } },
+    ],
+  };
+}
+
+/** Run a guarded write at Serializable; a serialization failure means "moved". */
+async function serial<T>(db: PrismaClient, fn: (tx: Prisma.TransactionClient) => Promise<T>, onConflict: T): Promise<T> {
+  try {
+    return await db.$transaction(fn, SERIALIZABLE);
+  } catch (error) {
+    if (isSerializationFailure(error)) return onConflict;
+    throw error;
+  }
+}
+
+function moveLog(kind: "BlogPost" | "SocialPost", m: Move): ControlLog {
+  return {
+    refType: kind,
+    refId: m.id,
+    status: "ok",
+    message: `Jarvis resume moved a past-due ${kind === "BlogPost" ? "blog" : "LinkedIn post"} to ${m.to.toISOString()}`,
+    meta: { source: JARVIS_SOURCE, action: "reschedule", from: m.from.toISOString(), to: m.to.toISOString() },
+  };
+}
+
+export function createPrismaControlStore(getDb: () => PrismaClient = requireDb): ControlStore {
+  const db = getDb;
 
   return {
-    pipelineControl: () => getPipelineControl(),
+    pipelineControl: () => getPipelineControl(db()),
 
     async recentRuns(limit, since) {
       const groups = await db().generationLog.groupBy({
@@ -245,6 +300,7 @@ export function createPrismaControlStore(): ControlStore {
         select: {
           ...blogSelect,
           body: true,
+          image: true,
           tags: true,
           faqs: true,
           brief: { select: { requiresLiveSource: true } },
@@ -281,38 +337,152 @@ export function createPrismaControlStore(): ControlStore {
       return inventoryUrlAllowlist(await getSiteContentInventory());
     },
 
+    async pastDue(now) {
+      const [blogs, social, last] = await Promise.all([
+        db().blogPost.findMany({
+          where: { origin: "pipeline", published: false, reviewState: "approved", publishAt: { lte: now } },
+          orderBy: { publishAt: "asc" },
+          select: { id: true, slug: true, publishAt: true },
+          take: 50,
+        }),
+        db().socialPost.findMany({
+          where: { status: "scheduled", channel: "linkedin", scheduledFor: { lte: now } },
+          orderBy: { scheduledFor: "asc" },
+          select: {
+            id: true,
+            scheduledFor: true,
+            blogPostId: true,
+            blogPost: { select: { published: true, publishAt: true } },
+          },
+          take: 50,
+        }),
+        db().blogPost.findFirst({
+          where: { origin: "pipeline", published: false, reviewState: "approved", publishAt: { gt: now } },
+          orderBy: { publishAt: "desc" },
+          select: { publishAt: true },
+        }),
+      ]);
+      return {
+        blogs: blogs.map((b) => ({ id: b.id, slug: b.slug, publishAt: b.publishAt as Date })),
+        social: social.map((p) => ({
+          id: p.id,
+          scheduledFor: p.scheduledFor,
+          blogPostId: p.blogPostId,
+          blogPublished: p.blogPost?.published ?? false,
+          blogPublishAt: p.blogPost?.publishAt ?? null,
+        })),
+        lastScheduledBlogAt: last?.publishAt ?? null,
+      };
+    },
+
     async createBrief(data, log) {
-      return db().$transaction(async (tx) => {
-        const brief = await tx.brief.create({
-          data: { ...data, realExample: "", status: "queued", origin: "jarvis", formatHint: "" },
-        });
-        await tx.generationLog.create({ data: logData({ ...log, refId: brief.id }) });
-        return brief;
-      });
+      return serial<CreateBriefResult>(
+        db(),
+        async (tx) => {
+          // Re-checked inside the transaction so two calls cannot both insert.
+          const existing = await tx.brief.findFirst({
+            where: { status: "queued", topic: { equals: data.topic, mode: "insensitive" } },
+            select: { id: true },
+          });
+          if (existing) return { ok: false as const, reason: "duplicate" as const, id: existing.id };
+          const brief = await tx.brief.create({
+            data: { ...data, realExample: "", status: "queued", origin: "jarvis", formatHint: "" },
+          });
+          await tx.generationLog.create({ data: logData({ ...log, refId: brief.id }) });
+          return { ok: true as const, brief };
+        },
+        { ok: false as const, reason: "conflict" as const }
+      );
     },
 
     async updateBlog(id, guard, data, log) {
-      return db().$transaction(async (tx) => {
-        const result = await tx.blogPost.updateMany({
-          where: { id, origin: "pipeline", published: false, updatedAt: guard.updatedAt },
-          data,
-        });
-        if (result.count !== 1) return false;
-        await tx.generationLog.create({ data: logData(log) });
-        return true;
-      });
+      return serial(
+        db(),
+        async (tx) => {
+          const result = await tx.blogPost.updateMany({
+            where: {
+              id,
+              origin: "pipeline",
+              published: false,
+              updatedAt: guard.updatedAt,
+              ...blogLinkWhere(guard.social),
+            },
+            data,
+          });
+          if (result.count !== 1) return false;
+          await tx.generationLog.create({ data: logData(log) });
+          return true;
+        },
+        false
+      );
     },
 
-    async updateSocial(id, guard, data, log) {
-      return db().$transaction(async (tx) => {
-        const result = await tx.socialPost.updateMany({
-          where: { id, status: guard.status, scheduledFor: guard.scheduledFor, publishedAt: null },
-          data,
-        });
-        if (result.count !== 1) return false;
-        await tx.generationLog.create({ data: logData(log) });
-        return true;
-      });
+    async updateSocial(id, guard: SocialGuard, data, log) {
+      return serial(
+        db(),
+        async (tx) => {
+          const result = await tx.socialPost.updateMany({
+            where: {
+              id,
+              status: guard.status,
+              scheduledFor: guard.scheduledFor,
+              publishedAt: null,
+              ...(guard.blogLiveBy ? socialLinkWhere(guard.blogLiveBy) : {}),
+            },
+            data,
+          });
+          if (result.count !== 1) return false;
+          await tx.generationLog.create({ data: logData(log) });
+          return true;
+        },
+        false
+      );
+    },
+
+    async setPipelineControl({ expectPaused, log, reschedule }) {
+      const none = { blogs: [] as Move[], social: [] as Move[] };
+      return serial(
+        db(),
+        async (tx) => {
+          const control = await getPipelineControl(tx);
+          if ((control?.paused ?? false) !== expectPaused) return { ok: false, applied: none };
+          const applied = { blogs: [] as Move[], social: [] as Move[] };
+          for (const m of reschedule.blogs) {
+            const r = await tx.blogPost.updateMany({
+              where: { id: m.id, origin: "pipeline", published: false, reviewState: "approved", publishAt: m.from },
+              data: { publishAt: m.to },
+            });
+            if (r.count === 1) {
+              applied.blogs.push(m);
+              await tx.generationLog.create({ data: logData(moveLog("BlogPost", m)) });
+            }
+          }
+          for (const m of reschedule.social) {
+            const r = await tx.socialPost.updateMany({
+              where: { id: m.id, status: "scheduled", scheduledFor: m.from },
+              data: { scheduledFor: m.to },
+            });
+            if (r.count === 1) {
+              applied.social.push(m);
+              await tx.generationLog.create({ data: logData(moveLog("SocialPost", m)) });
+            }
+          }
+          await tx.generationLog.create({
+            data: logData({
+              ...log,
+              meta: {
+                ...log.meta,
+                rescheduled: {
+                  blogs: applied.blogs.map((m) => m.id),
+                  social: applied.social.map((m) => m.id),
+                },
+              },
+            }),
+          });
+          return { ok: true, applied };
+        },
+        { ok: false, applied: none }
+      );
     },
 
     async writeLog(log) {

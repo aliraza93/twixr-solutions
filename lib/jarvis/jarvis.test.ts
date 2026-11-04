@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import { beforeEach, describe, it } from "node:test";
 import { MIN_TOKEN_LENGTH, authorize, bearerToken, configuredToken } from "@/lib/jarvis/auth";
 import { makeHandlers, RATE_LIMIT, type JarvisHandlers } from "@/lib/jarvis/handlers";
-import { isPipelinePaused, type PipelineControl } from "@/lib/jarvis/pause";
+import { isPipelinePaused, pauseSource, type PipelineControl } from "@/lib/jarvis/pause";
+import { isPublicHost } from "@/lib/jarvis/schemas";
 import { SlidingWindowLimiter } from "@/lib/jarvis/rate-limit";
 import { createControlService } from "@/lib/jarvis/service";
 import { PAUSE_MARKER, blogStateOf, socialStateOf, transitionFor } from "@/lib/jarvis/states";
@@ -13,7 +14,11 @@ import type {
   ControlStore,
   DayPlanRow,
   LogRow,
+  PastDue,
+  Reschedule,
   SocialDetail,
+  SocialGuard,
+  BlogGuard,
 } from "@/lib/jarvis/store";
 import type { DuplicateCheckResult } from "@/lib/pipeline/manual/duplicate-check";
 
@@ -24,8 +29,11 @@ import type { DuplicateCheckResult } from "@/lib/pipeline/manual/duplicate-check
 const TOKEN = "t".repeat(MIN_TOKEN_LENGTH + 8);
 const NOW = new Date("2026-11-04T10:00:00.000Z");
 const HOUR = 3600_000;
-const DRAWN_BLOG_AT = new Date(NOW.getTime() + 20 * HOUR);
-const DRAWN_LI_AT = new Date(NOW.getTime() + 30 * HOUR);
+/** Test draws: a blog goes 20h after `from`, a LinkedIn post 30h after `after`. */
+const drawBlog = (from: Date) => new Date(from.getTime() + 20 * HOUR);
+const drawLi = (after: Date) => new Date(after.getTime() + 30 * HOUR);
+const DRAWN_BLOG_AT = drawBlog(NOW);
+const DRAWN_LI_AT = drawLi(NOW);
 const EM_DASH = String.fromCodePoint(0x2014);
 
 const SENTENCE =
@@ -49,6 +57,7 @@ function blog(over: Partial<BlogDetail> = {}): BlogDetail {
     updatedAt: new Date(NOW.getTime() - HOUR),
     social: [],
     body: GOOD_BODY,
+    image: "https://res.cloudinary.com/twixr/image/upload/cover.png",
     tags: ["Laravel", "Queues"],
     faqs: [],
     brief: { requiresLiveSource: false },
@@ -87,6 +96,11 @@ class FakeStore implements ControlStore {
   allowlist = new Set<string>();
   /** Simulate the cron touching the row between read and write. */
   raceNextUpdate = false;
+  /** Simulate a parallel insert the pre-check did not see. */
+  hiddenQueuedTopic: string | null = null;
+  /** Simulate the pipeline switch flipping between read and write. */
+  racePipeline = false;
+  due: PastDue = { blogs: [], social: [], lastScheduledBlogAt: null };
 
   private record(log: ControlLog) {
     this.logs.push({ ...log, id: `log${this.logs.length + 1}`, createdAt: NOW });
@@ -150,6 +164,9 @@ class FakeStore implements ControlStore {
     return this.allowlist;
   }
   async createBrief(data: Parameters<ControlStore["createBrief"]>[0], log: Omit<ControlLog, "refId">) {
+    if (this.hiddenQueuedTopic?.toLowerCase() === data.topic.toLowerCase()) {
+      return { ok: false as const, reason: "duplicate" as const, id: "brief-parallel" };
+    }
     const row = {
       id: `brief${this.briefs.length + 10}`,
       ...data,
@@ -160,18 +177,49 @@ class FakeStore implements ControlStore {
     };
     this.briefs.push(row);
     this.record({ ...log, refId: row.id });
-    return row;
+    return { ok: true as const, brief: row };
   }
-  async updateBlog(id: string, guard: { updatedAt: Date }, data: Parameters<ControlStore["updateBlog"]>[2], log: ControlLog) {
+  async pastDue() {
+    return this.due;
+  }
+  async setPipelineControl(input: { expectPaused: boolean; log: ControlLog; reschedule: Reschedule }) {
+    if (this.racePipeline || (this.control?.paused ?? false) !== input.expectPaused) {
+      return { ok: false, applied: { blogs: [], social: [] } };
+    }
+    for (const m of input.reschedule.blogs) {
+      const b = this.blogs.get(m.id);
+      if (b) this.blogs.set(m.id, { ...b, publishAt: m.to });
+    }
+    for (const m of input.reschedule.social) {
+      const p = this.socials.get(m.id);
+      if (p) this.socials.set(m.id, { ...p, scheduledFor: m.to });
+    }
+    this.record(input.log);
+    return { ok: true, applied: input.reschedule };
+  }
+  /** Guards evaluated against the store's current rows, as the transaction does. */
+  async updateBlog(id: string, guard: BlogGuard, data: Parameters<ControlStore["updateBlog"]>[2], log: ControlLog) {
     const b = this.blogs.get(id);
     if (this.raceNextUpdate || !b || b.published || b.updatedAt.getTime() !== guard.updatedAt.getTime()) return false;
+    const live = [...this.socials.values()].filter((p) => p.blogPostId === id && p.status === "scheduled");
+    const blocked =
+      "noneScheduled" in guard.social
+        ? live.length > 0
+        : live.some((p) => p.scheduledFor.getTime() < (guard.social as { noneScheduledBefore: Date }).noneScheduledBefore.getTime());
+    if (blocked) return false;
     this.blogs.set(id, { ...b, ...data, updatedAt: new Date(b.updatedAt.getTime() + 1) });
     this.record(log);
     return true;
   }
-  async updateSocial(id: string, guard: { status: string; scheduledFor: Date }, data: Parameters<ControlStore["updateSocial"]>[2], log: ControlLog) {
+  async updateSocial(id: string, guard: SocialGuard, data: Parameters<ControlStore["updateSocial"]>[2], log: ControlLog) {
     const s = this.socials.get(id);
     if (!s || s.status !== guard.status || s.scheduledFor.getTime() !== guard.scheduledFor.getTime()) return false;
+    if (guard.blogLiveBy && s.blogPostId) {
+      const b = this.blogs.get(s.blogPostId);
+      if (b && !b.published && !(b.reviewState === "approved" && b.publishAt && b.publishAt <= guard.blogLiveBy)) {
+        return false;
+      }
+    }
     this.socials.set(id, { ...s, ...data });
     this.record(log);
     return true;
@@ -203,12 +251,13 @@ function build(limiter = new SlidingWindowLimiter(1000, 60_000)) {
           autoPublish: true,
           criticFloor: 60,
           criticMinScore: 78,
+          minGapHours: 5,
           timezone: "Asia/Karachi",
           crons: [{ path: "/api/cron/tick", schedule: "*/10 * * * *" }],
         },
         dayKey: () => "2026-11-04",
-        drawBlogPublishAt: () => DRAWN_BLOG_AT,
-        drawLinkedInAt: () => DRAWN_LI_AT,
+        drawBlogPublishAt: drawBlog,
+        drawLinkedInAt: drawLi,
       }),
   });
 }
@@ -219,8 +268,11 @@ beforeEach(() => {
   build();
 });
 
-function req(path: string, init: { method?: string; body?: unknown; auth?: string | null; ip?: string } = {}) {
-  const headers = new Headers({ "x-forwarded-for": init.ip ?? "203.0.113.7" });
+function req(
+  path: string,
+  init: { method?: string; body?: unknown; auth?: string | null; ip?: string; headers?: Record<string, string> } = {}
+) {
+  const headers = new Headers({ "x-forwarded-for": init.ip ?? "203.0.113.7", ...init.headers });
   const auth = init.auth === undefined ? `Bearer ${TOKEN}` : init.auth;
   if (auth) headers.set("authorization", auth);
   let body: string | undefined;
@@ -684,8 +736,22 @@ describe("pipeline", () => {
     );
   });
 
-  it("the cron's pause check fails open without a database", async () => {
-    assert.equal(await isPipelinePaused(), false);
+  it("the cron's pause check: off without a database, fails closed on a read error", async () => {
+    const original = { ...pauseSource };
+    try {
+      assert.equal(await isPipelinePaused(), false, "no database configured");
+      pauseSource.configured = () => true;
+      pauseSource.read = async () => null;
+      assert.equal(await isPipelinePaused(), false, "never paused");
+      pauseSource.read = async () => ({ paused: true, at: NOW, reason: "" });
+      assert.equal(await isPipelinePaused(), true);
+      pauseSource.read = async () => {
+        throw new Error("connection reset");
+      };
+      assert.equal(await isPipelinePaused(), true, "read error counts as paused");
+    } finally {
+      Object.assign(pauseSource, original);
+    }
   });
 
   it("status reports the day plan, next runs and recent runs", async () => {
@@ -713,5 +779,242 @@ describe("pipeline", () => {
     assert.equal(detail.json.logs[0].source, "jarvis");
     const logs = await call(handlers.listLogs(req("logs?limit=1")));
     assert.equal(logs.json.items.length, 1);
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* Review fixes: metadata, sources, cover, override                    */
+/* ------------------------------------------------------------------ */
+
+describe("gate: metadata hard fails, sources and cover", () => {
+  for (const [name, over, pattern] of [
+    ["an empty title", { title: "  " }, /Title is empty/],
+    ["an empty excerpt", { excerpt: "" }, /Excerpt \(meta description\) is empty/],
+    ["an empty slug", { slug: "" }, /Slug is empty/],
+    ["an unclean slug", { slug: "Laravel_Queue Retries" }, /Slug is not clean kebab-case/],
+    ["a slug over 80 characters", { slug: `laravel-${"a".repeat(80)}` }, /Slug too long/],
+    ["a missing cover image", { image: " " }, /Cover image missing/],
+    [
+      "a live-source brief without a source URL",
+      { brief: { requiresLiveSource: true } },
+      /requiresLiveSource brief needs at least one source URL/,
+    ],
+  ] as Array<[string, Partial<BlogDetail>, RegExp]>) {
+    it(`approve is refused for ${name}`, async () => {
+      store.blogs.set("blog1", blog(over));
+      const r = await act("blog", "blog1", { action: "approve" });
+      assert.equal(r.status, 422);
+      assert.equal(r.json.error.code, "quality_gate");
+      assert.ok(r.json.error.details.reasons.some((x: string) => pattern.test(x)), JSON.stringify(r.json));
+      assert.equal(store.blogs.get("blog1")!.reviewState, "needs_review");
+    });
+  }
+
+  it("a live-source brief with a real source in the body passes", async () => {
+    const body = `${GOOD_BODY}\n\n## Sources\n\n- https://laravel.com/docs/queues`;
+    store.blogs.set("blog1", blog({ body, brief: { requiresLiveSource: true } }));
+    assert.equal((await act("blog", "blog1", { action: "approve" })).status, 200);
+  });
+});
+
+describe("gate: override for findings it cannot re-check", () => {
+  for (const [name, over] of [
+    ["a dead link", { reviewReasons: ["Dead or unreachable link: https://example.com/gone"] }],
+    ["a duplicate title", { reviewReasons: ["Duplicate title: Laravel queue retries"] }],
+    ["a used topic", { reviewReasons: ["Topic already used in a prior brief: queues"] }],
+    ["a critic score under the minimum", { criticScore: 70 }],
+  ] as Array<[string, Partial<BlogDetail>]>) {
+    it(`blog with ${name} needs override`, async () => {
+      store.blogs.set("blog1", blog(over));
+      const refused = await act("blog", "blog1", { action: "approve" });
+      assert.equal(refused.status, 422);
+      assert.equal(refused.json.error.code, "override_required");
+      assert.equal(store.blogs.get("blog1")!.reviewState, "needs_review");
+
+      const passed = await act("blog", "blog1", { action: "approve", override: true });
+      assert.equal(passed.status, 200, JSON.stringify(passed.json));
+      const log = store.logs.at(-1)!;
+      assert.equal(log.meta.override, true);
+      assert.ok(Array.isArray(log.meta.overridden) && (log.meta.overridden as string[]).length > 0);
+    });
+  }
+
+  it("override never passes a hard failure", async () => {
+    store.blogs.set("blog1", blog({ criticScore: 40 }));
+    const r = await act("blog", "blog1", { action: "approve", override: true });
+    assert.equal(r.status, 422);
+    assert.equal(r.json.error.code, "quality_gate");
+  });
+
+  it("a LinkedIn post under the critic minimum needs override", async () => {
+    store.socials.set("li1", social({ criticScore: 70 }));
+    assert.equal((await act("social", "li1", { action: "approve" })).json.error.code, "override_required");
+    assert.equal((await act("social", "li1", { action: "approve", override: true })).status, 200);
+  });
+
+  it("pause takes no override", async () => {
+    store.blogs.set("blog1", blog({ reviewState: "approved", publishAt: new Date(NOW.getTime() + HOUR) }));
+    assert.equal((await act("blog", "blog1", { action: "pause", override: true })).status, 400);
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* Review fixes: link guards inside the write                          */
+/* ------------------------------------------------------------------ */
+
+describe("link guards evaluated at write time", () => {
+  it("blog schedule fails with conflict if a LinkedIn post was scheduled earlier after the read", async () => {
+    store.blogs.set("blog1", blog());
+    // The read shows no social post; one lands before the write.
+    store.socials.set("li1", social({ status: "scheduled", scheduledFor: new Date(NOW.getTime() + 2 * HOUR) }));
+    const r = await act("blog", "blog1", { action: "schedule", at: "2026-11-06T09:30:00Z" });
+    assert.equal(r.status, 409);
+    assert.equal(r.json.error.code, "conflict");
+    assert.equal(store.blogs.get("blog1")!.reviewState, "needs_review");
+  });
+
+  it("blog pause fails with conflict if a LinkedIn post was scheduled after the read", async () => {
+    store.blogs.set("blog1", blog({ reviewState: "approved", publishAt: new Date(NOW.getTime() + HOUR) }));
+    store.socials.set("li1", social({ status: "scheduled", scheduledFor: new Date(NOW.getTime() + 9 * HOUR) }));
+    assert.equal((await act("blog", "blog1", { action: "pause" })).json.error.code, "conflict");
+  });
+
+  it("social schedule fails with conflict if its blog was paused after the read", async () => {
+    // Read sees an approved blog; the store's row is already paused.
+    store.blogs.set("blog1", blog({ reviewReasons: [PAUSE_MARKER] }));
+    store.socials.set(
+      "li1",
+      social({ blog: { published: false, reviewState: "approved", publishAt: new Date(NOW.getTime() + HOUR) } })
+    );
+    const r = await act("social", "li1", { action: "approve" });
+    assert.equal(r.status, 409);
+    assert.equal(r.json.error.code, "conflict");
+    assert.equal(store.socials.get("li1")!.status, "needs_review");
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* Review fixes: resume backlog                                        */
+/* ------------------------------------------------------------------ */
+
+describe("resume backlog", () => {
+  it("pipeline resume spreads past-due blogs and LinkedIn posts forward", async () => {
+    store.control = { paused: true, at: NOW, reason: "" };
+    const old1 = new Date(NOW.getTime() - 30 * HOUR);
+    const old2 = new Date(NOW.getTime() - 10 * HOUR);
+    store.blogs.set("b1", blog({ id: "b1", reviewState: "approved", publishAt: old1 }));
+    store.blogs.set("b2", blog({ id: "b2", reviewState: "approved", publishAt: old2 }));
+    store.socials.set("li1", social({ status: "scheduled", scheduledFor: old2, blogPostId: "b1" }));
+    store.due = {
+      blogs: [
+        { id: "b1", slug: "b1", publishAt: old1 },
+        { id: "b2", slug: "b2", publishAt: old2 },
+      ],
+      social: [{ id: "li1", scheduledFor: old2, blogPostId: "b1", blogPublished: false, blogPublishAt: old1 }],
+      lastScheduledBlogAt: null,
+    };
+    const r = await call(handlers.actOnPipeline(req("pipeline", { body: { action: "resume" } })));
+    assert.equal(r.status, 200, JSON.stringify(r.json));
+    const [m1, m2] = r.json.rescheduled.blogs;
+    const b1At = drawBlog(NOW);
+    const b2At = drawBlog(new Date(b1At.getTime() + 5 * HOUR));
+    assert.equal(m1.to, b1At.toISOString());
+    assert.equal(m2.to, b2At.toISOString(), "second blog waits the minimum gap after the first");
+    assert.equal(r.json.rescheduled.social[0].to, drawLi(b1At).toISOString(), "LinkedIn after its blog's new time");
+    for (const m of [...r.json.rescheduled.blogs, ...r.json.rescheduled.social]) {
+      assert.ok(new Date(m.to).getTime() > NOW.getTime(), "nothing left past due");
+    }
+    assert.equal(store.blogs.get("b2")!.publishAt!.toISOString(), b2At.toISOString());
+  });
+
+  it("the backlog queues after blogs already scheduled", async () => {
+    store.control = { paused: true, at: NOW, reason: "" };
+    const last = new Date(NOW.getTime() + 40 * HOUR);
+    store.due = {
+      blogs: [{ id: "b1", slug: "b1", publishAt: new Date(NOW.getTime() - HOUR) }],
+      social: [],
+      lastScheduledBlogAt: last,
+    };
+    const r = await call(handlers.actOnPipeline(req("pipeline", { body: { action: "resume" } })));
+    assert.equal(r.json.rescheduled.blogs[0].to, drawBlog(new Date(last.getTime() + 5 * HOUR)).toISOString());
+  });
+
+  it("pause moves nothing, and a raced switch is a conflict", async () => {
+    store.due = { blogs: [{ id: "b1", slug: "b1", publishAt: NOW }], social: [], lastScheduledBlogAt: null };
+    const p = await call(handlers.actOnPipeline(req("pipeline", { body: { action: "pause" } })));
+    assert.deepEqual(p.json.rescheduled, { blogs: [], social: [] });
+    store.racePipeline = true;
+    const r = await call(handlers.actOnPipeline(req("pipeline", { body: { action: "resume" } })));
+    assert.equal(r.status, 409);
+    assert.equal(r.json.error.code, "conflict");
+  });
+
+  it("draft resume redraws a past-due time forward", async () => {
+    store.blogs.set("blog1", blog({ reviewReasons: [PAUSE_MARKER], publishAt: new Date(NOW.getTime() - 3 * HOUR) }));
+    const r = await act("blog", "blog1", { action: "resume" });
+    assert.equal(r.json.draft.publishAt, DRAWN_BLOG_AT.toISOString());
+    store.socials.set("li1", social({ reviewReasons: [PAUSE_MARKER], scheduledFor: new Date(NOW.getTime() - HOUR) }));
+    const s = await act("social", "li1", { action: "resume" });
+    assert.equal(s.json.draft.scheduledFor, DRAWN_LI_AT.toISOString());
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* Review fixes: nits                                                  */
+/* ------------------------------------------------------------------ */
+
+describe("brief insert is atomic with its duplicate check", () => {
+  it("a parallel insert of the same topic is refused as duplicate", async () => {
+    store.hiddenQueuedTopic = "Laravel queue retries";
+    const r = await call(handlers.createBrief(req("briefs", { body: { topic: "Laravel queue retries" } })));
+    assert.equal(r.status, 409);
+    assert.equal(r.json.error.code, "duplicate");
+    assert.equal(store.briefs.length, 0);
+  });
+});
+
+describe("body cap", () => {
+  it("refuses by Content-Length before reading", async () => {
+    const r = await call(
+      handlers.createBrief(req("briefs", { body: { topic: "Laravel queue retries" }, headers: { "content-length": "999999" } }))
+    );
+    assert.equal(r.status, 413);
+    assert.equal(store.briefs.length, 0);
+  });
+});
+
+describe("source URLs must be public", () => {
+  const blocked = [
+    "http://127.0.0.1/",
+    "http://localhost:3000/x",
+    "http://app.localhost/",
+    "http://169.254.169.254/latest/meta-data",
+    "http://10.0.0.5/",
+    "http://172.20.1.1/",
+    "http://192.168.1.1/",
+    "http://100.64.0.1/",
+    "http://0.0.0.0/",
+    "http://2130706433/",
+    "http://0x7f000001/",
+    "http://[::1]/",
+    "http://[fd00::1]/",
+    "http://[fe80::1]/",
+    "http://[::ffff:127.0.0.1]/",
+    "http://metadata.google.internal/",
+    "https://db.internal/",
+    "ftp://example.com/file",
+  ];
+  for (const url of blocked) {
+    it(`refuses ${url}`, async () => {
+      const r = await call(handlers.createBrief(req("briefs", { body: { topic: "Laravel queue retries", sources: [url] } })));
+      assert.equal(r.status, 400, JSON.stringify(r.json));
+    });
+  }
+
+  it("accepts public hosts", () => {
+    assert.equal(isPublicHost("laravel.com"), true);
+    assert.equal(isPublicHost("8.8.8.8"), true);
+    assert.equal(isPublicHost("[2606:4700::1111]"), true);
+    assert.equal(isPublicHost("172.32.0.1"), true);
   });
 });

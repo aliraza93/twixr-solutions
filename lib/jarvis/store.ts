@@ -73,6 +73,7 @@ export type BlogRow = {
 
 export type BlogDetail = BlogRow & {
   body: string;
+  image: string;
   tags: string[];
   faqs: unknown;
   brief: { requiresLiveSource: boolean } | null;
@@ -158,20 +159,60 @@ export interface ControlStore {
   }): Promise<DuplicateCheckResult>;
   internalAllowlist(): Promise<Set<string>>;
 
-  /** Each write and its log row commit together, or neither does. */
-  createBrief(data: NewBrief, log: Omit<ControlLog, "refId">): Promise<BriefRow>;
-  /** Conditional on the row still matching `guard`; false means it moved. */
-  updateBlog(
-    id: string,
-    guard: { updatedAt: Date },
-    data: BlogUpdate,
-    log: ControlLog
-  ): Promise<boolean>;
-  updateSocial(
-    id: string,
-    guard: { status: string; scheduledFor: Date },
-    data: SocialUpdate,
-    log: ControlLog
-  ): Promise<boolean>;
+  /** Past-due approved blogs and scheduled LinkedIn posts, oldest first. */
+  pastDue(now: Date): Promise<PastDue>;
+
+  /**
+   * Each write and its log row commit together, or neither does. Writes run
+   * at Serializable isolation; a serialization failure reports as a conflict.
+   */
+  createBrief(
+    data: NewBrief,
+    log: Omit<ControlLog, "refId">
+  ): Promise<{ ok: true; brief: BriefRow } | { ok: false; reason: "duplicate"; id: string } | { ok: false; reason: "conflict" }>;
+  /** Conditional on the row and its links still matching `guard`; false means it moved. */
+  updateBlog(id: string, guard: BlogGuard, data: BlogUpdate, log: ControlLog): Promise<boolean>;
+  updateSocial(id: string, guard: SocialGuard, data: SocialUpdate, log: ControlLog): Promise<boolean>;
+  /**
+   * Flip the pipeline switch if it is still in `expectPaused`, moving any
+   * listed past-due rows that still hold their `from` time. One transaction.
+   */
+  setPipelineControl(input: {
+    expectPaused: boolean;
+    log: ControlLog;
+    reschedule: Reschedule;
+  }): Promise<{ ok: boolean; applied: Reschedule }>;
   writeLog(log: ControlLog): Promise<void>;
 }
+
+export type PastDue = {
+  blogs: Array<{ id: string; slug: string; publishAt: Date }>;
+  social: Array<{
+    id: string;
+    scheduledFor: Date;
+    blogPostId: string | null;
+    blogPublished: boolean;
+    blogPublishAt: Date | null;
+  }>;
+  /** Latest future publishAt among approved blogs, so the backlog queues after it. */
+  lastScheduledBlogAt: Date | null;
+};
+
+export type Move = { id: string; from: Date; to: Date };
+export type Reschedule = { blogs: Move[]; social: Move[] };
+
+export type BlogGuard = {
+  updatedAt: Date;
+  /**
+   * Moving to scheduled: no LinkedIn post of this blog may be scheduled
+   * before `noneScheduledBefore`. Pausing: none may be scheduled at all.
+   */
+  social: { noneScheduledBefore: Date } | { noneScheduled: true };
+};
+
+export type SocialGuard = {
+  status: string;
+  scheduledFor: Date;
+  /** Moving to scheduled: the linked blog must be published or approved to go live by this time. */
+  blogLiveBy?: Date;
+};

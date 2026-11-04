@@ -1,3 +1,5 @@
+import type { BlogDraft } from "@/lib/pipeline/generate-blog";
+import { assessBlogMetadata } from "@/lib/pipeline/seo/metadata";
 import {
   bannedPhrases,
   dashCheck,
@@ -5,6 +7,7 @@ import {
   headingLevelCheck,
   lengthCheck,
   qualityGate,
+  sourcesRequired,
   titleLengthCheck,
   unknownInternalLinks,
   validateLinkedIn,
@@ -15,20 +18,40 @@ import {
  * approve, schedule or resume it. Jarvis never gets a path around them:
  *
  * - critic score present and at or above the hard floor (CRITIC_HARD_FLOOR),
+ * - metadata hard fails (empty title, excerpt or slug; unclean or long slug),
+ *   the same check that sets seoHardFail in run-generate,
  * - banned phrases and dash characters,
  * - heading, title and length rules,
- * - the publish quality gate (placeholders, FAQ answers, Sources, vague
- *   titles, empty alt text, live-source URLs),
+ * - sources for live-source briefs and the publish quality gate
+ *   (placeholders, FAQ answers, Sources, vague titles, empty alt text,
+ *   live-source URLs),
+ * - a cover image,
  * - invented internal links against the live site inventory.
  *
- * The network dead-link check and the slug/topic duplicate checks ran at
- * generation time and are not repeated here (the duplicate checks would match
- * the draft itself).
+ * Some checks ran at generation and cannot be repeated here: the network
+ * dead-link check, and the slug, title and topic duplicate checks (they would
+ * match the draft itself). If the stored review reasons carry one of those,
+ * or the critic score sits between the hard floor and CRITIC_MIN_SCORE, the
+ * draft passes the gate only with an explicit override (`needsOverride`).
  */
 
-export type GateResult = { ok: boolean; reasons: string[] };
+export type GateResult = {
+  ok: boolean;
+  /** Hard failures: no override can pass these. */
+  reasons: string[];
+  /** Earlier findings the gate cannot re-check; passable only with override. */
+  needsOverride: string[];
+};
 
 type Faq = { question: string; answer: string };
+
+const UNRECHECKABLE: RegExp[] = [
+  /^Dead or unreachable link/,
+  /^Slug already exists/,
+  /^Duplicate title/,
+  /^Topic already used/,
+  /^Topic appears in an existing post title/,
+];
 
 function parseFaqs(raw: unknown): Faq[] {
   if (!Array.isArray(raw)) return [];
@@ -44,17 +67,43 @@ function criticReasons(score: number | null, floor: number): string[] {
   return score < floor ? [`critic score ${score} below hard floor ${floor}`] : [];
 }
 
+function overrideReasons(
+  storedReasons: unknown,
+  score: number | null,
+  opts: { criticFloor: number; criticMinScore: number }
+): string[] {
+  const stored = Array.isArray(storedReasons) ? storedReasons.map(String) : [];
+  const out = stored.filter((r) => UNRECHECKABLE.some((re) => re.test(r)));
+  if (score !== null && score >= opts.criticFloor && score < opts.criticMinScore) {
+    out.push(`critic score ${score} below minimum ${opts.criticMinScore}`);
+  }
+  return out;
+}
+
+function result(reasons: string[], needsOverride: string[]): GateResult {
+  return { ok: reasons.length === 0, reasons, needsOverride };
+}
+
+export type GateOptions = {
+  criticFloor: number;
+  criticMinScore: number;
+  internalAllowlist?: Set<string>;
+};
+
 export function blogGate(
   post: {
+    slug: string;
     title: string;
     excerpt: string;
     body: string;
+    image: string;
     tags: string[];
     faqs: unknown;
     criticScore: number | null;
+    reviewReasons: unknown;
   },
   brief: { requiresLiveSource: boolean } | null,
-  opts: { criticFloor: number; internalAllowlist?: Set<string> }
+  opts: GateOptions
 ): GateResult {
   const faqs = parseFaqs(post.faqs);
   const combined = [
@@ -65,30 +114,44 @@ export function blogGate(
     ...faqs.flatMap((f) => [f.question, f.answer]),
   ].join("\n");
   const sources = extractUrls(post.body).filter((u) => /^https?:\/\//i.test(u));
+  const liveSource = { requiresLiveSource: brief?.requiresLiveSource ?? false };
+  const draft: BlogDraft = {
+    slug: post.slug,
+    title: post.title,
+    excerpt: post.excerpt,
+    category: "",
+    tags: post.tags,
+    readingTime: "",
+    body: post.body,
+    faqs,
+    coverAlt: "",
+    inlineImagePrompts: [],
+    sources,
+  };
 
   const reasons = [
     ...criticReasons(post.criticScore, opts.criticFloor),
+    ...assessBlogMetadata(draft).hardFails,
     ...bannedPhrases(combined),
     ...dashCheck(combined),
     ...lengthCheck(post.body, "blog"),
     ...headingLevelCheck(post.body),
     ...titleLengthCheck(post.title),
-    ...qualityGate(
-      { title: post.title, excerpt: post.excerpt, body: post.body, faqs, sources },
-      { requiresLiveSource: brief?.requiresLiveSource ?? false }
-    ),
+    ...sourcesRequired(draft, liveSource),
+    ...qualityGate(draft, liveSource),
+    ...(post.image.trim() ? [] : ["Cover image missing"]),
     ...(opts.internalAllowlist?.size
       ? unknownInternalLinks(post.body, opts.internalAllowlist)
       : []),
   ];
-  return { ok: reasons.length === 0, reasons };
+  return result(reasons, overrideReasons(post.reviewReasons, post.criticScore, opts));
 }
 
 export async function socialGate(
-  post: { body: string; criticScore: number | null },
+  post: { body: string; criticScore: number | null; reviewReasons: unknown },
   blog: { published: boolean; reviewState: string; publishAt: Date | null } | null,
   scheduledFor: Date,
-  opts: { criticFloor: number }
+  opts: GateOptions
 ): Promise<GateResult> {
   const validation = await validateLinkedIn(post.body);
   const reasons = [...criticReasons(post.criticScore, opts.criticFloor), ...validation.reasons];
@@ -104,5 +167,5 @@ export async function socialGate(
       );
     }
   }
-  return { ok: reasons.length === 0, reasons };
+  return result(reasons, overrideReasons(post.reviewReasons, post.criticScore, opts));
 }

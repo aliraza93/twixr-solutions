@@ -11,6 +11,7 @@ export type ControlErrorCode =
   | "linked_social"
   | "conflict"
   | "quality_gate"
+  | "override_required"
   | "internal";
 
 export class ControlError extends Error {

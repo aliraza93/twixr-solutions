@@ -25,6 +25,7 @@ export const jarvisHandlers = makeHandlers({
         autoPublish: pipeline.autoPublish,
         criticFloor: pipeline.criticHardFloor,
         criticMinScore: pipeline.criticMinScore,
+        minGapHours: pipeline.variety.minGapHoursMin,
         timezone: pipeline.timezone,
         crons: vercelConfig.crons,
       },

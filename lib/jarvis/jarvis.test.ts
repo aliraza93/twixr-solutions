@@ -863,6 +863,15 @@ describe("gate: override for findings it cannot re-check", () => {
     assert.equal((await act("social", "li1", { action: "approve", override: true })).status, 200);
   });
 
+  it("an unconfirmed LinkedIn publish needs override before approve", async () => {
+    store.socials.set(
+      "li1",
+      social({ reviewReasons: ["LinkedIn publish not confirmed, check the profile before retrying"] }),
+    );
+    assert.equal((await act("social", "li1", { action: "approve" })).json.error.code, "override_required");
+    assert.equal((await act("social", "li1", { action: "approve", override: true })).status, 200);
+  });
+
   it("pause takes no override", async () => {
     store.blogs.set("blog1", blog({ reviewState: "approved", publishAt: new Date(NOW.getTime() + HOUR) }));
     assert.equal((await act("blog", "blog1", { action: "pause", override: true })).status, 400);

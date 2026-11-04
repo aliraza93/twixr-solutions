@@ -51,6 +51,8 @@ const UNRECHECKABLE: RegExp[] = [
   /^Duplicate title/,
   /^Topic already used/,
   /^Topic appears in an existing post title/,
+  // The first post may already be live on LinkedIn: only Ali can clear this.
+  /^LinkedIn publish not confirmed/,
 ];
 
 function parseFaqs(raw: unknown): Faq[] {

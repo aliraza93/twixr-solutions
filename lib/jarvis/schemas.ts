@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { BLOG_STATES, DRAFT_ACTIONS, SOCIAL_STATES } from "@/lib/jarvis/states";
-import { isPublicHost } from "@/lib/security/public-host";
+import { isAllowedPort, isPublicHost } from "@/lib/security/public-host";
 
 /** Request shapes for /api/jarvis/*. Unknown body keys are refused. */
 
@@ -24,7 +24,8 @@ const publicHttpUrl = z
   .max(2000)
   .refine((value) => {
     try {
-      return isPublicHost(new URL(value).hostname);
+      const url = new URL(value);
+      return isAllowedPort(url.port) && isPublicHost(url.hostname);
     } catch {
       return false;
     }

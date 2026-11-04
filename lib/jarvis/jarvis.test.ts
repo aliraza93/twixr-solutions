@@ -1037,6 +1037,10 @@ describe("source URLs must be public", () => {
     "http://metadata.google.internal/",
     "https://db.internal/",
     "ftp://example.com/file",
+    "https://laravel.com:8443/news",
+    "http://8.8.8.8:6379/",
+    "http://[2001::1]/",
+    "http://192.88.99.1/",
   ];
   for (const url of blocked) {
     it(`refuses ${url}`, async () => {
@@ -1212,6 +1216,20 @@ describe("conditional write (expect)", () => {
     assert.equal(r.json.error.code, "conflict");
     assert.deepEqual(r.json.error.details, { state: "paused", updatedAt: changedAt.toISOString() });
     assert.equal(store.logs.length, 0);
+  });
+
+  it("says the expect check failed only when it did", async () => {
+    store.blogs.set("blog1", blog());
+    store.raceNextUpdate = true; // the write is refused for another reason; the row still matches expect
+    const other = await act("blog", "blog1", { action: "approve", expect: blogSeen() });
+    assert.equal(other.status, 409);
+    assert.match(other.json.error.message, /changed while this request ran/);
+
+    store.raceNextUpdate = false;
+    store.socials.set("li1", social());
+    store.beforeWrite = () => store.socials.set("li1", social({ reviewReasons: [PAUSE_MARKER] }));
+    const stale = await act("social", "li1", { action: "approve", expect: liSeen() });
+    assert.match(stale.json.error.message, /no longer in the state Jarvis expected/);
   });
 
   it("writes a LinkedIn post that still matches, and refuses one that moved", async () => {

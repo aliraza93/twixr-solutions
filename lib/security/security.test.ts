@@ -107,6 +107,10 @@ describe("isPublicAddress", () => {
     assert.equal(isPublicAddress(PUBLIC_V6), true);
     assert.equal(isPublicAddress(`[${PUBLIC_V6}]`), true);
     assert.equal(isPublicAddress("example.com"), false);
+    // Neighbours of the refused ranges stay public.
+    for (const a of ["192.88.98.1", "2001:4860:4860::8888", "2001:1::1", "100:0:0:1::1", "64:ff9c::1"]) {
+      assert.equal(isPublicAddress(a), true, a);
+    }
   });
 
   it("refuses private, loopback, link-local, CGNAT, metadata, reserved and IPv4-embedding v6", () => {
@@ -136,6 +140,14 @@ describe("isPublicAddress", () => {
       "fe80::1",
       "fe80::1%eth0",
       "ff02::1",
+      "192.88.99.1",
+      "2001::1",
+      "2001:0:4136:e378:8000:63bf:3fff:fdd2",
+      "::ffff:0:a00:1",
+      "::ffff:0:808:808",
+      "64:ff9b:1::a00:1",
+      "100::1",
+      "100::ffff:ffff:ffff:ffff",
     ]) {
       assert.equal(isPublicAddress(a), false, a);
     }
@@ -167,6 +179,16 @@ describe("assertPublicUrl", () => {
       await assert.rejects(assertPublicUrl(raw, { resolver }), (e: unknown) => e instanceof UnsafeUrlError && e.reason === "blocked_host", raw);
     }
     assert.deepEqual(resolver.calls, []);
+  });
+
+  it("allows only the standard ports", async () => {
+    const resolver = resolverFrom({ "laravel.com": [PUBLIC_V4] });
+    for (const raw of ["https://laravel.com/", "https://laravel.com:443/", "http://laravel.com:80/", "https://laravel.com:80/", "http://laravel.com:443/"]) {
+      assert.equal((await assertPublicUrl(raw, { resolver })).hostname, "laravel.com", raw);
+    }
+    for (const raw of ["https://laravel.com:8443/", "http://laravel.com:8080/", "http://laravel.com:22/", `http://${PUBLIC_V4}:6379/`]) {
+      await assert.rejects(assertPublicUrl(raw, { resolver }), (e: unknown) => e instanceof UnsafeUrlError && e.reason === "blocked_port", raw);
+    }
   });
 
   it("does not resolve public literals; refuses non-http, junk and unresolvable names", async () => {
@@ -238,7 +260,7 @@ describe("safeFetch", () => {
   });
 
   it("never requests a redirect target that is private by name, literal or resolution", async () => {
-    for (const location of ["http://127.0.0.1/admin", "http://[::ffff:169.254.169.254]/", "https://evil.example/", "http://localhost:3000/"]) {
+    for (const location of ["http://127.0.0.1/admin", "http://[::ffff:169.254.169.254]/", "https://evil.example/", "http://localhost/"]) {
       const net = network({ "https://a.example/go": { status: 302, headers: { location } } });
       await assert.rejects(
         safeFetch("https://a.example/go", { resolver, fetchImpl: net.fetchImpl }),
@@ -259,6 +281,28 @@ describe("safeFetch", () => {
     const net = network({ "https://a.example/nm": { status: 304 } });
     const r = await safeFetch("https://a.example/nm", { resolver, fetchImpl: net.fetchImpl });
     assert.equal(r.response.status, 304);
+  });
+
+  it("always runs under a deadline: 10 s by default, or the caller's signal", async () => {
+    const seen: Array<AbortSignal | null | undefined> = [];
+    const fetchImpl: FetchLike = async (_url, init) => {
+      seen.push(init.signal);
+      return new Response("ok");
+    };
+    await safeFetch("https://a.example/", { resolver, fetchImpl });
+    assert.ok(seen[0] instanceof AbortSignal && !seen[0].aborted, "a default timeout signal");
+    const outer = new AbortController();
+    await safeFetch("https://a.example/", { resolver, fetchImpl, signal: outer.signal });
+    assert.equal(seen[1], outer.signal, "the caller's signal alone, no extra timeout");
+  });
+
+  it("refuses a redirect to a non-standard port before requesting it", async () => {
+    const net = network({ "https://a.example/go": { status: 302, headers: { location: "https://a.example:8443/admin" } } });
+    await assert.rejects(
+      safeFetch("https://a.example/go", { resolver, fetchImpl: net.fetchImpl }),
+      (e: unknown) => e instanceof UnsafeUrlError && e.reason === "blocked_port"
+    );
+    assert.equal(net.calls.length, 1);
   });
 
   it("times out a slow lookup", async () => {
@@ -368,6 +412,8 @@ describe("deadLinkCheck", () => {
     "gone.example": [PUBLIC_V4],
     "moved.example": [PUBLIC_V4],
     "rebind.example": ["127.0.0.1"],
+    "hops.example": [PUBLIC_V4],
+    "nowhere-hop.example": [PUBLIC_V4],
   });
   const net = network({
     "https://ok.example/": { status: 200 },
@@ -375,6 +421,11 @@ describe("deadLinkCheck", () => {
     "https://gone.example/": { status: 404 },
     "https://moved.example/a": { status: 301, headers: { location: "https://ok.example/" } },
     "https://moved.example/b": { status: 301, headers: { location: "http://169.254.169.254/latest/meta-data" } },
+    "https://hops.example/1": { status: 301, headers: { location: "/2" } },
+    "https://hops.example/2": { status: 301, headers: { location: "/3" } },
+    "https://hops.example/3": { status: 301, headers: { location: "/4" } },
+    "https://hops.example/4": { status: 301, headers: { location: "/5" } },
+    "https://nowhere-hop.example/": { status: 302, headers: { location: "https://unknown-name.example/" } },
   });
 
   it("passes live public links (HEAD, GET fallback, public redirects)", async () => {
@@ -385,6 +436,19 @@ describe("deadLinkCheck", () => {
     assert.deepEqual(reasons, []);
     const getFallback = net.calls.find((c) => c.url === "https://nohead.example/" && c.init.method === "GET");
     assert.deepEqual(getFallback?.init.headers, { Range: "bytes=0-0" });
+  });
+
+  it("counts a chain of 4 public hops as alive without following past the limit", async () => {
+    const before = net.calls.length;
+    assert.deepEqual(await deadLinkCheck(["https://hops.example/1"], { resolver, fetchImpl: net.fetchImpl }), []);
+    const requested = net.calls.slice(before).map((c) => c.url);
+    assert.deepEqual(requested, ["https://hops.example/1", "https://hops.example/2", "https://hops.example/3", "https://hops.example/4"]);
+  });
+
+  it("still flags a redirect to a name that does not resolve", async () => {
+    assert.deepEqual(await deadLinkCheck(["https://nowhere-hop.example/"], { resolver, fetchImpl: net.fetchImpl }), [
+      "Dead or unreachable link: https://nowhere-hop.example/",
+    ]);
   });
 
   it("flags dead links, private resolutions and private redirects with the same reason", async () => {

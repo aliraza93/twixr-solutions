@@ -1,12 +1,12 @@
 import { lookup } from "node:dns/promises";
 import { isIP } from "node:net";
-import { isPublicAddress, isPublicHost } from "@/lib/security/public-host";
+import { isAllowedPort, isPublicAddress, isPublicHost } from "@/lib/security/public-host";
 
 /**
  * Fetch a URL that a user, Jarvis or a model supplied (source URLs, links in
  * drafts) without letting it reach the site's own network:
  *
- * - only http(s); the name must pass isPublicHost, and every address it
+ * - only http(s) on the standard port; the name must pass isPublicHost, and every address it
  *   resolves to must pass isPublicAddress (private, loopback, link-local,
  *   CGNAT, metadata, reserved and IPv4-embedding IPv6 are refused);
  * - redirects are never followed blindly: each hop is resolved and checked
@@ -27,6 +27,7 @@ export type UnsafeUrlReason =
   | "invalid_url"
   | "not_http"
   | "blocked_host"
+  | "blocked_port"
   | "unresolved"
   | "too_many_redirects";
 
@@ -42,6 +43,8 @@ export class UnsafeUrlError extends Error {
 }
 
 export const DEFAULT_MAX_REDIRECTS = 3;
+/** Used when the caller passes neither timeoutMs nor signal. */
+export const DEFAULT_TIMEOUT_MS = 10_000;
 
 /** All addresses for a name, as the OS resolver returns them. */
 export const systemResolver: HostResolver = async (hostname) => {
@@ -94,6 +97,9 @@ export async function assertPublicUrl(
   if (url.protocol !== "http:" && url.protocol !== "https:") {
     throw new UnsafeUrlError("not_http", raw, "Only http(s) URLs are fetched");
   }
+  if (!isAllowedPort(url.port)) {
+    throw new UnsafeUrlError("blocked_port", raw, "Only ports 80 and 443 are fetched");
+  }
   const host = url.hostname.replace(/^\[|\]$/g, "");
   if (!isPublicHost(host)) {
     throw new UnsafeUrlError("blocked_host", raw, "URL host is not a public address");
@@ -121,7 +127,7 @@ const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
 export type SafeFetchOptions = {
   method?: "GET" | "HEAD";
   headers?: Record<string, string>;
-  /** Covers the lookups and every hop. */
+  /** Covers the lookups and every hop (DEFAULT_TIMEOUT_MS when neither this nor signal is given). */
   timeoutMs?: number;
   /** An outer signal (for example a shared deadline); combined with timeoutMs. */
   signal?: AbortSignal;
@@ -145,7 +151,8 @@ export type SafeFetchResult = {
 export async function safeFetch(raw: string, opts: SafeFetchOptions = {}): Promise<SafeFetchResult> {
   const maxRedirects = opts.maxRedirects ?? DEFAULT_MAX_REDIRECTS;
   const fetchImpl = opts.fetchImpl ?? ((input, init) => fetch(input, init));
-  const signals = [opts.signal, opts.timeoutMs ? AbortSignal.timeout(opts.timeoutMs) : undefined].filter(
+  const timeoutMs = opts.timeoutMs ?? (opts.signal ? undefined : DEFAULT_TIMEOUT_MS);
+  const signals = [opts.signal, timeoutMs ? AbortSignal.timeout(timeoutMs) : undefined].filter(
     (s): s is AbortSignal => Boolean(s)
   );
   const signal = signals.length > 1 ? AbortSignal.any(signals) : signals[0];

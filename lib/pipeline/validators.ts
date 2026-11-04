@@ -7,7 +7,7 @@ import {
   toAbsoluteInventoryUrl,
 } from "@/lib/pipeline/seo/types";
 import { SITE_URL } from "@/lib/seo";
-import { safeFetch, type FetchLike, type HostResolver } from "@/lib/security/safe-fetch";
+import { UnsafeUrlError, safeFetch, type FetchLike, type HostResolver } from "@/lib/security/safe-fetch";
 import type { Brief } from "@prisma/client";
 
 export type ValidationResult = { ok: boolean; reasons: string[] };
@@ -244,8 +244,9 @@ type LinkFetchDeps = { resolver?: HostResolver; fetchImpl?: FetchLike };
 /**
  * Alive when HEAD (or, for CDNs that reject HEAD, a one-byte GET) answers
  * 2xx or 3xx. safeFetch resolves and checks every hop, so a link to (or
- * redirecting to) a private address counts as unreachable. Bodies are never
- * read.
+ * redirecting to) a private or unresolvable address counts as unreachable.
+ * A chain longer than safeFetch's redirect limit counts as alive: every hop
+ * it saw answered and passed the public check. Bodies are never read.
  */
 async function headOk(url: string, timeoutMs: number, deps: LinkFetchDeps = {}): Promise<boolean> {
   const alive = (status: number, ok: boolean) => ok || (status >= 300 && status < 400);
@@ -263,8 +264,8 @@ async function headOk(url: string, timeoutMs: number, deps: LinkFetchDeps = {}):
     });
     await get.response.body?.cancel().catch(() => undefined);
     return alive(get.response.status, get.response.ok);
-  } catch {
-    return false;
+  } catch (error) {
+    return error instanceof UnsafeUrlError && error.reason === "too_many_redirects";
   }
 }
 

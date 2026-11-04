@@ -33,6 +33,7 @@ function isPublicV4(a: number, b: number, c: number): boolean {
     (a === 169 && b === 254) ||
     (a === 172 && b >= 16 && b <= 31) ||
     (a === 192 && b === 168) ||
+    (a === 192 && b === 88 && c === 99) || // 6to4 relay anycast
     (a === 192 && b === 0 && (c === 0 || c === 2)) || // IETF protocol assignments, TEST-NET-1
     (a === 198 && (b === 18 || b === 19)) || // benchmarking
     (a === 198 && b === 51 && c === 100) || // TEST-NET-2
@@ -70,7 +71,10 @@ export function isPublicHost(hostname: string): boolean {
     if (g.slice(0, 5).every((x) => x === 0) && g[5] === 0xffff) {
       return isPublicV4(g[6] >> 8, g[6] & 0xff, g[7] >> 8); // IPv4-mapped
     }
-    if (g[0] === 0x64 && g[1] === 0xff9b) return false; // NAT64
+    if (g.slice(0, 4).every((x) => x === 0) && g[4] === 0xffff && g[5] === 0) return false; // IPv4-translated ::ffff:0:0:0/96
+    if (g[0] === 0x64 && g[1] === 0xff9b) return false; // NAT64: 64:ff9b::/96 and local-use 64:ff9b:1::/48
+    if (g[0] === 0x100 && g[1] === 0 && g[2] === 0 && g[3] === 0) return false; // discard-only 100::/64
+    if (g[0] === 0x2001 && g[1] === 0) return false; // Teredo 2001::/32
     if (g[0] === 0x2002) return false; // 6to4
     if (g[0] === 0x2001 && g[1] === 0x0db8) return false; // documentation
     if ((g[0] & 0xfe00) === 0xfc00) return false; // unique local
@@ -79,6 +83,14 @@ export function isPublicHost(hostname: string): boolean {
     return true;
   }
   return true;
+}
+
+/**
+ * Only the scheme's standard port: none (the default), 80 or 443. WHATWG URL
+ * parsing already drops a default port, so `https://x:443` has port "".
+ */
+export function isAllowedPort(port: string): boolean {
+  return port === "" || port === "80" || port === "443";
 }
 
 /** True when `address` is an IP literal (v4 or v6) that passes isPublicHost. */

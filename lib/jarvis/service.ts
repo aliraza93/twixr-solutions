@@ -324,7 +324,10 @@ export function createControlService(deps: ControlDeps) {
       meta,
     });
     if (!updated) {
-      throw new ControlError(409, "conflict", expect ? NOT_EXPECTED : CHANGED, blogCurrent(await store.getBlog(id)));
+      const now = await store.getBlog(id);
+      const expectFailed =
+        expect && (!now || blogStateOf(now) !== expect.state || now.updatedAt.getTime() !== expect.updatedAt.getTime());
+      throw new ControlError(409, "conflict", expectFailed ? NOT_EXPECTED : CHANGED, blogCurrent(now));
     }
     const fresh = await store.getBlog(id);
     return { draft: fresh ? blogView(fresh) : null };
@@ -387,7 +390,10 @@ export function createControlService(deps: ControlDeps) {
       { refType: "SocialPost", refId: id, status: "ok", message, meta }
     );
     if (!updated) {
-      throw new ControlError(409, "conflict", expect ? NOT_EXPECTED : CHANGED, socialCurrent(await store.getSocial(id)));
+      const now = await store.getSocial(id);
+      const expectFailed =
+        expect && (!now || socialStateOf(now) !== expect.state || now.scheduledFor.getTime() !== expect.scheduledFor.getTime());
+      throw new ControlError(409, "conflict", expectFailed ? NOT_EXPECTED : CHANGED, socialCurrent(now));
     }
     const fresh = await store.getSocial(id);
     return { draft: fresh ? socialView(fresh) : null };

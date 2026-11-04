@@ -96,6 +96,8 @@ class FakeStore implements ControlStore {
   allowlist = new Set<string>();
   /** Simulate the cron touching the row between read and write. */
   raceNextUpdate = false;
+  /** Runs inside the write before its checks: another writer that committed first. */
+  beforeWrite: (() => void) | null = null;
   /** Simulate a parallel insert the pre-check did not see. */
   hiddenQueuedTopic: string | null = null;
   /** Simulate the pipeline switch flipping between read and write. */
@@ -208,8 +210,12 @@ class FakeStore implements ControlStore {
   }
   /** Guards evaluated against the store's current rows, as the transaction does. */
   async updateBlog(id: string, guard: BlogGuard, data: Parameters<ControlStore["updateBlog"]>[2], log: ControlLog) {
+    this.beforeWrite?.();
     const b = this.blogs.get(id);
     if (this.raceNextUpdate || !b || b.published || b.updatedAt.getTime() !== guard.updatedAt.getTime()) return false;
+    if (guard.expect && (blogStateOf(b) !== guard.expect.state || b.updatedAt.getTime() !== guard.expect.updatedAt.getTime())) {
+      return false;
+    }
     const live = [...this.socials.values()].filter(
       (p) => p.blogPostId === id && (p.status === "scheduled" || p.status === "publishing")
     );
@@ -223,8 +229,12 @@ class FakeStore implements ControlStore {
     return true;
   }
   async updateSocial(id: string, guard: SocialGuard, data: Parameters<ControlStore["updateSocial"]>[2], log: ControlLog) {
+    this.beforeWrite?.();
     const s = this.socials.get(id);
     if (!s || s.status !== guard.status || s.scheduledFor.getTime() !== guard.scheduledFor.getTime()) return false;
+    if (guard.expect && (socialStateOf(s) !== guard.expect.state || s.scheduledFor.getTime() !== guard.expect.scheduledFor.getTime())) {
+      return false;
+    }
     if (guard.blogLiveBy && s.blogPostId) {
       const b = this.blogs.get(s.blogPostId);
       if (b && !b.published && !(b.reviewState === "approved" && b.publishAt && b.publishAt <= guard.blogLiveBy)) {
@@ -1027,6 +1037,10 @@ describe("source URLs must be public", () => {
     "http://metadata.google.internal/",
     "https://db.internal/",
     "ftp://example.com/file",
+    "https://laravel.com:8443/news",
+    "http://8.8.8.8:6379/",
+    "http://[2001::1]/",
+    "http://192.88.99.1/",
   ];
   for (const url of blocked) {
     it(`refuses ${url}`, async () => {
@@ -1151,5 +1165,126 @@ describe("source hosts: IPv4 inside IPv6 and reserved ranges", () => {
   }
   it("still accepts public IPv4-mapped addresses", () => {
     assert.equal(isPublicHost(new URL("http://[::ffff:8.8.8.8]/").hostname), true);
+  });
+});
+
+describe("conditional write (expect)", () => {
+  const blogSeen = () => ({ state: "needs_review", updatedAt: blog().updatedAt.toISOString() });
+  const liSeen = () => ({ state: "needs_review", scheduledFor: social().scheduledFor.toISOString() });
+
+  it("writes when the blog still matches what Jarvis saw", async () => {
+    store.blogs.set("blog1", blog());
+    const r = await act("blog", "blog1", { action: "approve", expect: blogSeen() });
+    assert.equal(r.status, 200);
+    assert.equal(r.json.draft.state, "scheduled");
+  });
+
+  it("refuses a blog whose state or updatedAt moved, with the current values, writing nothing", async () => {
+    store.blogs.set("blog1", blog());
+    const later = new Date(NOW.getTime() - 30_000);
+    const cases = [
+      { state: "paused", updatedAt: blog().updatedAt.toISOString() },
+      { state: "needs_review", updatedAt: later.toISOString() },
+    ];
+    for (const expect of cases) {
+      const r = await act("blog", "blog1", { action: "approve", expect });
+      assert.equal(r.status, 409);
+      assert.equal(r.json.error.code, "conflict");
+      assert.deepEqual(r.json.error.details, { state: "needs_review", updatedAt: blog().updatedAt.toISOString() });
+    }
+    assert.equal(store.logs.length, 0);
+    assert.equal(blogStateOf(store.blogs.get("blog1")!), "needs_review");
+  });
+
+  it("answers conflict, not invalid_transition or quality_gate, when the expected state is stale", async () => {
+    store.blogs.set("blog1", blog({ reviewState: "approved", publishAt: DRAWN_BLOG_AT, criticScore: 10 }));
+    const r = await act("blog", "blog1", { action: "approve", expect: blogSeen() });
+    assert.equal(r.status, 409);
+    assert.equal(r.json.error.code, "conflict");
+    assert.equal(r.json.error.details.state, "scheduled");
+    assert.equal(store.logs.length, 0);
+  });
+
+  it("re-checks a blog inside the write: a change that lands after the read is a conflict", async () => {
+    store.blogs.set("blog1", blog());
+    const changedAt = new Date(NOW.getTime() - 1000);
+    store.beforeWrite = () => {
+      store.blogs.set("blog1", blog({ reviewReasons: [PAUSE_MARKER], updatedAt: changedAt }));
+    };
+    const r = await act("blog", "blog1", { action: "approve", expect: blogSeen() });
+    assert.equal(r.status, 409);
+    assert.equal(r.json.error.code, "conflict");
+    assert.deepEqual(r.json.error.details, { state: "paused", updatedAt: changedAt.toISOString() });
+    assert.equal(store.logs.length, 0);
+  });
+
+  it("says the expect check failed only when it did", async () => {
+    store.blogs.set("blog1", blog());
+    store.raceNextUpdate = true; // the write is refused for another reason; the row still matches expect
+    const other = await act("blog", "blog1", { action: "approve", expect: blogSeen() });
+    assert.equal(other.status, 409);
+    assert.match(other.json.error.message, /changed while this request ran/);
+
+    store.raceNextUpdate = false;
+    store.socials.set("li1", social());
+    store.beforeWrite = () => store.socials.set("li1", social({ reviewReasons: [PAUSE_MARKER] }));
+    const stale = await act("social", "li1", { action: "approve", expect: liSeen() });
+    assert.match(stale.json.error.message, /no longer in the state Jarvis expected/);
+  });
+
+  it("writes a LinkedIn post that still matches, and refuses one that moved", async () => {
+    store.socials.set("li1", social());
+    const ok = await act("social", "li1", { action: "approve", expect: liSeen() });
+    assert.equal(ok.status, 200);
+    assert.equal(ok.json.draft.state, "scheduled");
+
+    store.socials.set("li2", social({ id: "li2", status: "scheduled", scheduledFor: DRAWN_LI_AT }));
+    const stale = await act("social", "li2", { action: "pause", expect: { state: "scheduled", scheduledFor: NOW.toISOString() } });
+    assert.equal(stale.status, 409);
+    assert.equal(stale.json.error.code, "conflict");
+    assert.deepEqual(stale.json.error.details, { state: "scheduled", scheduledFor: DRAWN_LI_AT.toISOString() });
+  });
+
+  it("re-checks a LinkedIn post inside the write: a pause that keeps status and time still conflicts", async () => {
+    store.socials.set("li1", social());
+    // Same status column and time, so only the expect check can see it.
+    store.beforeWrite = () => {
+      store.socials.set("li1", social({ reviewReasons: [PAUSE_MARKER] }));
+    };
+    const r = await act("social", "li1", { action: "approve", expect: liSeen() });
+    assert.equal(r.status, 409);
+    assert.equal(r.json.error.code, "conflict");
+    assert.equal(r.json.error.details.state, "paused");
+    assert.equal(store.socials.get("li1")!.status, "needs_review");
+    assert.equal(store.logs.length, 0);
+  });
+
+  it("is optional: the same race without expect still writes when the guard columns match", async () => {
+    store.socials.set("li1", social());
+    store.beforeWrite = () => {
+      store.socials.set("li1", social({ reviewReasons: [PAUSE_MARKER] }));
+    };
+    const r = await act("social", "li1", { action: "approve" });
+    assert.equal(r.status, 200);
+  });
+
+  it("validates expect per kind", async () => {
+    store.blogs.set("blog1", blog());
+    store.socials.set("li1", social());
+    const bad: Array<[string, string, unknown]> = [
+      ["blog", "blog1", { state: "needs_review", scheduledFor: NOW.toISOString() }],
+      ["blog", "blog1", { state: "publishing", updatedAt: NOW.toISOString() }],
+      ["blog", "blog1", { state: "needs_review" }],
+      ["blog", "blog1", { state: "needs_review", updatedAt: "yesterday" }],
+      ["social", "li1", { state: "needs_review", updatedAt: NOW.toISOString() }],
+      ["social", "li1", { state: "discarded", scheduledFor: NOW.toISOString() }],
+      ["social", "li1", { state: "needs_review", scheduledFor: NOW.toISOString(), extra: 1 }],
+    ];
+    for (const [kind, id, expect] of bad) {
+      const r = await act(kind, id, { action: "approve", expect });
+      assert.equal(r.status, 400, JSON.stringify(expect));
+      assert.equal(r.json.error.code, "invalid_request");
+    }
+    assert.equal(store.logs.length, 0);
   });
 });

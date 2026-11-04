@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { cronAuthorized } from "@/lib/security/bearer";
 import {
   claimDayPlan,
   dayPlanIsDue,
@@ -24,8 +25,7 @@ export const maxDuration = 300;
  * drawn moment, and the claim is atomic so overlapping ticks cannot double-post.
  */
 export async function GET(req: Request) {
-  const auth = req.headers.get("authorization");
-  if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!cronAuthorized(req)) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 

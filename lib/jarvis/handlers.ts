@@ -5,7 +5,7 @@ import { SlidingWindowLimiter, clientIp } from "@/lib/jarvis/rate-limit";
 import {
   briefsQuery,
   createBriefBody,
-  draftActionBody,
+  draftActionBodyFor,
   draftParams,
   draftsQuery,
   logsQuery,
@@ -152,7 +152,7 @@ export function makeHandlers(deps: HandlerDeps) {
     actOnDraft: (req: Request, params: Params) =>
       guarded(req, async () => {
         const p = parse(draftParams, params);
-        const input = parse(draftActionBody, await body(req));
+        const input = parse(draftActionBodyFor(p.kind), await body(req));
         return ok(await deps.service().actOnDraft(p.kind, p.id, input));
       }),
 

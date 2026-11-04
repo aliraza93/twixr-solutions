@@ -88,6 +88,8 @@ type Mods = {
   publishLi: typeof import("@/lib/pipeline/run-publish-linkedin");
   generate: typeof import("@/lib/pipeline/run-generate");
   tick: typeof import("@/app/api/cron/tick/route");
+  cronGenerate: typeof import("@/app/api/cron/generate/route");
+  cronLinkedin: typeof import("@/app/api/cron/publish-linkedin/route");
 };
 let m: Mods;
 
@@ -108,6 +110,8 @@ before(async () => {
     publishLi: await import("@/lib/pipeline/run-publish-linkedin"),
     generate: await import("@/lib/pipeline/run-generate"),
     tick: await import("@/app/api/cron/tick/route"),
+    cronGenerate: await import("@/app/api/cron/generate/route"),
+    cronLinkedin: await import("@/app/api/cron/publish-linkedin/route"),
   };
 });
 
@@ -195,6 +199,58 @@ describe("prisma store: guarded writes", () => {
     assert.equal(await write(), false);
     fake.txError = new Error("connection lost");
     await assert.rejects(write, /connection lost/);
+  });
+
+  it("updateBlog with expect reads the row after the locks and writes only if it still matches", async () => {
+    const updatedAt = new Date(NOW.getTime() - HOUR);
+    const at = new Date(NOW.getTime() + 5 * HOUR);
+    const write = () =>
+      store().updateBlog(
+        "b1",
+        { updatedAt, expect: { state: "needs_review", updatedAt }, social: { noneScheduledBefore: at } },
+        { reviewState: "approved", reviewReasons: [], publishAt: at },
+        log
+      );
+    fake.handlers["blogPost.updateMany"] = () => ({ count: 1 });
+    fake.handlers["blogPost.findUnique"] = () => ({ published: false, reviewState: "needs_review", reviewReasons: ["Paused by Jarvis"], updatedAt });
+    assert.equal(await write(), false, "paused is not needs_review");
+    assert.equal(fake.of("blogPost", "updateMany").length, 0);
+    assert.equal(fake.of("generationLog", "create").length, 0);
+
+    fake.reset();
+    fake.handlers["blogPost.updateMany"] = () => ({ count: 1 });
+    fake.handlers["blogPost.findUnique"] = () => ({ published: false, reviewState: "needs_review", reviewReasons: [], updatedAt });
+    assert.equal(await write(), true);
+    const order = fake.calls.map((c) => (c.model === "$raw" ? "lock" : `${c.model}.${c.op}`));
+    assert.deepEqual(order.slice(0, 4), ["lock", "lock", "blogPost.findUnique", "blogPost.updateMany"]);
+  });
+
+  it("updateSocial with expect compares the derived state and time under the lock", async () => {
+    const was = new Date(NOW.getTime() - HOUR);
+    const write = () =>
+      store().updateSocial(
+        "li1",
+        { status: "scheduled", scheduledFor: was, expect: { state: "scheduled", scheduledFor: was } },
+        { status: "needs_review", reviewReasons: ["Paused by Jarvis"], scheduledFor: was },
+        { ...log, refType: "SocialPost", refId: "li1" }
+      );
+    fake.handlers["socialPost.updateMany"] = () => ({ count: 1 });
+    fake.handlers["socialPost.findUnique"] = () => ({ status: "scheduled", reviewReasons: [], scheduledFor: new Date(was.getTime() + 1) });
+    assert.equal(await write(), false);
+    assert.equal(fake.of("socialPost", "updateMany").length, 0);
+    fake.handlers["socialPost.findUnique"] = () => ({ status: "scheduled", reviewReasons: [], scheduledFor: was });
+    assert.equal(await write(), true);
+    assert.equal(fake.of("socialPost", "updateMany").length, 1);
+  });
+
+  it("updateBlog without expect does not read the row first", async () => {
+    await store().updateBlog(
+      "b1",
+      { updatedAt: NOW, social: { noneScheduled: true } },
+      { reviewState: "needs_review", reviewReasons: [], publishAt: null },
+      log
+    );
+    assert.equal(fake.of("blogPost", "findUnique").length, 0);
   });
 
   it("updateSocial to scheduled locks its blog first and guards on the blog being live by then", async () => {
@@ -523,5 +579,69 @@ describe("cron: stuck claims and an unrecorded post", () => {
     // never released back to the queue
     const releases = fake.of("socialPost", "updateMany").filter((c) => (c.args as { data: { status?: string } }).data.status === "scheduled");
     assert.equal(releases.length, 0);
+  });
+});
+
+describe("cron routes: CRON_SECRET", () => {
+  const routes = () => [
+    ["tick", m.tick.GET],
+    ["generate", m.cronGenerate.GET],
+    ["publish-linkedin", m.cronLinkedin.GET],
+  ] as const;
+  const call = (handler: (req: Request) => Promise<Response>, auth?: string) =>
+    handler(
+      new Request("https://twixrsolutions.com/api/cron/x?dryRun=1", auth === undefined ? {} : { headers: { authorization: auth } })
+    );
+
+  it("refuses a wrong, missing or differently cased bearer and touches nothing", async () => {
+    for (const [name, handler] of routes()) {
+      for (const auth of [undefined, "Bearer wrong-secret-for-tests", "bearer cron-secret-for-tests", "cron-secret-for-tests"]) {
+        const res = await call(handler, auth);
+        assert.equal(res.status, 401, `${name} with ${auth}`);
+      }
+    }
+    assert.equal(fake.calls.length, 0);
+  });
+
+  it("accepts the exact bearer", async () => {
+    for (const [name, handler] of routes()) {
+      const res = await call(handler, "Bearer cron-secret-for-tests");
+      assert.equal(res.status, 200, name);
+    }
+  });
+
+  it("refuses everything, even Bearer undefined, when the secret is unset or blank", async () => {
+    const saved = process.env.CRON_SECRET;
+    const originalError = console.error;
+    console.error = () => undefined;
+    try {
+      for (const secret of [undefined, "", "   "]) {
+        if (secret === undefined) delete process.env.CRON_SECRET;
+        else process.env.CRON_SECRET = secret;
+        for (const [name, handler] of routes()) {
+          for (const auth of ["Bearer undefined", `Bearer ${secret ?? ""}`, "Bearer ", "Bearer null"]) {
+            const res = await call(handler, auth);
+            assert.equal(res.status, 401, `${name} with secret ${JSON.stringify(secret)} and ${auth}`);
+          }
+        }
+      }
+      assert.equal(fake.calls.length, 0);
+    } finally {
+      process.env.CRON_SECRET = saved;
+      console.error = originalError;
+    }
+  });
+
+  it("accepts a short secret, so a short live value keeps publishing", async () => {
+    const saved = process.env.CRON_SECRET;
+    process.env.CRON_SECRET = "short";
+    try {
+      for (const [name, handler] of routes()) {
+        assert.equal((await call(handler, "Bearer short")).status, 200, name);
+        assert.equal((await call(handler, "Bearer undefined")).status, 401, name);
+      }
+    } finally {
+      process.env.CRON_SECRET = saved;
+    }
   });
 });

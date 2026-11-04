@@ -14,7 +14,9 @@ import {
   pausedReasons,
   socialStateOf,
   transitionFor,
+  type BlogState,
   type DraftAction,
+  type SocialState,
 } from "@/lib/jarvis/states";
 import type {
   BlogGuard,
@@ -26,6 +28,7 @@ import type {
   Move,
   PastDue,
   Reschedule,
+  SocialGuard,
   SocialRow,
   SocialSummary,
 } from "@/lib/jarvis/store";
@@ -173,6 +176,36 @@ function refuseTransition(kind: string, action: DraftAction, state: string, allo
   });
 }
 
+/** The expect block for this kind, as Dates; a block for the other kind is a bad request. */
+function blogExpectOf(input: DraftActionInput): BlogGuard["expect"] {
+  const e = input.expect;
+  if (!e) return undefined;
+  if (!("updatedAt" in e)) {
+    throw new ControlError(400, "invalid_request", "A blog expect takes state and updatedAt");
+  }
+  return { state: e.state as BlogState, updatedAt: new Date(e.updatedAt) };
+}
+
+function socialExpectOf(input: DraftActionInput): SocialGuard["expect"] {
+  const e = input.expect;
+  if (!e) return undefined;
+  if (!("scheduledFor" in e)) {
+    throw new ControlError(400, "invalid_request", "A social expect takes state and scheduledFor");
+  }
+  return { state: e.state as SocialState, scheduledFor: new Date(e.scheduledFor) };
+}
+
+function blogCurrent(post: BlogRow | null) {
+  return post ? { state: blogStateOf(post), updatedAt: post.updatedAt } : undefined;
+}
+
+function socialCurrent(post: SocialRow | null) {
+  return post ? { state: socialStateOf(post), scheduledFor: post.scheduledFor } : undefined;
+}
+
+const CHANGED = "The draft changed while this request ran; read it again";
+const NOT_EXPECTED = "The draft is no longer in the state Jarvis expected; read it again";
+
 export function createControlService(deps: ControlDeps) {
   const { store, config } = deps;
 
@@ -220,6 +253,13 @@ export function createControlService(deps: ControlDeps) {
     if (!post || post.origin !== "pipeline") {
       throw new ControlError(404, "not_found", "No pipeline blog draft with that id");
     }
+    const expect = blogExpectOf(input);
+    if (
+      expect &&
+      (blogStateOf(post) !== expect.state || post.updatedAt.getTime() !== expect.updatedAt.getTime())
+    ) {
+      throw new ControlError(409, "conflict", NOT_EXPECTED, blogCurrent(post));
+    }
     const from = blogStateOf(post);
     const move = transitionFor(input.action, from);
     if (!move.ok) refuseTransition("blog", input.action, from, move.allowedFrom);
@@ -255,7 +295,7 @@ export function createControlService(deps: ControlDeps) {
       });
       await enforceGate({ refType: "BlogPost", refId: id, meta }, post.slug, gate, input.override);
       meta.publishAt = at.toISOString();
-      guard = { updatedAt: post.updatedAt, social: { noneScheduledBefore: at } };
+      guard = { updatedAt: post.updatedAt, expect, social: { noneScheduledBefore: at } };
       data = { reviewState: "approved" as const, reviewReasons: [], publishAt: at };
       message = `Jarvis ${input.action} blog ${post.slug}: publishes at ${at.toISOString()}`;
     } else {
@@ -267,7 +307,7 @@ export function createControlService(deps: ControlDeps) {
           { socialPostIds: scheduledSocial.map((s) => s.id) }
         );
       }
-      guard = { updatedAt: post.updatedAt, social: { noneScheduled: true } };
+      guard = { updatedAt: post.updatedAt, expect, social: { noneScheduled: true } };
       data = {
         reviewState: "needs_review" as const,
         reviewReasons: pausedReasons(input.reason),
@@ -284,7 +324,10 @@ export function createControlService(deps: ControlDeps) {
       meta,
     });
     if (!updated) {
-      throw new ControlError(409, "conflict", "The draft changed while this request ran; read it again");
+      const now = await store.getBlog(id);
+      const expectFailed =
+        expect && (!now || blogStateOf(now) !== expect.state || now.updatedAt.getTime() !== expect.updatedAt.getTime());
+      throw new ControlError(409, "conflict", expectFailed ? NOT_EXPECTED : CHANGED, blogCurrent(now));
     }
     const fresh = await store.getBlog(id);
     return { draft: fresh ? blogView(fresh) : null };
@@ -297,6 +340,13 @@ export function createControlService(deps: ControlDeps) {
       throw new ControlError(409, "invalid_transition", `${post.channel} drafts are posted by hand, not scheduled`, {
         channel: post.channel,
       });
+    }
+    const expect = socialExpectOf(input);
+    if (
+      expect &&
+      (socialStateOf(post) !== expect.state || post.scheduledFor.getTime() !== expect.scheduledFor.getTime())
+    ) {
+      throw new ControlError(409, "conflict", NOT_EXPECTED, socialCurrent(post));
     }
     const from = socialStateOf(post);
     const move = transitionFor(input.action, from);
@@ -335,12 +385,15 @@ export function createControlService(deps: ControlDeps) {
 
     const updated = await store.updateSocial(
       id,
-      { status: post.status, scheduledFor: post.scheduledFor, blogLiveBy },
+      { status: post.status, scheduledFor: post.scheduledFor, blogLiveBy, expect },
       data,
       { refType: "SocialPost", refId: id, status: "ok", message, meta }
     );
     if (!updated) {
-      throw new ControlError(409, "conflict", "The draft changed while this request ran; read it again");
+      const now = await store.getSocial(id);
+      const expectFailed =
+        expect && (!now || socialStateOf(now) !== expect.state || now.scheduledFor.getTime() !== expect.scheduledFor.getTime());
+      throw new ControlError(409, "conflict", expectFailed ? NOT_EXPECTED : CHANGED, socialCurrent(now));
     }
     const fresh = await store.getSocial(id);
     return { draft: fresh ? socialView(fresh) : null };

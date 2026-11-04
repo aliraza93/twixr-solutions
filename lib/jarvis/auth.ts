@@ -1,4 +1,4 @@
-import { createHash, timingSafeEqual } from "node:crypto";
+import { secretsMatch } from "@/lib/security/bearer";
 
 /**
  * Bearer token auth for the Jarvis control API.
@@ -32,12 +32,8 @@ export function bearerToken(header: string | null): string | null {
   return match ? match[1] : null;
 }
 
-function digest(value: string): Buffer {
-  return createHash("sha256").update(value, "utf8").digest();
-}
-
 export function tokensMatch(presented: string, expected: string): boolean {
-  return timingSafeEqual(digest(presented), digest(expected));
+  return secretsMatch(presented, expected);
 }
 
 export function authorize(

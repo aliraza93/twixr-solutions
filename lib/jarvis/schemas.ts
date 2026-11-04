@@ -2,6 +2,7 @@ import { z } from "zod";
 import { GENERATORS } from "@/lib/jarvis/generator";
 import { BLOG_STATES, DRAFT_ACTIONS, SOCIAL_STATES } from "@/lib/jarvis/states";
 import { isAllowedPort, isPublicHost } from "@/lib/security/public-host";
+import { UNSAFE_MARKUP_MESSAGE, hasUnsafeMarkup } from "@/lib/security/unsafe-markup";
 
 /** Request shapes for /api/jarvis/*. Unknown body keys are refused. */
 
@@ -188,18 +189,22 @@ export const IDEMPOTENCY_KEY_RE = /^[A-Za-z0-9_-]{8,64}$/;
 
 const score = z.number().int().min(0).max(100);
 
+/** Text that reaches JSON-LD and meta tags: no script tags, handlers or javascript: URLs. */
+const plainText = (min: number, max: number) =>
+  z.string().trim().min(min).max(max).refine((v) => !hasUnsafeMarkup(v), UNSAFE_MARKUP_MESSAGE);
+
 export const intakeBody = z
   .object({
     idempotencyKey: z.string().regex(IDEMPOTENCY_KEY_RE, "8 to 64 letters, digits, - or _"),
-    title: z.string().trim().min(1).max(200),
-    excerpt: z.string().trim().min(1).max(400),
+    title: plainText(1, 200),
+    excerpt: plainText(1, 400),
     /** Length and kebab-case are metadata hard fails, refused by the gate (422). */
     slug: z.string().trim().min(1).max(120),
     tags: z.array(z.string().trim().min(1).max(40)).max(12).default([]),
     category: z.string().trim().max(60).default(""),
     body: z.string().trim().min(1).max(60_000),
     faqs: z
-      .array(z.object({ question: z.string().trim().min(1).max(300), answer: z.string().trim().max(2000) }).strict())
+      .array(z.object({ question: plainText(1, 300), answer: plainText(0, 2000) }).strict())
       .max(20)
       .default([]),
     criticScore: score,

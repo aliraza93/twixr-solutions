@@ -28,6 +28,11 @@ export async function runPublishLinkedin(
 ): Promise<RunPublishResult> {
   const runId = createRunId();
   const dryRun = Boolean(options.dryRun);
+  // Set once this run owns the row (status "publishing"), and once LinkedIn
+  // has accepted the post. A claimed row that was never posted is handed
+  // back on error; a posted one is never handed back, so it cannot go twice.
+  let claimedId: string | null = null;
+  let posted = false;
 
   try {
     if (!pipeline.enabled) {
@@ -68,6 +73,28 @@ export async function runPublishLinkedin(
         });
       }
       return { runId, status: "skip", message: "Nothing due" };
+    }
+
+    // Claim before validating or posting. If Jarvis paused or moved the row,
+    // or another run took it, the conditional update matches nothing.
+    if (!dryRun) {
+      const claimed = await withDb(async () => {
+        const db = requireDb();
+        const result = await db.socialPost.updateMany({
+          where: { id: post.id, status: "scheduled", scheduledFor: { lte: new Date() } },
+          data: { status: "publishing" },
+        });
+        return result.count;
+      }, 0);
+      if (claimed !== 1) {
+        return {
+          runId,
+          status: "skip",
+          message: "Post changed before claim",
+          socialPostId: post.id,
+        };
+      }
+      claimedId = post.id;
     }
 
     const validation = await validateLinkedIn(post.body);
@@ -136,6 +163,7 @@ export async function runPublishLinkedin(
       imageUrl: post.imageUrl || undefined,
       visibility: (post.visibility as "PUBLIC" | "CONNECTIONS") || "PUBLIC",
     });
+    posted = result.ok;
 
     if (!result.ok) {
       await withDb(async () => {
@@ -200,6 +228,9 @@ export async function runPublishLinkedin(
     const message =
       error instanceof Error ? error.message : "Unknown publish failure";
     console.error("runPublishLinkedin failed:", error);
+    if (claimedId && !posted) {
+      await releaseClaim(claimedId);
+    }
     try {
       await logStage({
         runId,
@@ -212,4 +243,15 @@ export async function runPublishLinkedin(
     }
     return { runId, status: "fail", message };
   }
+}
+
+/** Hand a claimed, never-posted row back to the queue. */
+async function releaseClaim(id: string): Promise<void> {
+  await withDb(async () => {
+    const db = requireDb();
+    await db.socialPost.updateMany({
+      where: { id, status: "publishing" },
+      data: { status: "scheduled" },
+    });
+  }, undefined);
 }

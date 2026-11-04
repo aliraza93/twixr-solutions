@@ -22,6 +22,7 @@ export type BlogState = (typeof BLOG_STATES)[number];
 export const SOCIAL_STATES = [
   "published",
   "scheduled",
+  "publishing",
   "needs_review",
   "paused",
   "manual",
@@ -63,6 +64,7 @@ export function socialStateOf(post: {
   switch (post.status) {
     case "published":
     case "scheduled":
+    case "publishing":
     case "manual":
     case "failed":
       return post.status;

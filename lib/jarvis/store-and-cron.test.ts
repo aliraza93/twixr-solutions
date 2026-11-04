@@ -88,6 +88,8 @@ type Mods = {
   publishLi: typeof import("@/lib/pipeline/run-publish-linkedin");
   generate: typeof import("@/lib/pipeline/run-generate");
   tick: typeof import("@/app/api/cron/tick/route");
+  cronGenerate: typeof import("@/app/api/cron/generate/route");
+  cronLinkedin: typeof import("@/app/api/cron/publish-linkedin/route");
 };
 let m: Mods;
 
@@ -108,6 +110,8 @@ before(async () => {
     publishLi: await import("@/lib/pipeline/run-publish-linkedin"),
     generate: await import("@/lib/pipeline/run-generate"),
     tick: await import("@/app/api/cron/tick/route"),
+    cronGenerate: await import("@/app/api/cron/generate/route"),
+    cronLinkedin: await import("@/app/api/cron/publish-linkedin/route"),
   };
 });
 
@@ -523,5 +527,56 @@ describe("cron: stuck claims and an unrecorded post", () => {
     // never released back to the queue
     const releases = fake.of("socialPost", "updateMany").filter((c) => (c.args as { data: { status?: string } }).data.status === "scheduled");
     assert.equal(releases.length, 0);
+  });
+});
+
+describe("cron routes: CRON_SECRET", () => {
+  const routes = () => [
+    ["tick", m.tick.GET],
+    ["generate", m.cronGenerate.GET],
+    ["publish-linkedin", m.cronLinkedin.GET],
+  ] as const;
+  const call = (handler: (req: Request) => Promise<Response>, auth?: string) =>
+    handler(
+      new Request("https://twixrsolutions.com/api/cron/x?dryRun=1", auth === undefined ? {} : { headers: { authorization: auth } })
+    );
+
+  it("refuses a wrong, missing or differently cased bearer and touches nothing", async () => {
+    for (const [name, handler] of routes()) {
+      for (const auth of [undefined, "Bearer wrong-secret-for-tests", "bearer cron-secret-for-tests", "cron-secret-for-tests"]) {
+        const res = await call(handler, auth);
+        assert.equal(res.status, 401, `${name} with ${auth}`);
+      }
+    }
+    assert.equal(fake.calls.length, 0);
+  });
+
+  it("accepts the exact bearer", async () => {
+    for (const [name, handler] of routes()) {
+      const res = await call(handler, "Bearer cron-secret-for-tests");
+      assert.equal(res.status, 200, name);
+    }
+  });
+
+  it("refuses everything, even Bearer undefined, when the secret is unset or short", async () => {
+    const saved = process.env.CRON_SECRET;
+    const originalError = console.error;
+    console.error = () => undefined;
+    try {
+      for (const secret of [undefined, "", "short-secret", "               x"]) {
+        if (secret === undefined) delete process.env.CRON_SECRET;
+        else process.env.CRON_SECRET = secret;
+        for (const [name, handler] of routes()) {
+          for (const auth of ["Bearer undefined", `Bearer ${secret ?? ""}`, "Bearer ", "Bearer null"]) {
+            const res = await call(handler, auth);
+            assert.equal(res.status, 401, `${name} with secret ${JSON.stringify(secret)} and ${auth}`);
+          }
+        }
+      }
+      assert.equal(fake.calls.length, 0);
+    } finally {
+      process.env.CRON_SECRET = saved;
+      console.error = originalError;
+    }
   });
 });

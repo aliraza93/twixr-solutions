@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
+import { cronAuthorized } from "@/lib/security/bearer";
 import { runPublishDue } from "@/lib/pipeline/run-publish-due";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
 export async function GET(req: Request) {
-  const auth = req.headers.get("authorization");
-  if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!cronAuthorized(req)) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 

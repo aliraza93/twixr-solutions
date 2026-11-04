@@ -194,7 +194,10 @@ export async function runPublishLinkedin(
       };
     }
 
-    await withDb(async () => {
+    // LinkedIn has the post. If recording that fails, say so loudly: the
+    // row stays "publishing" (never retried) and the stuck-claim sweep moves
+    // it to review for Ali to check the profile.
+    try {
       const db = requireDb();
       await db.socialPost.update({
         where: { id: post.id },
@@ -205,7 +208,27 @@ export async function runPublishLinkedin(
           failReason: "",
         },
       });
-    }, undefined);
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : "unknown error";
+      console.error("LinkedIn post published but not recorded:", post.id, reason);
+      await logStage({
+        runId,
+        stage: "publish",
+        status: "fail",
+        refType: "SocialPost",
+        refId: post.id,
+        message: `Posted to LinkedIn but the status write failed: ${reason}`,
+        meta: { externalId: result.externalId ?? null },
+      });
+      await notifyRunSummary(runId);
+      return {
+        runId,
+        status: "fail",
+        message: "Posted to LinkedIn but not recorded",
+        socialPostId: post.id,
+        externalId: result.externalId,
+      };
+    }
 
     await logStage({
       runId,
@@ -254,4 +277,56 @@ async function releaseClaim(id: string): Promise<void> {
       data: { status: "scheduled" },
     });
   }, undefined);
+}
+
+export const STUCK_CLAIM_MINUTES = 15;
+export const STUCK_CLAIM_REASON =
+  "LinkedIn publish not confirmed, check the profile before retrying";
+
+/**
+ * A row left in "publishing" means a run claimed it and never recorded the
+ * outcome (killed mid-post, or the final write failed). The post may already
+ * be on LinkedIn, so it never goes back to "scheduled": it moves to review
+ * for Ali to check the profile. Called from the 10-minute tick.
+ */
+export async function recoverStuckPublishing(now = new Date()): Promise<number> {
+  const cutoff = new Date(now.getTime() - STUCK_CLAIM_MINUTES * 60_000);
+  const stuck = await withDb(async () => {
+    const db = requireDb();
+    return db.socialPost.findMany({
+      where: { status: "publishing", scheduledFor: { lt: cutoff } },
+      select: { id: true },
+      take: 20,
+    });
+  }, [] as Array<{ id: string }>);
+  if (stuck.length === 0) return 0;
+
+  const runId = createRunId();
+  let moved = 0;
+  for (const row of stuck) {
+    const count = await withDb(async () => {
+      const db = requireDb();
+      const result = await db.socialPost.updateMany({
+        where: { id: row.id, status: "publishing", scheduledFor: { lt: cutoff } },
+        data: {
+          status: "needs_review",
+          reviewReasons: [STUCK_CLAIM_REASON],
+          failReason: STUCK_CLAIM_REASON,
+        },
+      });
+      return result.count;
+    }, 0);
+    if (count === 1) {
+      moved++;
+      await logStage({
+        runId,
+        stage: "publish",
+        status: "warn",
+        refType: "SocialPost",
+        refId: row.id,
+        message: STUCK_CLAIM_REASON,
+      });
+    }
+  }
+  return moved;
 }

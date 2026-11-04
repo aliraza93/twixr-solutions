@@ -1,6 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { requireDb, withDb } from "@/lib/cms/db";
 import { pipeline } from "@/lib/pipeline/config";
+import { isPipelinePaused } from "@/lib/jarvis/pause";
 import { createRunId, logStage } from "@/lib/pipeline/log";
 import { notifyRunSummary } from "@/lib/pipeline/notify";
 import { runPublishLinkedin } from "@/lib/pipeline/run-publish-linkedin";
@@ -91,26 +92,48 @@ export async function publishDueBlogs(options: {
     return due.length;
   }
 
+  // Conditional flip: a row Jarvis paused (or rescheduled, or the admin
+  // changed) between the read above and this write is left alone.
+  const published: typeof due = [];
   await withDb(async () => {
     const db = requireDb();
     const date = todayDate();
+    const now = new Date();
     for (const row of due) {
-      await db.blogPost.update({
-        where: { id: row.id },
+      const result = await db.blogPost.updateMany({
+        where: {
+          id: row.id,
+          origin: "pipeline",
+          reviewState: "approved",
+          published: false,
+          publishAt: { lte: now },
+        },
         data: { published: true, date },
       });
+      if (result.count === 1) published.push(row);
     }
   }, undefined);
+
+  if (published.length === 0) {
+    await logStage({
+      runId: options.runId,
+      stage: "publish",
+      status: "skip",
+      message: "Due blogs changed before publish; nothing flipped",
+      meta: { ids: due.map((b) => b.id) },
+    });
+    return 0;
+  }
 
   revalidatePublic();
 
   // Push the new URLs to IndexNow so Bing (and the LLM search tools reading
   // its index) pick them up now instead of on the next crawl.
   const indexNow = await submitToIndexNow(
-    due.map((row) => absoluteUrl(`/blog/${row.slug}`))
+    published.map((row) => absoluteUrl(`/blog/${row.slug}`))
   );
 
-  for (const row of due) {
+  for (const row of published) {
     try {
       await notifySubscribersOfPost(row.id);
     } catch (error) {
@@ -122,15 +145,15 @@ export async function publishDueBlogs(options: {
     runId: options.runId,
     stage: "publish",
     status: "ok",
-    message: `Published ${due.length} blog(s)`,
+    message: `Published ${published.length} blog(s)`,
     meta: {
-      ids: due.map((b) => b.id),
-      slugs: due.map((b) => b.slug),
+      ids: published.map((b) => b.id),
+      slugs: published.map((b) => b.slug),
       indexNow,
     },
   });
 
-  return due.length;
+  return published.length;
 }
 
 /**
@@ -151,6 +174,16 @@ export async function runPublishDue(
         runId,
         status: "skip",
         message: "Pipeline disabled",
+        blogsPublished: 0,
+        linkedIn,
+      };
+    }
+
+    if (await isPipelinePaused()) {
+      return {
+        runId,
+        status: "skip",
+        message: "Pipeline paused from Jarvis",
         blogsPublished: 0,
         linkedIn,
       };

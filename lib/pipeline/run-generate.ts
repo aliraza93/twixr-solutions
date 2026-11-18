@@ -24,10 +24,18 @@ import {
   aiCoverImage,
   generateInlineImages,
   linkedinImage,
+  uploadScreenshotFromUrl,
 } from "@/lib/pipeline/images";
 import { createRunId, logStage } from "@/lib/pipeline/log";
 import { notifyRunSummary } from "@/lib/pipeline/notify";
 import { renderOgCover } from "@/lib/pipeline/og-cover";
+import {
+  isProductPillar,
+  productFactSheet,
+  productLinkedInNote,
+  screenshotsFor,
+  screenshotUrl,
+} from "@/lib/pipeline/product/invoicora";
 import {
   randomBlogPublishAt,
   randomLinkedInScheduledFor,
@@ -75,7 +83,7 @@ import {
 } from "@/lib/pipeline/seo/audit";
 import { buildSeoReport, formatSeoReportText } from "@/lib/pipeline/seo/score";
 import type { InventoryItem, RecommendedInternalLink } from "@/lib/pipeline/seo/types";
-import { absoluteUrl } from "@/lib/seo";
+import { absoluteUrl, SITE_URL } from "@/lib/seo";
 import {
   qualityGate,
   validateBlog,
@@ -379,6 +387,19 @@ export async function runGenerateFromBrief(
     });
     const rng = createRng(`${plan.seed}:schedule`);
 
+    // The weekly Invoicora post uses real screenshots instead of drawn
+    // images, and always gets a LinkedIn companion with an image.
+    const productShots = isProductPillar(brief.pillar)
+      ? screenshotsFor(brief.topic)
+      : [];
+    const isProduct = productShots.length > 0;
+    const productFacts = isProduct ? productFactSheet() : undefined;
+    if (isProduct) {
+      plan.images.inlineCount = Math.max(0, productShots.length - 1);
+      plan.social.attachLinkedIn = true;
+      plan.social.withImage = true;
+    }
+
     // Receipts are the only first-hand material the model may use. Without
     // them the post has no experience signals at all.
     const receipts = await receiptsForBrief(
@@ -675,6 +696,13 @@ export async function runGenerateFromBrief(
         : plan.images.coverMode;
       if (!shouldGenerateImages) {
         // skip cover
+      } else if (isProduct) {
+        coverUrl = await uploadScreenshotFromUrl(
+          screenshotUrl(productShots[0], SITE_URL),
+          draft.slug,
+          "cover"
+        );
+        coverStyleId = `screenshot:${productShots[0].id}`;
       } else if (coverMode === "ai") {
         const cover = await aiCoverImage(draft, plan);
         coverUrl = cover.url;
@@ -714,7 +742,22 @@ export async function runGenerateFromBrief(
     }
 
     const inline = shouldGenerateImages
-      ? await generateInlineImages(draft, plan)
+      ? await generateInlineImages(
+          draft,
+          plan,
+          isProduct
+            ? productShots.slice(1).map((shot, i) => ({
+                alt: shot.alt,
+                load: () =>
+                  uploadScreenshotFromUrl(
+                    screenshotUrl(shot, SITE_URL),
+                    draft.slug,
+                    "inline",
+                    i + 1
+                  ),
+              }))
+            : undefined
+        )
       : {
           body: draft.body,
           generated: 0,
@@ -863,7 +906,7 @@ export async function runGenerateFromBrief(
     };
     let criticRan = false;
     try {
-      cBlog = await criticBlog(draftForValidation);
+      cBlog = await criticBlog(draftForValidation, productFacts);
       criticRan = true;
       await logStage({
         runId,
@@ -1126,6 +1169,7 @@ export async function runGenerateFromBrief(
                   .join(" ")
               : ""),
           plan,
+          productNote: isProduct ? productLinkedInNote() : undefined,
         });
 
         await logStage({
@@ -1145,7 +1189,10 @@ export async function runGenerateFromBrief(
         try {
           // Text-only posts happen on purpose: an account that attaches an
           // image to every single post reads as scheduled output.
-          if (plan.social.withImage && shouldGenerateImages) {
+          if (isProduct && coverUrl) {
+            // The product screenshot is the honest picture for this post.
+            sharedSocialImageUrl = coverUrl;
+          } else if (plan.social.withImage && shouldGenerateImages) {
             const liImg = await linkedinImage({
               title: draft.title,
               topic: brief.topic,
@@ -1175,7 +1222,7 @@ export async function runGenerateFromBrief(
           issues: ["critic skipped"],
         };
         try {
-          cLi = await criticLinkedIn(li.text);
+          cLi = await criticLinkedIn(li.text, productFacts);
         } catch (error) {
           await logStage({
             runId,

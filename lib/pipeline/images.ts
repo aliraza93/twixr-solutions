@@ -10,6 +10,7 @@ import { pipeline } from "@/lib/pipeline/config";
 import type { BlogDraft } from "@/lib/pipeline/generate-blog";
 import { seoImageFilename } from "@/lib/pipeline/seo/image-hygiene";
 import { renderLinkedInCard } from "@/lib/pipeline/og-cover";
+import { arrangeBodyImages } from "@/lib/content/arrange-images";
 import { INLINE_IMAGE_KINDS, RENDER_MODIFIERS } from "@/lib/pipeline/variety/banks";
 import type { VarietyPlan } from "@/lib/pipeline/variety/plan";
 import sharp from "sharp";
@@ -345,6 +346,10 @@ function ensureInlinePlaceholders(
       body = `${body.trim()}\n\n![${item.alt}](${item.placeholder})\n`;
     }
   }
+
+  // Missing placeholders were added at the end above; spread them (and any
+  // the model stacked together) through the body instead.
+  body = arrangeBodyImages(body);
 
   return { ...draft, body, inlineImagePrompts: prompts };
 }

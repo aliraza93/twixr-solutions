@@ -23,10 +23,36 @@ type RegisterUploadResponse = {
   };
 };
 
+/**
+ * A short, readable reason from a failed LinkedIn response. An expired or
+ * revoked token gets its own message, because the fix is a new token in
+ * Vercel (LINKEDIN_ACCESS_TOKEN) rather than a retry.
+ */
+export function describeLinkedInError(
+  step: string,
+  status: number,
+  body: string
+): string {
+  let code = "";
+  let message = "";
+  try {
+    const parsed = JSON.parse(body) as { code?: string; message?: string };
+    code = parsed.code ?? "";
+    message = parsed.message ?? "";
+  } catch {
+    message = body;
+  }
+  if (status === 401 || code === "EXPIRED_ACCESS_TOKEN" || code === "REVOKED_ACCESS_TOKEN") {
+    return `LinkedIn token expired or revoked (${step} ${status}${code ? ` ${code}` : ""}): renew LINKEDIN_ACCESS_TOKEN in Vercel`;
+  }
+  const detail = [code, message].filter(Boolean).join(": ").slice(0, 200);
+  return `LinkedIn ${step} failed (${status}${detail ? ` ${detail}` : ""})`;
+}
+
 async function registerImageUpload(
   token: string,
   personUrn: string
-): Promise<{ uploadUrl: string; asset: string } | null> {
+): Promise<{ uploadUrl: string; asset: string } | { error: string }> {
   const res = await fetch(
     "https://api.linkedin.com/v2/assets?action=registerUpload",
     {
@@ -54,7 +80,7 @@ async function registerImageUpload(
   if (!res.ok) {
     const body = await res.text().catch(() => "");
     console.error("LinkedIn registerUpload failed:", res.status, body);
-    return null;
+    return { error: describeLinkedInError("registerUpload", res.status, body) };
   }
 
   const data = (await res.json()) as RegisterUploadResponse;
@@ -62,7 +88,9 @@ async function registerImageUpload(
   const uploadUrl =
     Object.values(mechanism).find((m) => m?.uploadUrl)?.uploadUrl ?? "";
   const asset = data.value?.asset ?? "";
-  if (!uploadUrl || !asset) return null;
+  if (!uploadUrl || !asset) {
+    return { error: "LinkedIn registerUpload returned no upload URL" };
+  }
   return { uploadUrl, asset };
 }
 
@@ -123,8 +151,8 @@ export async function postToLinkedIn(
       const contentType = imgRes.headers.get("content-type") || "image/png";
       const bytes = await imgRes.arrayBuffer();
       const registered = await registerImageUpload(token, person);
-      if (!registered) {
-        return { ok: false, error: "LinkedIn registerUpload failed" };
+      if ("error" in registered) {
+        return { ok: false, error: registered.error };
       }
       const uploaded = await putImageBytes(
         token,
@@ -172,9 +200,10 @@ export async function postToLinkedIn(
 
     if (!res.ok) {
       const errText = await res.text().catch(() => "");
+      console.error("LinkedIn ugcPosts failed:", res.status, errText);
       return {
         ok: false,
-        error: `ugcPosts ${res.status}: ${errText.slice(0, 240)}`,
+        error: describeLinkedInError("ugcPosts", res.status, errText),
       };
     }
 

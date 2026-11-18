@@ -13,6 +13,7 @@ import { Card } from "@/components/ui/card";
 import { Chip } from "@/components/ui/chip";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { MarkdownContent } from "@/components/blog/markdown-content";
+import { arrangeBodyImages } from "@/lib/content/arrange-images";
 import { BlogFaqAccordion } from "@/components/blog/faq-accordion";
 import { ReadingProgress } from "@/components/blog/reading-progress";
 import { SubscribeCard } from "@/components/blog/subscribe-card";
@@ -40,7 +41,7 @@ export function BlogDetailClient({ post, related }: BlogDetailClientProps) {
     [post.body, post.faqs]
   );
   const body = useMemo(
-    () => resolvePostBody(post.body ?? "", faqs),
+    () => arrangeBodyImages(resolvePostBody(post.body ?? "", faqs)),
     [post.body, faqs]
   );
   // Only show an update stamp when the post was genuinely revisited, not on

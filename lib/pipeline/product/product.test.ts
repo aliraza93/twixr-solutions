@@ -149,3 +149,14 @@ test("company page text links the blog and the product, no dashes", () => {
   assert.doesNotMatch(text, /[–—]/);
   assert.ok(text.length <= 3000);
 });
+
+import { applyPatch, CONTENT_PATCHES } from "../content-patches";
+
+test("launch-date patch fixes the countdown line and is idempotent", () => {
+  const p = CONTENT_PATCHES[0];
+  const before = "Two Choices\n\nYou have 4 days before GTA 6 launch week peaks. You can build it.";
+  const after = applyPatch(before, p);
+  assert.equal(after, "Two Choices\n\nGTA 6 is out, and launch week is when clips are worth the most. You can build it.");
+  assert.equal(applyPatch(after, p), after);
+  assert.match(applyPatch("Only 3 days until GTA 6 drops. Get ready.", p), /^GTA 6 is out/);
+});

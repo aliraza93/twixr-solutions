@@ -103,6 +103,11 @@ export type RunGenerateOptions = {
   /** Use an existing Brief instead of takeNextBrief. */
   briefId?: string;
   publishMode?: "auto" | "draft" | "publish_now";
+  /**
+   * With publish_now: schedule the LinkedIn companion about 20 minutes after
+   * the blog instead of at a drawn peak hour (used for a launch post).
+   */
+  linkedInSoon?: boolean;
   generateImages?: boolean;
   generateLinkedIn?: boolean;
   generateX?: boolean;
@@ -1250,7 +1255,10 @@ export async function runGenerateFromBrief(
         ];
 
         const scheduleLinkedIn = pipeline.autoPublish || liOk;
-        const scheduledFor = randomLinkedInScheduledFor(blogPublishAt, rng);
+        const scheduledFor =
+          options.linkedInSoon && publishMode === "publish_now"
+            ? new Date(Math.max(Date.now(), blogPublishAt.getTime()) + 20 * 60_000)
+            : randomLinkedInScheduledFor(blogPublishAt, rng);
 
         socialPostId = await withDb(async () => {
           const db = requireDb();

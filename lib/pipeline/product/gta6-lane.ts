@@ -32,17 +32,20 @@ export function isGta6PostDue(lastUsedAt: Date | null, now: Date, days = gta6Lan
 
 export type Gta6LaneDecision =
   | { due: false; reason: string }
-  | { due: true; brief: Brief };
+  | { due: true; brief: Brief; launch: boolean };
 
 export async function takeGta6BriefIfDue(
   now = new Date(),
   options: { force?: boolean } = {}
 ): Promise<Gta6LaneDecision> {
   if (!gta6LaneEnabled()) return { due: false, reason: "PIPELINE_GTA6_LANE is false" };
-  if (!options.force && !isGta6PostDue(await lastProductUse(GTA6_SHORTS), now)) {
+  const lastUsed = await lastProductUse(GTA6_SHORTS);
+  // The very first run is the launch post: it goes out on any day, at once.
+  const launch = lastUsed === null;
+  if (!options.force && !launch && !isGta6PostDue(lastUsed, now)) {
     return { due: false, reason: "Not a GTA6 Shorts day, or today's post is done" };
   }
   const brief = await nextProductBrief(GTA6_SHORTS, now);
   if (!brief) return { due: false, reason: "GTA6 Shorts topic bank is used up" };
-  return { due: true, brief };
+  return { due: true, brief, launch };
 }

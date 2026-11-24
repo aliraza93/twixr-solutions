@@ -12,6 +12,8 @@ import { generationSkipMessage, siteMayGenerate } from "@/lib/jarvis/generator";
 import { runGenerate } from "@/lib/pipeline/run-generate";
 import { runPublishDue } from "@/lib/pipeline/run-publish-due";
 import { recoverStuckPublishing } from "@/lib/pipeline/run-publish-linkedin";
+import { applyContentPatches } from "@/lib/pipeline/content-patches";
+import { revalidatePath } from "next/cache";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -39,6 +41,10 @@ export async function GET(req: Request) {
   // Never publishes, so it runs even while paused: claims that never
   // recorded an outcome go to review, not back to the queue.
   const stuckClaims = await recoverStuckPublishing();
+
+  // Text fixes to generated posts, before anything due goes out.
+  const patched = await applyContentPatches();
+  if (patched > 0) revalidatePath("/blog", "layout");
 
   const due = await runPublishDue({
     dryRun,

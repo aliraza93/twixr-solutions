@@ -42,7 +42,7 @@ export const GTA6_SHORTS = {
   },
   facts: [
     "GTA6 Shorts (gtasixshorts.com) is a GTA 6 clipping tool Ali Raza built and runs through his agency Twixr Solutions. He is the author of this blog, so say plainly that it is his product.",
-    "It went live in GTA 6 launch week (GTA 6 released on 19 November 2026).",
+    "It went live in GTA 6 launch week. GTA 6 released on 19 November 2026, so the game is already out: never write that the launch is upcoming, and never count days to it.",
     "It is an independent tool, not affiliated with Rockstar Games or Take-Two.",
     "Who it is for: creators and clippers who cut short-form video from streams and get paid by brands per 1,000 views.",
     "What it does: turns streams into vertical, captioned clips, lists live clipping campaigns, and tracks earnings. Footer line: Run your clipping business.",
@@ -56,6 +56,8 @@ export const GTA6_SHORTS = {
   ],
   writerRules: [
     "GTA6 SHORTS RULES:",
+    "- GTA 6 is already out (released 19 November 2026). Do not describe the launch as coming, and do not invent countdowns, deadlines or 'X days before' framing.",
+    "- Do not invent time or effort estimates (for example how long a build takes, or how fast a clip is ready). Describe what the product does instead.",
     "- Never imply the tool is made, approved or endorsed by Rockstar Games or Take-Two. Mention once that it is independent when the post is about GTA 6 itself.",
     "- Never promise or estimate what a reader will earn. Campaign rates belong to the brands that run them and change.",
     "- No user counts, clip counts, revenue, view numbers or testimonials: none are listed, so none exist for this post.",

@@ -202,6 +202,18 @@ export async function runPublishDue(
       if (result.status === "skip") break;
     }
 
+    // Product company-page posts (GTA6 Shorts). One per tick is plenty.
+    if (pipeline.linkedin.orgUrn.trim()) {
+      const page = await runPublishLinkedin({ dryRun, quiet, channel: "linkedin_page" });
+      if (page.status !== "skip") {
+        linkedIn.push({
+          status: page.status,
+          message: `page: ${page.message}`,
+          socialPostId: page.socialPostId,
+        });
+      }
+    }
+
     // The weekly refresh rides along here: it is cheap to check (one indexed
     // query) and it keeps the archive from aging silently.
     let refresh: Awaited<ReturnType<typeof runRefresh>> | null = null;

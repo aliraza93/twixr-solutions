@@ -1,5 +1,6 @@
 import { requireDb, withDb } from "@/lib/cms/db";
 import { pipeline } from "@/lib/pipeline/config";
+import { GTA6_SHORTS_PILLAR } from "@/lib/pipeline/product/gta6shorts";
 import { drawPublishAt, localWeekday, WEEKDAY_WEIGHTS } from "@/lib/pipeline/variety/clock";
 import { createRng, type Rng } from "@/lib/pipeline/variety/rng";
 import { pickWeighted, parseWeightEnv } from "@/lib/pipeline/variety/sampler";
@@ -122,7 +123,13 @@ export async function countPipelinePostsThisWeek(): Promise<number> {
     const start = startOfUtcWeek();
     const end = endOfUtcWeek();
     return db.blogPost.count({
-      where: { origin: "pipeline", createdAt: { gte: start, lt: end } },
+      // GTA6 Shorts runs on its own lane (three a week) and must not eat
+      // the editorial quota, or the regular posts would stop.
+      where: {
+        origin: "pipeline",
+        createdAt: { gte: start, lt: end },
+        NOT: { brief: { is: { pillar: GTA6_SHORTS_PILLAR } } },
+      },
     });
   }, 0);
 }

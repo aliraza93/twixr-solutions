@@ -3,6 +3,13 @@ import { pipeline } from "@/lib/pipeline/config";
 
 export type LinkedInPostInput = {
   text: string;
+  /**
+   * Post as someone other than LINKEDIN_PERSON_URN, e.g. a company page
+   * (urn:li:organization:...). Needs a token with the matching scope.
+   */
+  author?: string;
+  /** Token for `author`; defaults to LINKEDIN_ACCESS_TOKEN. */
+  token?: string;
   imageUrl?: string;
   visibility?: "PUBLIC" | "CONNECTIONS";
 };
@@ -115,8 +122,8 @@ export async function postToLinkedIn(
   input: LinkedInPostInput
 ): Promise<LinkedInPostResult> {
   try {
-    const token = pipeline.linkedin.token.trim();
-    const person = pipeline.linkedin.person.trim();
+    const token = (input.token || pipeline.linkedin.token).trim();
+    const person = (input.author || pipeline.linkedin.person).trim();
     if (!token || !person) {
       return { ok: false, error: "LinkedIn credentials missing" };
     }

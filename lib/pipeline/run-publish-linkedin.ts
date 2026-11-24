@@ -13,6 +13,11 @@ export type RunPublishOptions = {
    * so logging each no-op would write ~144 rows a day for no information.
    */
   quiet?: boolean;
+  /**
+   * "linkedin": Ali's profile (default). "linkedin_page": the product's
+   * company page (LINKEDIN_ORG_URN); skipped when no page is configured.
+   */
+  channel?: "linkedin" | "linkedin_page";
 };
 
 export type RunPublishResult = {
@@ -28,6 +33,8 @@ export async function runPublishLinkedin(
 ): Promise<RunPublishResult> {
   const runId = createRunId();
   const dryRun = Boolean(options.dryRun);
+  const channel = options.channel ?? "linkedin";
+  const isPage = channel === "linkedin_page";
   // Set once this run owns the row (status "publishing"), and once LinkedIn
   // has accepted the post. A claimed row that was never posted is handed
   // back on error; a posted one is never handed back, so it cannot go twice.
@@ -45,6 +52,10 @@ export async function runPublishLinkedin(
       return { runId, status: "skip", message: "Pipeline disabled" };
     }
 
+    if (isPage && !pipeline.linkedin.orgUrn.trim()) {
+      return { runId, status: "skip", message: "No LinkedIn page configured" };
+    }
+
     // Quiet on purpose: the tick calls this every 10 minutes.
     if (await isPipelinePaused()) {
       return { runId, status: "skip", message: "Pipeline paused from Jarvis" };
@@ -56,7 +67,7 @@ export async function runPublishLinkedin(
       return db.socialPost.findFirst({
         where: {
           status: "scheduled",
-          channel: "linkedin",
+          channel,
           scheduledFor: { lte: now },
         },
         orderBy: { scheduledFor: "asc" },
@@ -159,6 +170,12 @@ export async function runPublishLinkedin(
     }
 
     const result = await postToLinkedIn({
+      ...(isPage
+        ? {
+            author: pipeline.linkedin.orgUrn.trim(),
+            token: pipeline.linkedin.orgToken.trim() || undefined,
+          }
+        : {}),
       text: post.body,
       imageUrl: post.imageUrl || undefined,
       visibility: (post.visibility as "PUBLIC" | "CONNECTIONS") || "PUBLIC",

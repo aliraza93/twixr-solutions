@@ -9,27 +9,19 @@
  * public/products/invoicora/ and uploaded to Cloudinary per post.
  */
 
+import type { Product, ProductImage, ProductTopic } from "@/lib/pipeline/product/types";
+
+export type { ProductTopic };
+export type ProductScreenshot = ProductImage;
+
 export const PRODUCT_PILLAR_PREFIX = "Product/";
 export const INVOICORA_PILLAR = "Product/Invoicora";
 
-export type ProductScreenshot = {
-  id: string;
-  file: string;
-  alt: string;
-  /** What the picture shows, for the writer to place it next to the right text. */
-  shows: string;
-};
-
-export type ProductTopic = {
-  topic: string;
-  targetKeyword: string;
-  angle: string;
-  /** Screenshot ids: the first is the cover, the rest go inline. */
-  screenshots: string[];
-};
-
 export const INVOICORA = {
+  key: "invoicora",
   name: "Invoicora",
+  pillar: INVOICORA_PILLAR,
+  imageKind: "screenshot",
   url: "https://www.invoicora.com/",
   links: {
     home: "https://www.invoicora.com/",
@@ -199,78 +191,42 @@ export const INVOICORA = {
       screenshots: ["editor", "templates"],
     },
   ] satisfies ProductTopic[],
-};
+} satisfies Product;
 
-export function isProductPillar(pillar: string): boolean {
-  return pillar.trim().toLowerCase().startsWith(PRODUCT_PILLAR_PREFIX.toLowerCase());
-}
+// The helpers below keep the original Invoicora-only call sites working.
+// New code should use lib/pipeline/product/catalog.ts.
+import {
+  isProductPillar as isAnyProductPillar,
+  productFactSheet as factSheetFor,
+  productInstructions as instructionsFor,
+  productLinkedInNote as linkedInNoteFor,
+  screenshotUrl as imageUrlFor,
+  screenshotsFor as imagesFor,
+  topicFor as topicOf,
+} from "@/lib/pipeline/product/catalog";
+
+export const isProductPillar = isAnyProductPillar;
 
 export function topicFor(topic: string): ProductTopic | undefined {
-  const key = topic.trim().toLowerCase();
-  return INVOICORA.topics.find((t) => t.topic.toLowerCase() === key);
+  return topicOf(INVOICORA, topic);
 }
 
 export function screenshotsFor(topic: string): ProductScreenshot[] {
-  const ids = topicFor(topic)?.screenshots ?? ["home", "editor"];
-  return ids
-    .map((id) => INVOICORA.screenshots.find((s) => s.id === id))
-    .filter((s): s is ProductScreenshot => Boolean(s));
+  return imagesFor(INVOICORA_PILLAR, topic);
 }
 
 export function screenshotUrl(shot: ProductScreenshot, siteUrl: string): string {
-  return new URL(`/products/invoicora/${shot.file}`, siteUrl).toString();
+  return imageUrlFor(INVOICORA, shot, siteUrl);
 }
 
-/** Short fact sheet the critic treats as grounded, so true prices are not marked "unverifiable". */
 export function productFactSheet(): string {
-  return [
-    `VERIFIED PRODUCT FACTS (${INVOICORA.name}, the author's own product, from ${INVOICORA.url}):`,
-    ...INVOICORA.facts.map((f) => `- ${f}`),
-  ].join("\n");
+  return factSheetFor(INVOICORA_PILLAR);
 }
 
-/**
- * The brief's extra instructions for an Invoicora post. Stored on the brief,
- * so the writer gets them through the normal admin-instructions block.
- */
 export function productInstructions(topic: ProductTopic): string {
-  const inline = topic.screenshots.slice(1);
-  const shots = inline
-    .map((id, i) => {
-      const s = INVOICORA.screenshots.find((x) => x.id === id);
-      return s ? `  __INLINE_${i + 1}__ is a real screenshot of ${s.shows}.` : "";
-    })
-    .filter(Boolean);
-  return [
-    "PRODUCT POST: this week's post is about Invoicora, Ali's own product.",
-    "Write something genuinely useful to a founder, freelancer or developer first; the product is the worked example, not an advert.",
-    "Say in your own voice that you built Invoicora. No hype, no banned phrases, no fake testimonials, users, revenue or metrics.",
-    "Use ONLY the product facts below for anything about Invoicora. If a fact is not listed, do not claim it.",
-    productFactSheet(),
-    "",
-    "LINKS (required): link to Invoicora 2 to 4 times with descriptive anchor text, never 'click here'. Use these exact URLs:",
-    ...Object.entries(INVOICORA.links).map(([k, v]) => `- ${k}: ${v}`),
-    "Include the home page or the builder (create) once, and end with one short, plain call to try it free.",
-    "",
-    shots.length
-      ? [
-          `IMAGES: use exactly ${shots.length} inline image placeholder(s). They will be replaced with real product screenshots, so place each next to the paragraph it illustrates, never at the end:`,
-          ...shots,
-          "Write each alt as what that screenshot shows.",
-        ].join("\n")
-      : "",
-  ]
-    .filter(Boolean)
-    .join("\n");
+  return instructionsFor(INVOICORA, topic);
 }
 
-/** Extra LinkedIn instructions for the weekly product post. */
 export function productLinkedInNote(): string {
-  return [
-    `PRODUCT: this post is about ${INVOICORA.name}, a product you built. Say so plainly, once.`,
-    "Lead with the reader's problem; the product is the answer, not the headline.",
-    `Put ${INVOICORA.url} on its own line once, before the "Full write-up" line.`,
-    "Use only these facts about the product; claim nothing else:",
-    ...INVOICORA.facts.map((f) => `- ${f}`),
-  ].join("\n");
+  return linkedInNoteFor(INVOICORA_PILLAR);
 }

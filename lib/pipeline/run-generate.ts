@@ -30,12 +30,14 @@ import { createRunId, logStage } from "@/lib/pipeline/log";
 import { notifyRunSummary } from "@/lib/pipeline/notify";
 import { renderOgCover } from "@/lib/pipeline/og-cover";
 import {
+  companyPageText,
   isProductPillar,
   productFactSheet,
+  productForPillar,
   productLinkedInNote,
   screenshotsFor,
   screenshotUrl,
-} from "@/lib/pipeline/product/invoicora";
+} from "@/lib/pipeline/product/catalog";
 import {
   randomBlogPublishAt,
   randomLinkedInScheduledFor,
@@ -387,13 +389,15 @@ export async function runGenerateFromBrief(
     });
     const rng = createRng(`${plan.seed}:schedule`);
 
-    // The weekly Invoicora post uses real screenshots instead of drawn
-    // images, and always gets a LinkedIn companion with an image.
-    const productShots = isProductPillar(brief.pillar)
-      ? screenshotsFor(brief.topic)
-      : [];
-    const isProduct = productShots.length > 0;
-    const productFacts = isProduct ? productFactSheet() : undefined;
+    // Product posts (Invoicora weekly, GTA6 Shorts three times a week) use
+    // the product's own images instead of drawn ones, and always get a
+    // LinkedIn companion with an image.
+    const product = isProductPillar(brief.pillar)
+      ? productForPillar(brief.pillar)
+      : undefined;
+    const productShots = product ? screenshotsFor(brief.pillar, brief.topic) : [];
+    const isProduct = Boolean(product) && productShots.length > 0;
+    const productFacts = isProduct ? productFactSheet(brief.pillar) : undefined;
     if (isProduct) {
       plan.images.inlineCount = Math.max(0, productShots.length - 1);
       plan.social.attachLinkedIn = true;
@@ -698,7 +702,7 @@ export async function runGenerateFromBrief(
         // skip cover
       } else if (isProduct) {
         coverUrl = await uploadScreenshotFromUrl(
-          screenshotUrl(productShots[0], SITE_URL),
+          screenshotUrl(product!, productShots[0], SITE_URL),
           draft.slug,
           "cover"
         );
@@ -750,7 +754,7 @@ export async function runGenerateFromBrief(
                 alt: shot.alt,
                 load: () =>
                   uploadScreenshotFromUrl(
-                    screenshotUrl(shot, SITE_URL),
+                    screenshotUrl(product!, shot, SITE_URL),
                     draft.slug,
                     "inline",
                     i + 1
@@ -1169,7 +1173,7 @@ export async function runGenerateFromBrief(
                   .join(" ")
               : ""),
           plan,
-          productNote: isProduct ? productLinkedInNote() : undefined,
+          productNote: isProduct ? productLinkedInNote(brief.pillar) : undefined,
         });
 
         await logStage({
@@ -1284,6 +1288,40 @@ export async function runGenerateFromBrief(
             blogPublishAt: blogPublishAt.toISOString(),
           },
         });
+
+        // The product's LinkedIn company page gets a short version a few
+        // hours after the personal post. Only when the page is configured.
+        if (isProduct && product?.companyPage && pipeline.linkedin.orgUrn.trim()) {
+          const pageAt = new Date(scheduledFor.getTime() + 3 * 3600_000);
+          const pagePostId = await withDb(async () => {
+            const db = requireDb();
+            const row = await db.socialPost.create({
+              data: {
+                channel: "linkedin_page",
+                blogPostId,
+                body: companyPageText(product, {
+                  title: draft.title,
+                  excerpt: draft.excerpt,
+                  url: absoluteUrl(`/blog/${draft.slug}`),
+                }),
+                imageUrl: sharedSocialImageUrl,
+                visibility: "PUBLIC",
+                status: scheduleLinkedIn ? "scheduled" : "needs_review",
+                reviewReasons: [] as Prisma.InputJsonValue,
+                scheduledFor: pageAt,
+              },
+            });
+            return row.id;
+          }, undefined);
+          await logStage({
+            runId,
+            stage: "linkedin",
+            status: "ok",
+            refType: "SocialPost",
+            refId: pagePostId,
+            message: `${product.name} page post scheduled for ${pageAt.toISOString()}`,
+          });
+        }
       } catch (error) {
         await logStage({
           runId,

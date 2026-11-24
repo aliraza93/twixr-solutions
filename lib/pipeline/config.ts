@@ -96,6 +96,10 @@ export const pipeline = {
   linkedin: {
     token: process.env.LINKEDIN_ACCESS_TOKEN ?? "",
     person: process.env.LINKEDIN_PERSON_URN ?? "",
+    /** Company page (urn:li:organization:...) for product page posts. Empty disables them. */
+    orgUrn: process.env.LINKEDIN_ORG_URN ?? "",
+    /** Token with w_organization_social for the page; falls back to the main token. */
+    orgToken: process.env.LINKEDIN_ORG_ACCESS_TOKEN ?? "",
     version: process.env.LINKEDIN_API_VERSION ?? "202601",
   },
   defaults: {

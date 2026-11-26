@@ -7,6 +7,8 @@ import {
   markOpportunityPromoted,
   markOpportunityUsed,
 } from "@/lib/pipeline/seo/opportunity-store";
+import { isProductPillar } from "@/lib/pipeline/product/invoicora";
+import { takeProductBriefIfDue } from "@/lib/pipeline/product/weekly";
 
 export type BasePillar = "Build" | "Business" | "Timely" | "Code card";
 
@@ -127,10 +129,12 @@ async function takeWeightedBankBrief(): Promise<Brief | null> {
     orderBy: { createdAt: "asc" },
     select: { id: true, pillar: true, createdAt: true },
   });
-  if (queued.length === 0) return null;
+  // Product briefs only run through the weekly slot (lib/pipeline/product).
+  const eligible = queued.filter((row) => !isProductPillar(row.pillar));
+  if (eligible.length === 0) return null;
 
   const byBase = new Map<BasePillar, typeof queued>();
-  for (const row of queued) {
+  for (const row of eligible) {
     const base = basePillarOf(row.pillar);
     const list = byBase.get(base) ?? [];
     list.push(row);
@@ -155,10 +159,7 @@ async function takeWeightedBankBrief(): Promise<Brief | null> {
 
   const inPillar = byBase.get(chosenBase) ?? [];
   if (inPillar.length === 0) {
-    return db.brief.findFirst({
-      where: dueFilter,
-      orderBy: { createdAt: "asc" },
-    });
+    return db.brief.findUnique({ where: { id: eligible[0].id } });
   }
 
   let candidates = inPillar;
@@ -176,6 +177,10 @@ async function takeWeightedBankBrief(): Promise<Brief | null> {
  * Prefer a high-score content-gap opportunity, else weighted topic-bank brief.
  */
 export async function takeNextBrief(): Promise<NextBriefResult | null> {
+  // One Invoicora post a week comes first; everything else is unchanged.
+  const product = await takeProductBriefIfDue();
+  if (product) return { brief: product };
+
   const promoted = await tryPromoteOpportunity();
   if (promoted) return promoted;
 

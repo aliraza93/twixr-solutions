@@ -413,6 +413,8 @@ export type LinkedInBlogContext = {
   realExample?: string;
   /** The run's randomized social plan. */
   plan?: VarietyPlan;
+  /** Set for the weekly product post: facts, link and framing for the product. */
+  productNote?: string;
 };
 
 export function buildLinkedInPrompt(blog: LinkedInBlogContext): {
@@ -487,6 +489,7 @@ export function buildLinkedInPrompt(blog: LinkedInBlogContext): {
         : `HASHTAGS: exactly ${tagCount}, on the final line, mixing broad and specific. No hashtag walls.`
       : "HASHTAGS: 4 to 5 on the final line.",
     `LINK: a line reading exactly - Full write-up: ${blog.blogUrl}`,
+    blog.productNote ?? "",
     "TONE: first person, senior, dry confidence, near-zero emojis (prefer none). Sell the outcome; the tech is proof lower down.",
     "",
     "OUTPUT: call submit_linkedin_draft with:",

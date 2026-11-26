@@ -7,6 +7,7 @@ import {
   toAbsoluteInventoryUrl,
 } from "@/lib/pipeline/seo/types";
 import { SITE_URL } from "@/lib/seo";
+import { UnsafeUrlError, safeFetch, type FetchLike, type HostResolver } from "@/lib/security/safe-fetch";
 import type { Brief } from "@prisma/client";
 
 export type ValidationResult = { ok: boolean; reasons: string[] };
@@ -238,37 +239,43 @@ export function unknownInternalLinks(
   return reasons;
 }
 
-async function headOk(url: string, timeoutMs: number): Promise<boolean> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
+type LinkFetchDeps = { resolver?: HostResolver; fetchImpl?: FetchLike };
+
+/**
+ * Alive when HEAD (or, for CDNs that reject HEAD, a one-byte GET) answers
+ * 2xx or 3xx. safeFetch resolves and checks every hop, so a link to (or
+ * redirecting to) a private or unresolvable address counts as unreachable.
+ * A chain longer than safeFetch's redirect limit counts as alive: every hop
+ * it saw answered and passed the public check. Bodies are never read.
+ */
+async function headOk(url: string, timeoutMs: number, deps: LinkFetchDeps = {}): Promise<boolean> {
+  const alive = (status: number, ok: boolean) => ok || (status >= 300 && status < 400);
+  const signal = AbortSignal.timeout(timeoutMs);
   try {
-    const res = await fetch(url, {
-      method: "HEAD",
-      redirect: "follow",
-      signal: controller.signal,
-    });
-    if (res.ok || (res.status >= 300 && res.status < 400)) return true;
+    const head = await safeFetch(url, { method: "HEAD", signal, ...deps });
+    await head.response.body?.cancel().catch(() => undefined);
+    if (alive(head.response.status, head.response.ok)) return true;
     // Some CDNs reject HEAD; try GET lightly
-    const getRes = await fetch(url, {
+    const get = await safeFetch(url, {
       method: "GET",
-      redirect: "follow",
-      signal: controller.signal,
+      signal,
       headers: { Range: "bytes=0-0" },
+      ...deps,
     });
-    return getRes.ok || (getRes.status >= 300 && getRes.status < 400);
-  } catch {
-    return false;
-  } finally {
-    clearTimeout(timer);
+    await get.response.body?.cancel().catch(() => undefined);
+    return alive(get.response.status, get.response.ok);
+  } catch (error) {
+    return error instanceof UnsafeUrlError && error.reason === "too_many_redirects";
   }
 }
 
 export async function deadLinkCheck(
   urls: string[],
-  opts?: { concurrency?: number; timeoutMs?: number }
+  opts?: { concurrency?: number; timeoutMs?: number } & LinkFetchDeps
 ): Promise<string[]> {
   const concurrency = opts?.concurrency ?? 4;
   const timeoutMs = opts?.timeoutMs ?? 8000;
+  const deps: LinkFetchDeps = { resolver: opts?.resolver, fetchImpl: opts?.fetchImpl };
   const unique = [...new Set(urls)].filter(Boolean);
   const reasons: string[] = [];
   let i = 0;
@@ -277,7 +284,7 @@ export async function deadLinkCheck(
     while (i < unique.length) {
       const idx = i++;
       const url = unique[idx];
-      const ok = await headOk(url, timeoutMs);
+      const ok = await headOk(url, timeoutMs, deps);
       if (!ok) reasons.push(`Dead or unreachable link: ${url}`);
     }
   }

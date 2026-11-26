@@ -10,6 +10,12 @@ import {
   takeNextBrief,
 } from "@/lib/pipeline/briefs";
 import { pipeline } from "@/lib/pipeline/config";
+import { isPipelinePaused } from "@/lib/jarvis/pause";
+import {
+  generationSkipMessage,
+  siteMayGenerate,
+  writeIfSiteGenerates,
+} from "@/lib/jarvis/generator";
 import { criticBlog, criticLinkedIn, type CriticResult } from "@/lib/pipeline/critic";
 import { generateBlog, reviseBlogDraft } from "@/lib/pipeline/generate-blog";
 import { generateLinkedIn } from "@/lib/pipeline/generate-linkedin";
@@ -18,10 +24,20 @@ import {
   aiCoverImage,
   generateInlineImages,
   linkedinImage,
+  uploadScreenshotFromUrl,
 } from "@/lib/pipeline/images";
 import { createRunId, logStage } from "@/lib/pipeline/log";
 import { notifyRunSummary } from "@/lib/pipeline/notify";
 import { renderOgCover } from "@/lib/pipeline/og-cover";
+import {
+  companyPageText,
+  isProductPillar,
+  productFactSheet,
+  productForPillar,
+  productLinkedInNote,
+  screenshotsFor,
+  screenshotUrl,
+} from "@/lib/pipeline/product/catalog";
 import {
   randomBlogPublishAt,
   randomLinkedInScheduledFor,
@@ -69,7 +85,7 @@ import {
 } from "@/lib/pipeline/seo/audit";
 import { buildSeoReport, formatSeoReportText } from "@/lib/pipeline/seo/score";
 import type { InventoryItem, RecommendedInternalLink } from "@/lib/pipeline/seo/types";
-import { absoluteUrl } from "@/lib/seo";
+import { absoluteUrl, SITE_URL } from "@/lib/seo";
 import {
   qualityGate,
   validateBlog,
@@ -87,6 +103,11 @@ export type RunGenerateOptions = {
   /** Use an existing Brief instead of takeNextBrief. */
   briefId?: string;
   publishMode?: "auto" | "draft" | "publish_now";
+  /**
+   * With publish_now: schedule the LinkedIn companion about 20 minutes after
+   * the blog instead of at a drawn peak hour (used for a launch post).
+   */
+  linkedInSoon?: boolean;
   generateImages?: boolean;
   generateLinkedIn?: boolean;
   generateX?: boolean;
@@ -112,6 +133,9 @@ export type RunGenerateResult = {
   title?: string;
   seoScore?: number;
 };
+
+/** Review reason on a cron post whose generator moved to Jarvis mid-run. */
+export const GENERATOR_MOVED_REASON = "Generator moved to Jarvis during this run";
 
 function todayDate(): string {
   return new Date().toISOString().slice(0, 10);
@@ -165,6 +189,27 @@ export async function runGenerate(
       });
       if (shouldNotify) await notifyRunSummary(runId);
       return { runId, status: "skip", message: "Pipeline disabled" };
+    }
+
+    // Paused from Jarvis (lib/jarvis/pause.ts). Logged, but no notify mail:
+    // a pause is deliberate and should not page Ali on every run.
+    if (await isPipelinePaused()) {
+      await logStage({
+        runId,
+        stage: "brief",
+        status: "skip",
+        message: "Pipeline paused from Jarvis",
+      });
+      return { runId, status: "skip", message: "Pipeline paused" };
+    }
+
+    // Generation handed to Jarvis (lib/jarvis/generator.ts), or the switch
+    // could not be read: write nothing. Publishing is not affected.
+    const generation = await siteMayGenerate();
+    if (!generation.allowed) {
+      const message = generationSkipMessage(generation.reason);
+      await logStage({ runId, stage: "brief", status: "skip", message });
+      return { runId, status: "skip", message };
     }
 
     if (!skipCadence) {
@@ -269,6 +314,7 @@ export async function runGenerate(
       dryRun,
       opportunityId,
       opportunityPriority,
+      siteGeneratorOnly: true,
     });
   } catch (error) {
     const message =
@@ -292,6 +338,14 @@ export async function runGenerate(
 export type RunGenerateFromBriefOptions = RunGenerateOptions & {
   opportunityId?: string;
   opportunityPriority?: number;
+  /**
+   * Guard this run with the generator switch: checked before any image is
+   * drawn, checked again with the first insert in one locked transaction,
+   * and once more before approving (a late switch leaves the post in
+   * needs_review). Set by the cron's runGenerate; the admin's own manual
+   * generate does not set it.
+   */
+  siteGeneratorOnly?: boolean;
 };
 
 /**
@@ -339,6 +393,21 @@ export async function runGenerateFromBrief(
       formatOverride,
     });
     const rng = createRng(`${plan.seed}:schedule`);
+
+    // Product posts (Invoicora weekly, GTA6 Shorts three times a week) use
+    // the product's own images instead of drawn ones, and always get a
+    // LinkedIn companion with an image.
+    const product = isProductPillar(brief.pillar)
+      ? productForPillar(brief.pillar)
+      : undefined;
+    const productShots = product ? screenshotsFor(brief.pillar, brief.topic) : [];
+    const isProduct = Boolean(product) && productShots.length > 0;
+    const productFacts = isProduct ? productFactSheet(brief.pillar) : undefined;
+    if (isProduct) {
+      plan.images.inlineCount = Math.max(0, productShots.length - 1);
+      plan.social.attachLinkedIn = true;
+      plan.social.withImage = true;
+    }
 
     // Receipts are the only first-hand material the model may use. Without
     // them the post has no experience signals at all.
@@ -599,6 +668,24 @@ export async function runGenerateFromBrief(
       },
     });
 
+    // Before any image is drawn: a run whose generator moved to Jarvis while
+    // it was drafting spends nothing more and writes nothing.
+    if (options.siteGeneratorOnly) {
+      const generation = await siteMayGenerate();
+      if (!generation.allowed) {
+        const message = generationSkipMessage(generation.reason);
+        await logStage({
+          runId,
+          stage: "blog",
+          status: "skip",
+          refType: "Brief",
+          refId: brief.id,
+          message: `${message}; draft discarded before images and writing, brief left queued`,
+        });
+        return { runId, status: "skip", message };
+      }
+    }
+
     let coverUrl = "";
     let coverStyleId = "";
     if (!shouldGenerateImages) {
@@ -618,6 +705,13 @@ export async function runGenerateFromBrief(
         : plan.images.coverMode;
       if (!shouldGenerateImages) {
         // skip cover
+      } else if (isProduct) {
+        coverUrl = await uploadScreenshotFromUrl(
+          screenshotUrl(product!, productShots[0], SITE_URL),
+          draft.slug,
+          "cover"
+        );
+        coverStyleId = `screenshot:${productShots[0].id}`;
       } else if (coverMode === "ai") {
         const cover = await aiCoverImage(draft, plan);
         coverUrl = cover.url;
@@ -657,7 +751,22 @@ export async function runGenerateFromBrief(
     }
 
     const inline = shouldGenerateImages
-      ? await generateInlineImages(draft, plan)
+      ? await generateInlineImages(
+          draft,
+          plan,
+          isProduct
+            ? productShots.slice(1).map((shot, i) => ({
+                alt: shot.alt,
+                load: () =>
+                  uploadScreenshotFromUrl(
+                    screenshotUrl(product!, shot, SITE_URL),
+                    draft.slug,
+                    "inline",
+                    i + 1
+                  ),
+              }))
+            : undefined
+        )
       : {
           body: draft.body,
           generated: 0,
@@ -697,14 +806,23 @@ export async function runGenerateFromBrief(
       }
     }
 
-    const order = await nextSortOrder();
     const clusterLabel =
       draft.contentCluster ||
       brief.pillar.split("/")[1]?.trim() ||
       brief.pillar;
     const keywordLabel = draft.primaryKeyword || brief.targetKeyword || brief.topic;
 
-    const blogPostId = await upsertBlogPost({
+    // The cron's first write and its generator check share one transaction
+    // under the switch's lock (shared here, exclusive in setGenerator), so a
+    // switch to Jarvis cannot land between them. The admin's manual generate
+    // writes without the guard.
+    const insertDraft = async (db?: Prisma.TransactionClient) => {
+      const order = db
+        ? ((await db.blogPost.aggregate({ _max: { sortOrder: true } }))._max.sortOrder ?? 0) + 1
+        : await nextSortOrder();
+      return { id: await upsertBlogPost(firstWrite(order), db), order };
+    };
+    const firstWrite = (order: number) => ({
       slug: draft.slug,
       title: draft.title,
       excerpt: draft.excerpt,
@@ -727,6 +845,27 @@ export async function runGenerateFromBrief(
       contentCluster: clusterLabel,
       targetKeyword: keywordLabel,
     });
+
+    let blogPostId: string;
+    let order: number;
+    if (options.siteGeneratorOnly) {
+      const written = await writeIfSiteGenerates((tx) => insertDraft(tx));
+      if (!written.ok) {
+        const message = generationSkipMessage(written.reason);
+        await logStage({
+          runId,
+          stage: "blog",
+          status: "skip",
+          refType: "Brief",
+          refId: brief.id,
+          message: `${message}; draft discarded before writing, brief left queued`,
+        });
+        return { runId, status: "skip", message };
+      }
+      ({ id: blogPostId, order } = written.value);
+    } else {
+      ({ id: blogPostId, order } = await insertDraft());
+    }
 
     const draftForValidation = { ...draft, body: inline.body };
     const vBlog = await validateBlog(draftForValidation, brief, {
@@ -776,7 +915,7 @@ export async function runGenerateFromBrief(
     };
     let criticRan = false;
     try {
-      cBlog = await criticBlog(draftForValidation);
+      cBlog = await criticBlog(draftForValidation, productFacts);
       criticRan = true;
       await logStage({
         runId,
@@ -855,12 +994,29 @@ export async function runGenerateFromBrief(
       qualityReasons.length > 0 ||
       criticHardFail;
 
+    // Last look before approving or scheduling: if the switch moved to Jarvis
+    // after the insert, the post stays a needs_review draft for Ali.
+    let generatorMoved = false;
+    if (options.siteGeneratorOnly && !dryRun) {
+      generatorMoved = !(await siteMayGenerate()).allowed;
+      if (generatorMoved) {
+        await logStage({
+          runId,
+          stage: "blog",
+          status: "warn",
+          refType: "BlogPost",
+          refId: blogPostId,
+          message: "Generator moved to Jarvis during this run; the post is held for review, not scheduled",
+        });
+      }
+    }
+
     // Auto-publish by default: validators/critic still run and log, but do not block.
     // publishMode: auto | draft | publish_now (admin manual controls).
     let approved = false;
     let blogPublishAt: Date | null = null;
     let publishNow = false;
-    if (!dryRun && !seoHardFail) {
+    if (!dryRun && !seoHardFail && !generatorMoved) {
       if (publishMode === "draft") {
         approved = false;
       } else if (publishMode === "publish_now") {
@@ -878,6 +1034,7 @@ export async function runGenerateFromBrief(
     }
 
     const reviewReasons = [
+      ...(generatorMoved ? [GENERATOR_MOVED_REASON] : []),
       ...imageReasons,
       ...vBlog.reasons,
       ...(criticHardFail
@@ -1021,6 +1178,7 @@ export async function runGenerateFromBrief(
                   .join(" ")
               : ""),
           plan,
+          productNote: isProduct ? productLinkedInNote(brief.pillar) : undefined,
         });
 
         await logStage({
@@ -1040,7 +1198,10 @@ export async function runGenerateFromBrief(
         try {
           // Text-only posts happen on purpose: an account that attaches an
           // image to every single post reads as scheduled output.
-          if (plan.social.withImage && shouldGenerateImages) {
+          if (isProduct && coverUrl) {
+            // The product screenshot is the honest picture for this post.
+            sharedSocialImageUrl = coverUrl;
+          } else if (plan.social.withImage && shouldGenerateImages) {
             const liImg = await linkedinImage({
               title: draft.title,
               topic: brief.topic,
@@ -1070,7 +1231,7 @@ export async function runGenerateFromBrief(
           issues: ["critic skipped"],
         };
         try {
-          cLi = await criticLinkedIn(li.text);
+          cLi = await criticLinkedIn(li.text, productFacts);
         } catch (error) {
           await logStage({
             runId,
@@ -1094,7 +1255,10 @@ export async function runGenerateFromBrief(
         ];
 
         const scheduleLinkedIn = pipeline.autoPublish || liOk;
-        const scheduledFor = randomLinkedInScheduledFor(blogPublishAt, rng);
+        const scheduledFor =
+          options.linkedInSoon && publishMode === "publish_now"
+            ? new Date(Math.max(Date.now(), blogPublishAt.getTime()) + 20 * 60_000)
+            : randomLinkedInScheduledFor(blogPublishAt, rng);
 
         socialPostId = await withDb(async () => {
           const db = requireDb();
@@ -1132,6 +1296,40 @@ export async function runGenerateFromBrief(
             blogPublishAt: blogPublishAt.toISOString(),
           },
         });
+
+        // The product's LinkedIn company page gets a short version a few
+        // hours after the personal post. Only when the page is configured.
+        if (isProduct && product?.companyPage && pipeline.linkedin.orgUrn.trim()) {
+          const pageAt = new Date(scheduledFor.getTime() + 3 * 3600_000);
+          const pagePostId = await withDb(async () => {
+            const db = requireDb();
+            const row = await db.socialPost.create({
+              data: {
+                channel: "linkedin_page",
+                blogPostId,
+                body: companyPageText(product, {
+                  title: draft.title,
+                  excerpt: draft.excerpt,
+                  url: absoluteUrl(`/blog/${draft.slug}`),
+                }),
+                imageUrl: sharedSocialImageUrl,
+                visibility: "PUBLIC",
+                status: scheduleLinkedIn ? "scheduled" : "needs_review",
+                reviewReasons: [] as Prisma.InputJsonValue,
+                scheduledFor: pageAt,
+              },
+            });
+            return row.id;
+          }, undefined);
+          await logStage({
+            runId,
+            stage: "linkedin",
+            status: "ok",
+            refType: "SocialPost",
+            refId: pagePostId,
+            message: `${product.name} page post scheduled for ${pageAt.toISOString()}`,
+          });
+        }
       } catch (error) {
         await logStage({
           runId,

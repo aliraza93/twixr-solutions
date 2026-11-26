@@ -10,6 +10,7 @@ import { pipeline } from "@/lib/pipeline/config";
 import type { BlogDraft } from "@/lib/pipeline/generate-blog";
 import { seoImageFilename } from "@/lib/pipeline/seo/image-hygiene";
 import { renderLinkedInCard } from "@/lib/pipeline/og-cover";
+import { arrangeBodyImages } from "@/lib/content/arrange-images";
 import { INLINE_IMAGE_KINDS, RENDER_MODIFIERS } from "@/lib/pipeline/variety/banks";
 import type { VarietyPlan } from "@/lib/pipeline/variety/plan";
 import sharp from "sharp";
@@ -346,12 +347,44 @@ function ensureInlinePlaceholders(
     }
   }
 
+  // Missing placeholders were added at the end above; spread them (and any
+  // the model stacked together) through the body instead.
+  body = arrangeBodyImages(body);
+
   return { ...draft, body, inlineImagePrompts: prompts };
+}
+
+/** A ready image (e.g. a real product screenshot) used in place of a drawn one. */
+export type FixedInlineImage = { alt: string; load: () => Promise<string> };
+
+/**
+ * Upload a real screenshot served from this site's public/ folder to
+ * Cloudinary, so it gets the same CDN transforms as every other post image.
+ */
+export async function uploadScreenshotFromUrl(
+  sourceUrl: string,
+  slug: string,
+  role: "cover" | "inline" | "linkedin",
+  index?: number
+): Promise<string> {
+  const res = await fetch(sourceUrl);
+  if (!res.ok) {
+    throw new Error(`Screenshot fetch failed (${res.status}): ${sourceUrl}`);
+  }
+  const type = res.headers.get("content-type") || "image/jpeg";
+  const bytes = new Uint8Array(await res.arrayBuffer());
+  const name = seoImageFilename(slug, role, index).replace(/\.png$/, ".jpg");
+  const uploaded = await uploadToCloudinary(new File([bytes], name, { type }), {
+    maxWidth: 1600,
+    quality: 82,
+  });
+  return uploaded.url;
 }
 
 export async function generateInlineImages(
   draft: BlogDraft,
-  plan?: VarietyPlan
+  plan?: VarietyPlan,
+  fixed?: FixedInlineImage[]
 ): Promise<InlineImageResult> {
   const target = plan ? plan.images.inlineCount : 2;
   const plannedKinds = plan
@@ -379,20 +412,24 @@ export async function generateInlineImages(
       plan?.images.kinds[i]?.medium ?? inferRender(item.prompt);
     usedStyles.push(style.id);
     styleIds.push(style.id);
+    const ready = fixed?.[i];
     try {
-      const url = await generateImage(item.prompt, {
-        size,
-        filename: seoImageFilename(draft.slug, "inline", i + 1),
-        style,
-        modifier: render === "photo" ? modifier : undefined,
-        render,
-      });
-      body = body.replaceAll(item.placeholder, url);
+      const url = ready
+        ? await ready.load()
+        : await generateImage(item.prompt, {
+            size,
+            filename: seoImageFilename(draft.slug, "inline", i + 1),
+            style,
+            modifier: render === "photo" ? modifier : undefined,
+            render,
+          });
       const escaped = item.placeholder.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      // A ready image keeps its own true alt; a drawn one keeps the writer's.
       body = body.replace(
         new RegExp(`!\\[([^\\]]*)\\]\\(${escaped}\\)`, "g"),
-        `![$1](${url})`
+        ready ? `![${ready.alt}](${url})` : `![$1](${url})`
       );
+      body = body.replaceAll(item.placeholder, url);
       urls.push(url);
       generated += 1;
     } catch (error) {

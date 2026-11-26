@@ -12,7 +12,27 @@ import { isPersistedId } from "@/lib/cms/utils";
 import { stripEmDashes, stripEmDashesDeep } from "@/lib/content/strip-em-dashes";
 import { pickRelatedPosts } from "@/lib/pipeline/seo/related";
 import { notifyIfNewlyPublished } from "@/lib/newsletter/notify";
-import type { BlogPost as PrismaBlogPost } from "@prisma/client";
+import type { BlogPost as PrismaBlogPost, PrismaClient } from "@prisma/client";
+
+/** The client or an interactive transaction: enough to write one blog post. */
+export type BlogWriter = { blogPost: Pick<PrismaClient["blogPost"], "findUnique" | "update" | "upsert"> };
+
+/**
+ * The text normalisers every stored post goes through: no em dashes in any
+ * text field, and no leading markdown H1 in the body (the page title is the
+ * h1). Shared by upsertBlogPost and the Jarvis intake.
+ */
+export function normalizeBlogText<
+  T extends { title: string; excerpt: string; body: string; faqs?: unknown }
+>(input: T): T {
+  return {
+    ...input,
+    title: stripEmDashes(input.title),
+    excerpt: stripEmDashes(input.excerpt),
+    body: stripLeadingH1(stripEmDashes(input.body)),
+    ...(input.faqs !== undefined ? { faqs: stripEmDashesDeep(input.faqs) } : {}),
+  };
+}
 
 /**
  * A post body must not open with a markdown H1. The page already renders the
@@ -231,9 +251,9 @@ export async function upsertBlogPost(
     targetKeyword?: string;
     schemaType?: string;
     lastReviewedAt?: Date | null;
-  }
+  },
+  db: BlogWriter = requireDb()
 ) {
-  const db = requireDb();
   const data = {
     slug: input.slug,
     title: stripEmDashes(input.title),

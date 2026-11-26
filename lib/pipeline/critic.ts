@@ -65,9 +65,17 @@ async function grade(payload: string): Promise<CriticResult> {
   };
 }
 
-export async function criticBlog(draft: BlogDraft): Promise<CriticResult> {
+/**
+ * `facts` is a verified fact sheet (e.g. the author's own product), so true
+ * prices and features in it are not graded as unverifiable.
+ */
+export async function criticBlog(
+  draft: BlogDraft,
+  facts?: string
+): Promise<CriticResult> {
   const payload = [
     "Grade this blog draft.",
+    ...(facts ? ["", facts, "Claims that match these facts are grounded."] : []),
     "",
     JSON.stringify(
       {
@@ -87,7 +95,15 @@ export async function criticBlog(draft: BlogDraft): Promise<CriticResult> {
   return grade(payload);
 }
 
-export async function criticLinkedIn(text: string): Promise<CriticResult> {
-  const payload = ["Grade this LinkedIn post.", "", text].join("\n");
+export async function criticLinkedIn(
+  text: string,
+  facts?: string
+): Promise<CriticResult> {
+  const payload = [
+    "Grade this LinkedIn post.",
+    ...(facts ? ["", facts, "Claims that match these facts are grounded."] : []),
+    "",
+    text,
+  ].join("\n");
   return grade(payload);
 }

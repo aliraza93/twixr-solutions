@@ -1,4 +1,15 @@
+import {
+  UnsafeUrlError,
+  readCappedText,
+  safeFetch,
+  type FetchLike,
+  type HostResolver,
+} from "@/lib/security/safe-fetch";
+
 const MAX_CHARS = 12000;
+/** Bytes read from a source page; the excerpt only needs the first 12000 characters of text. */
+export const MAX_SOURCE_BYTES = 3 * 1024 * 1024;
+const SOURCE_TIMEOUT_MS = 20000;
 
 export type SourceFetchResult =
   | { ok: true; url: string; title: string; excerpt: string }
@@ -36,10 +47,13 @@ function extractTitle(html: string): string {
 }
 
 /**
- * Fetch and extract plain-text facts from an optional Source URL.
+ * Fetch and extract plain-text facts from an optional Source URL. The URL is
+ * resolved and checked (and so is every redirect hop) by safeFetch; the
+ * resolver and fetch are parameters for tests.
  */
 export async function fetchSourceExcerpt(
-  sourceUrl: string
+  sourceUrl: string,
+  deps: { resolver?: HostResolver; fetchImpl?: FetchLike } = {}
 ): Promise<SourceFetchResult> {
   const url = sourceUrl.trim();
   if (!url) {
@@ -50,16 +64,18 @@ export async function fetchSourceExcerpt(
   }
 
   try {
-    const res = await fetch(url, {
+    const { response: res } = await safeFetch(url, {
       method: "GET",
-      redirect: "follow",
       headers: {
         "User-Agent": "TwixrPipelineBot/1.0 (+https://www.twixrsolutions.com)",
         Accept: "text/html,application/xhtml+xml,text/plain;q=0.9,*/*;q=0.8",
       },
-      signal: AbortSignal.timeout(20000),
+      timeoutMs: SOURCE_TIMEOUT_MS,
+      resolver: deps.resolver,
+      fetchImpl: deps.fetchImpl,
     });
     if (!res.ok) {
+      await res.body?.cancel().catch(() => undefined);
       return {
         ok: false,
         url,
@@ -67,7 +83,7 @@ export async function fetchSourceExcerpt(
       };
     }
     const contentType = res.headers.get("content-type") || "";
-    const raw = await res.text();
+    const { text: raw } = await readCappedText(res, MAX_SOURCE_BYTES);
     if (
       contentType.includes("text/html") ||
       contentType.includes("xhtml") ||
@@ -90,6 +106,9 @@ export async function fetchSourceExcerpt(
     }
     return { ok: true, url, title: "", excerpt };
   } catch (error) {
+    if (error instanceof UnsafeUrlError) {
+      return { ok: false, url, error: `Source URL refused: ${error.message}` };
+    }
     return {
       ok: false,
       url,

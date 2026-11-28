@@ -18,7 +18,7 @@ export const site = {
 
   // Raw values - single source of truth.
   contact: {
-    email: "aliraza.2369196@gmail.com",
+    email: "aliraza@twixrsolutions.com",
     upwork: "https://www.upwork.com/freelancers/~01e1dd4667ee1975e6",
     fiverr: "", // no public Fiverr profile - left blank so SEO/sameAs skips it
     linkedin: "https://www.linkedin.com/in/aliraza6332",
@@ -31,7 +31,7 @@ export const site = {
   // Ready-to-map list for the Contact page left column + footer contact links.
   // `external: true` → open in a new tab with rel="noopener noreferrer".
   contactMethods: [
-    { key: "email",    label: "Email",       value: "aliraza.2369196@gmail.com", href: "mailto:aliraza.2369196@gmail.com", external: false },
+    { key: "email",    label: "Email",       value: "aliraza@twixrsolutions.com", href: "mailto:aliraza@twixrsolutions.com", external: false },
     { key: "upwork",   label: "Upwork",      value: "Top Rated Plus",            href: "https://www.upwork.com/freelancers/~01e1dd4667ee1975e6", external: true },
     { key: "github",   label: "GitHub",      value: "github.com/aliraza93",      href: "https://github.com/aliraza93", external: true },
     { key: "linkedin", label: "LinkedIn",    value: "in/aliraza6332",            href: "https://www.linkedin.com/in/aliraza6332", external: true },

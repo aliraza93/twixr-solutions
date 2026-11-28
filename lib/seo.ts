@@ -144,12 +144,46 @@ const ORG_ID = `${SITE_URL}/#organization`;
 const PERSON_ID = `${SITE_URL}/#person`;
 const WEBSITE_ID = `${SITE_URL}/#website`;
 
+/**
+ * Search for "twixr solutions" (28 Nov 2026) surfaced only look-alike names
+ * (Twixor, Twixl, Twixify), so the entity says plainly which one this is.
+ */
+export const BRAND_DISAMBIGUATION =
+  "Twixr Solutions is a software development studio in Lahore, Pakistan, founded by Ali Raza. It is not related to Twixor, Twixl or Twixify.";
+
+const CORE_SERVICES = [
+  "Laravel development",
+  "Next.js and React development",
+  "Vue.js development",
+  "NestJS and Node.js API development",
+  "SaaS and MVP development",
+  "AWS cloud and DevOps",
+];
+
 export function organizationNode(): Node {
   return {
-    "@type": "Organization",
+    "@type": ["Organization", "ProfessionalService"],
     "@id": ORG_ID,
     name: SITE_NAME,
+    alternateName: ["Twixr", "twixrsolutions"],
+    disambiguatingDescription: BRAND_DISAMBIGUATION,
     url: SITE_URL,
+    address: {
+      "@type": "PostalAddress",
+      addressLocality: "Lahore",
+      addressRegion: "Punjab",
+      addressCountry: "PK",
+    },
+    areaServed: "Worldwide",
+    knowsAbout: CORE_SERVICES,
+    hasOfferCatalog: {
+      "@type": "OfferCatalog",
+      name: "Software development services",
+      itemListElement: CORE_SERVICES.map((name) => ({
+        "@type": "Offer",
+        itemOffered: { "@type": "Service", name },
+      })),
+    },
     logo: {
       "@type": "ImageObject",
       url: absoluteUrl("/icon-512.png"),
@@ -160,6 +194,17 @@ export function organizationNode(): Node {
     description: site.tagline,
     founder: { "@id": PERSON_ID },
     ...(real(site.contact.email) ? { email: real(site.contact.email) } : {}),
+    ...(real(site.contact.email)
+      ? {
+          contactPoint: {
+            "@type": "ContactPoint",
+            contactType: "sales",
+            email: real(site.contact.email),
+            url: absoluteUrl("/contact"),
+            availableLanguage: ["English"],
+          },
+        }
+      : {}),
     ...(sameAs.length ? { sameAs } : {}),
   };
 }

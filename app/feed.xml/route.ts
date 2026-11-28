@@ -1,9 +1,9 @@
-import { getBlogListings } from "@/content/blog";
+import { getBlogListings } from "@/lib/cms/blog";
 import { SITE_URL, SITE_NAME, absoluteUrl } from "@/lib/seo";
 import { site } from "@/content/site";
 
-// Static at build time; regenerated on each deploy.
-export const dynamic = "force-static";
+// Reads the CMS like the sitemap does, refreshed hourly.
+export const revalidate = 3600;
 
 function esc(value: string): string {
   return value
@@ -19,8 +19,8 @@ function toRfc822(date?: string): string {
   return isNaN(d.getTime()) ? new Date().toUTCString() : d.toUTCString();
 }
 
-export function GET(): Response {
-  const posts = getBlogListings();
+export async function GET(): Promise<Response> {
+  const posts = await getBlogListings();
 
   const items = posts
     .map((post) => {

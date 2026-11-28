@@ -16,13 +16,46 @@ const RETIRED_POSTS = [
   "laravel-12-nestjs-10-react-19-one-feature-worth-caring-about",
 ];
 
+/**
+ * Case studies unpublished from the portfolio. Google still holds these URLs
+ * (Search Console showed them as 404 in November 2026), so they point at the
+ * portfolio index. Remove a slug from this list before republishing it, or
+ * the redirect will hide the new page.
+ */
+const RETIRED_CASE_STUDIES = [
+  "flutter-field-service-app",
+  "aws-cicd-vue-laravel-dashboards",
+  "cloud-cicd-pipeline",
+  "ai-proposal-engine",
+  "ecommerce-growth-platform",
+  "custom-saas-platform",
+  "gaming-ecommerce-store",
+  "laravel-multitenant-api",
+  "upwork-automation-suite",
+  "forage-b2b-saas",
+  "manageph-contractor-payments-platform",
+  "leadquiz-saas-funnel-platform",
+];
+
 const nextConfig: NextConfig = {
   async redirects() {
-    return RETIRED_POSTS.map((slug) => ({
-      source: `/blog/${slug}`,
-      destination: "/blog",
-      permanent: true,
-    }));
+    return [
+      ...RETIRED_POSTS.map((slug) => ({
+        source: `/blog/${slug}`,
+        destination: "/blog",
+        permanent: true,
+      })),
+      ...RETIRED_CASE_STUDIES.map((slug) => ({
+        source: `/portfolio/${slug}`,
+        destination: "/portfolio",
+        permanent: true,
+      })),
+      {
+        source: "/blog/topics/ai",
+        destination: "/blog/topics/ai-industry-news",
+        permanent: true,
+      },
+    ];
   },
   images: {
     remotePatterns: [

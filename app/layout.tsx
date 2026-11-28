@@ -32,17 +32,20 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
-const SITE_DESCRIPTION = `${site.role} with ${site.yearsExperience} years of experience in Laravel, Node, Next.js, Vue, and AWS. Top Rated Plus on Upwork - building SaaS, e-commerce, and APIs that scale.`;
+const SITE_TITLE = `${SITE_NAME} | Laravel & Next.js SaaS Development`;
+const SITE_DESCRIPTION = `${SITE_NAME} builds SaaS products, APIs and e-commerce on Laravel, Next.js, Vue, NestJS and AWS. Led by ${site.name}, Upwork Top Rated Plus, ${site.yearsExperience} years.`;
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: `${SITE_NAME} | ${site.role}`,
+    default: SITE_TITLE,
     template: `%s | ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
   keywords: [
     "Twixr Solutions",
+    "Laravel development agency",
+    "Next.js development agency",
     "Laravel developer",
     "Next.js developer",
     "full-stack engineer",
@@ -70,7 +73,7 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: SITE_URL,
     siteName: SITE_NAME,
-    title: `${SITE_NAME} | ${site.role}`,
+    title: SITE_TITLE,
     description: SITE_DESCRIPTION,
     images: [
       {
@@ -83,7 +86,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: `${SITE_NAME} | ${site.role}`,
+    title: SITE_TITLE,
     description: SITE_DESCRIPTION,
     images: [DEFAULT_OG],
     creator: TWITTER_HANDLE,

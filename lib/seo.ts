@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { site } from "@/content/site";
 import { resolveEntities } from "@/lib/seo-entities";
+import { seoOverride } from "@/lib/seo-overrides";
 
 /** Single canonical host for the whole site. Matches the live deployment. */
 export const SITE_URL = "https://www.twixrsolutions.com";
@@ -64,9 +65,12 @@ type SeoInput = {
 };
 
 /** Build consistent page Metadata (canonical + OpenGraph + Twitter) for every page. */
+/** Longest <title> before search results start cutting it off. */
+const TITLE_LIMIT = 60;
+
 export function pageMetadata({
-  title,
-  description,
+  title: rawTitle,
+  description: rawDescription,
   path,
   image = DEFAULT_OG,
   type = "website",
@@ -76,14 +80,21 @@ export function pageMetadata({
   tags,
   noindex,
 }: SeoInput & { modifiedTime?: string; tags?: string[] }): Metadata {
+  const override = seoOverride(path);
+  const title = override?.title ?? rawTitle;
+  const description = override?.description ?? rawDescription;
   const url = absoluteUrl(path);
-  const ogTitle = `${title} | ${SITE_NAME}`;
+  const branded = `${title} | ${SITE_NAME}`;
+  // Long titles drop the brand suffix so the words people search for are not
+  // the part that gets truncated.
+  const fitsWithBrand = branded.length <= TITLE_LIMIT;
+  const ogTitle = fitsWithBrand ? branded : title;
   const desc =
     description.length > 160 ? `${description.slice(0, 157).trimEnd()}…` : description;
   const ogImage = socialImage(image);
   const isJpg = ogImage.includes("f_jpg");
   return {
-    title,
+    title: fitsWithBrand ? title : { absolute: title },
     description: desc,
     alternates: { canonical: url },
     openGraph: {

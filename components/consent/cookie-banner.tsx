@@ -28,16 +28,19 @@ export function CookieBanner() {
   const [open, setOpen] = useState(false);
   const [view, setView] = useState<View>("prompt");
   const [functional, setFunctional] = useState(false);
+  const [analytics, setAnalytics] = useState(false);
 
   useEffect(() => {
     const existing = readConsent();
     setFunctional(Boolean(existing?.functional));
+    setAnalytics(Boolean(existing?.analytics));
     setOpen(!existing);
     setReady(true);
 
     const onOpen = () => {
       const current = readConsent();
       setFunctional(Boolean(current?.functional));
+      setAnalytics(Boolean(current?.analytics));
       setView(current ? "prefs" : "prompt");
       setOpen(true);
     };
@@ -114,7 +117,7 @@ export function CookieBanner() {
                         type="button"
                         variant="primary"
                         className="min-h-11"
-                        onClick={() => close(defaultConsent(true))}
+                        onClick={() => close(defaultConsent(true, true))}
                       >
                         {consentCopy.accept}
                       </Button>
@@ -123,7 +126,7 @@ export function CookieBanner() {
                         variant="ghost"
                         className="min-h-11 border-d-hairline text-d-text hover:border-d-text hover:bg-d-bg-2"
                         arrow={false}
-                        onClick={() => close(defaultConsent(false))}
+                        onClick={() => close(defaultConsent(false, false))}
                       >
                         {consentCopy.reject}
                       </Button>
@@ -166,7 +169,11 @@ export function CookieBanner() {
                     <ul className="mt-6 divide-y divide-d-hairline border-y border-d-hairline">
                       {consentCopy.categories.map((category) => {
                         const on =
-                          category.id === "essential" ? true : functional;
+                          category.id === "essential"
+                            ? true
+                            : category.id === "analytics"
+                              ? analytics
+                              : functional;
                         return (
                           <li
                             key={category.id}
@@ -190,6 +197,9 @@ export function CookieBanner() {
                                 if (category.id === "functional") {
                                   setFunctional(checked);
                                 }
+                                if (category.id === "analytics") {
+                                  setAnalytics(checked);
+                                }
                               }}
                               className="mt-1 shrink-0"
                               aria-label={category.label}
@@ -204,7 +214,7 @@ export function CookieBanner() {
                         type="button"
                         variant="primary"
                         className="min-h-11"
-                        onClick={() => close(defaultConsent(functional))}
+                        onClick={() => close(defaultConsent(functional, analytics))}
                       >
                         {consentCopy.save}
                       </Button>

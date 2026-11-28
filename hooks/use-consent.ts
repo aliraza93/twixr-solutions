@@ -29,5 +29,6 @@ export function useConsent() {
     choice,
     decided: Boolean(choice),
     functional: Boolean(choice?.functional),
+    analytics: Boolean(choice?.analytics),
   };
 }

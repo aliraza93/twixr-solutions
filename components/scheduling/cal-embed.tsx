@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import Cal, { getCalApi } from "@calcom/embed-react";
 import { CAL_CONFIG } from "@/lib/data/scheduling";
+import { track } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
 type CalEmbedProps = {
@@ -39,6 +40,16 @@ export function CalEmbed({ className }: CalEmbedProps) {
     (async function () {
       const cal = await getCalApi({ namespace: CAL_CONFIG.namespace });
       cal("ui", CAL_UI_CONFIG);
+      // The calendar rendered: someone opened the booking widget.
+      cal("on", {
+        action: "linkReady",
+        callback: () => track("book_call", { booking_stage: "widget_opened" }),
+      });
+      // A slot was actually booked. Only the stage is sent, no attendee data.
+      cal("on", {
+        action: "bookingSuccessfulV2",
+        callback: () => track("book_call", { booking_stage: "completed" }),
+      });
     })();
   }, []);
 

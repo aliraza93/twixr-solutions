@@ -4,6 +4,7 @@ import { useRef, useState, type FormEvent, type ReactNode } from "react";
 import Link from "next/link";
 import { Check, Loader2 } from "lucide-react";
 import { submitContact } from "@/app/actions/contact";
+import { track } from "@/lib/analytics";
 import { PageHero } from "@/components/sections/page-hero";
 import { ScrollReveal } from "@/components/motion/scroll-reveal";
 import { Button } from "@/components/ui/button";
@@ -218,6 +219,7 @@ function ContactForm() {
     try {
       const result = await submitContact(values);
       if (result.ok) {
+        track("generate_lead", { form_name: "contact" });
         setStatus("success");
         setErrors({});
         return;

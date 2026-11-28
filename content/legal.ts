@@ -1,6 +1,6 @@
 import { site } from "./site";
 
-export const LEGAL_UPDATED = "5 September 2026";
+export const LEGAL_UPDATED = "28 November 2026";
 
 export type LegalSlug = "privacy" | "terms" | "cookies";
 
@@ -59,6 +59,7 @@ export const legalPages: Record<LegalSlug, LegalPage> = {
           "New-post notices: if you subscribe on a blog article, I store your email so I can send you a message when a post goes live. That list is not used for ads.",
           `Call booking on [/schedule](/schedule): Cal.com collects the details you enter on their form (typically name, email, and meeting notes). That processing is covered by [Cal.com’s privacy policy](https://cal.com/privacy).`,
           "Technical data: IP address (for spam / rate-limiting), browser type, and standard server logs from the host (Vercel).",
+          "Analytics, only if you allow it in the cookie banner: Google Analytics records pages viewed, the source of the visit, and whether a form was sent or a contact link was clicked. It never receives what you type into a form.",
           "If you hire me, I may also hold project files, credentials you choose to share, invoices, and correspondence. Those stay in the tools we agree to use (email, Git, cloud consoles, Upwork, etc.).",
         ],
       },
@@ -92,6 +93,7 @@ export const legalPages: Record<LegalSlug, LegalPage> = {
           "The database provider behind Studio - stored inquiries and subscriber emails.",
           "Cloudinary - images published from Studio.",
           "Cal.com - if you book a call.",
+          "Google Analytics - visit statistics, only if you allow analytics cookies.",
           "Upwork or LinkedIn - if you contact me there instead of the form.",
         ],
       },
@@ -229,12 +231,12 @@ export const legalPages: Record<LegalSlug, LegalPage> = {
       "What this site stores in your browser, and what it does not.",
     seoTitle: "Cookie Policy",
     seoDescription:
-      "Twixr Solutions cookie policy: essential admin cookies only. No advertising or analytics cookies on the public site.",
+      "Twixr Solutions cookie policy: essential cookies, plus optional analytics and booking cookies that only load after you allow them. No advertising cookies.",
     sections: [
       {
         heading: "The short version",
         paragraphs: [
-          `The public site does not use advertising cookies, analytics cookies, or a marketing pixel. A consent banner asks before the booking calendar (Cal.com) loads. Subscribing to new-post notices stores your email on the server. It does not set a tracking cookie.`,
+          `The public site does not use advertising cookies or a marketing pixel. A consent banner asks before Google Analytics or the booking calendar (Cal.com) loads, and each is off until you allow it. Subscribing to new-post notices stores your email on the server. It does not set a tracking cookie.`,
         ],
       },
       {
@@ -250,6 +252,7 @@ export const legalPages: Record<LegalSlug, LegalPage> = {
           "Studio sidebar preference (admin only): remembers whether the dashboard sidebar is collapsed.",
           "Contact form: submissions are sent to the server. Rate-limiting uses the request IP in memory; it is not a cookie on your device.",
           "Consent choice: `twixr_consent` remembers Accept / Essential only / Preferences so the banner does not reappear every visit.",
+          "Analytics (optional): if you allow it, Google Analytics sets `_ga` cookies to count visits and see which pages lead to an enquiry or a booked call. It records that a form was sent or a contact link was clicked, never what you typed. Ad features are switched off.",
         ],
       },
       {
@@ -257,6 +260,7 @@ export const legalPages: Record<LegalSlug, LegalPage> = {
         bullets: [
           `[Cal.com](${site.contact.booking}) on [/schedule](/schedule) may set its own cookies to run the booking widget. See [Cal.com’s privacy policy](https://cal.com/privacy).`,
           "Vercel (the host) may set cookies that are strictly necessary for the application or security.",
+          "Google Analytics, only with your consent. See [Google's privacy policy](https://policies.google.com/privacy).",
           "If you follow links to Upwork, LinkedIn, or other sites, those sites have their own cookies. I do not control them.",
         ],
       },

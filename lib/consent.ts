@@ -1,4 +1,5 @@
-export const CONSENT_VERSION = 1;
+// v2 added the analytics category, so v1 choices are asked again.
+export const CONSENT_VERSION = 2;
 export const CONSENT_STORAGE_KEY = "twixr-consent";
 export const CONSENT_COOKIE = "twixr_consent";
 export const CONSENT_OPEN_EVENT = "twixr:consent-open";
@@ -8,11 +9,12 @@ export type ConsentChoice = {
   version: number;
   essential: true;
   functional: boolean;
+  analytics: boolean;
   updatedAt: string;
 };
 
 export type ConsentCategory = {
-  id: "essential" | "functional";
+  id: "essential" | "functional" | "analytics";
   locked?: boolean;
 };
 
@@ -20,11 +22,15 @@ function isBrowser() {
   return typeof window !== "undefined";
 }
 
-export function defaultConsent(functional = false): ConsentChoice {
+export function defaultConsent(
+  functional = false,
+  analytics = functional
+): ConsentChoice {
   return {
     version: CONSENT_VERSION,
     essential: true,
     functional,
+    analytics,
     updatedAt: new Date().toISOString(),
   };
 }
@@ -36,13 +42,18 @@ export function readConsent(): ConsentChoice | null {
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<ConsentChoice>;
     if (parsed.version !== CONSENT_VERSION) return null;
-    if (parsed.essential !== true || typeof parsed.functional !== "boolean") {
+    if (
+      parsed.essential !== true ||
+      typeof parsed.functional !== "boolean" ||
+      typeof parsed.analytics !== "boolean"
+    ) {
       return null;
     }
     return {
       version: CONSENT_VERSION,
       essential: true,
       functional: parsed.functional,
+      analytics: parsed.analytics,
       updatedAt: parsed.updatedAt ?? new Date().toISOString(),
     };
   } catch {
@@ -52,7 +63,7 @@ export function readConsent(): ConsentChoice | null {
 
 function writeCookie(choice: ConsentChoice) {
   const maxAge = 60 * 60 * 24 * 365;
-  document.cookie = `${CONSENT_COOKIE}=${choice.version}:${choice.functional ? "1" : "0"}; path=/; max-age=${maxAge}; SameSite=Lax`;
+  document.cookie = `${CONSENT_COOKIE}=${choice.version}:${choice.functional ? "1" : "0"}:${choice.analytics ? "1" : "0"}; path=/; max-age=${maxAge}; SameSite=Lax`;
 }
 
 export function writeConsent(choice: ConsentChoice) {
@@ -69,9 +80,9 @@ export function openCookiePreferences() {
 }
 
 export function acceptAllConsent() {
-  writeConsent(defaultConsent(true));
+  writeConsent(defaultConsent(true, true));
 }
 
 export function rejectOptionalConsent() {
-  writeConsent(defaultConsent(false));
+  writeConsent(defaultConsent(false, false));
 }

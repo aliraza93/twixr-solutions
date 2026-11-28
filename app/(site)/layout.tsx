@@ -4,6 +4,8 @@ import { CookieBanner } from "@/components/consent/cookie-banner";
 import { SmoothScroll } from "@/components/motion/smooth-scroll";
 import { SiteEffects } from "@/components/motion/site-effects";
 import { JsonLd } from "@/components/seo/json-ld";
+import { GoogleAnalytics } from "@/components/analytics/google-analytics";
+import { ContactClickTracker } from "@/components/analytics/contact-click-tracker";
 import { siteJsonLd } from "@/lib/seo";
 import { getSite } from "@/lib/cms/site";
 
@@ -22,6 +24,8 @@ export default async function SiteLayout({
         <Footer />
         <CookieBanner />
         <SiteEffects />
+        <GoogleAnalytics />
+        <ContactClickTracker />
       </div>
       <JsonLd data={siteJsonLd()} />
     </SmoothScroll>

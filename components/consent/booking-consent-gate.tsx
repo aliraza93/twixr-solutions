@@ -5,7 +5,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { consentCopy } from "@/content/consent";
-import { defaultConsent, writeConsent } from "@/lib/consent";
+import { defaultConsent, readConsent, writeConsent } from "@/lib/consent";
 import { DURATION, MOTION_EASE } from "@/lib/motion";
 
 export function BookingConsentGate() {
@@ -31,7 +31,11 @@ export function BookingConsentGate() {
           type="button"
           variant="primary"
           className="min-h-11"
-          onClick={() => writeConsent(defaultConsent(true))}
+          onClick={() =>
+            writeConsent(
+              defaultConsent(true, readConsent()?.analytics ?? false)
+            )
+          }
         >
           {consentCopy.bookingGate.allow}
         </Button>
